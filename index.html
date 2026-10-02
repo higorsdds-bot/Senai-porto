@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HUB ES+ | Plataforma Administrativa Integrada</title>
+  <meta name="description" content="Plataforma de gestão integrada para operações, documentos, ocorrências, compras e indicadores do HUB ES+." />
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN com Configuração Customizada dos Tokens HUB ES+ -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            hub: {
+              navy: '#0a192f',
+              dark: '#0f2b48',
+              blue: '#0066cc',
+              blueHover: '#0052a3',
+              cyan: '#0284c7',
+              coral: '#ff5722',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              purple: '#8b5cf6',
+              surface: '#f8fafc',
+              border: '#e2e8f0'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          boxShadow: {
+            'hub-sm': '0 2px 4px rgba(10, 25, 47, 0.04)',
+            'hub-md': '0 4px 12px rgba(10, 25, 47, 0.06)',
+            'hub-lg': '0 12px 24px -4px rgba(10, 25, 47, 0.08)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js para Visualização de Dados -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom CSS para glassmorphism e animações -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+
+  <div class="flex-1 flex overflow-hidden">
+    <!-- ================================================================= -->
+    <!-- SIDEBAR FIXA (DESKTOP) -->
+    <!-- ================================================================= -->
+    <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200/90 shrink-0 z-30 select-none">
+      <!-- Marca HUB ES+ -->
+      <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-sky-500 text-white flex items-center justify-center font-extrabold text-base shadow-md shadow-blue-600/20">
+          ES+
+        </div>
+        <div>
+          <span class="text-sm font-extrabold text-slate-900 tracking-tight block">HUB ES+</span>
+          <span class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase block">Gestão Administrativa</span>
+        </div>
+      </div>
+
+      <!-- Links de Navegação -->
+      <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-6 text-xs font-semibold">
+        <!-- Grupo 1: Geral -->
+        <div>
+          <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Visão Executiva</span>
+          <div class="mt-2 space-y-1">
+            <a href="#dashboard" data-nav-id="nav-dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+              <span>Dashboard Executivo</span>
+            </a>
+            <a href="#indicadores" data-nav-id="nav-indicadores" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+              <span>Indicadores & BI</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Grupo 2: Operações e Demandas -->
+        <div>
+          <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Operações & Demandas</span>
+          <div class="mt-2 space-y-1">
+            <a href="#compras" data-nav-id="nav-compras" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              <span>Compras</span>
+            </a>
+            <a href="#insumos" data-nav-id="nav-insumos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="boxes" class="w-4 h-4"></i>
+              <span>Controle de Insumos</span>
+            </a>
+            <a href="#ocorrencias" data-nav-id="nav-ocorrencias" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              <span>Ocorrências Técnicas</span>
+            </a>
+            <a href="#limpeza" data-nav-id="nav-limpeza" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>Controle de Limpeza</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Grupo 3: Infraestrutura e Governança -->
+        <div>
+          <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Infra & Governança</span>
+          <div class="mt-2 space-y-1">
+            <a href="#documentos" data-nav-id="nav-documentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="folder-git-2" class="w-4 h-4"></i>
+              <span>Gestão Documental</span>
+            </a>
+            <a href="#agenda" data-nav-id="nav-agenda" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+              <span>Agenda Inteligente</span>
+            </a>
+            <a href="#equipamentos" data-nav-id="nav-equipamentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="monitor" class="w-4 h-4"></i>
+              <span>Equipamentos (Patrimônio)</span>
+            </a>
+            <a href="#comunicacao" data-nav-id="nav-comunicacao" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              <i data-lucide="megaphone" class="w-4 h-4"></i>
+              <span>Central de Comunicação</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Rodapé da Sidebar: Conexão com API e Versão -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+        <div class="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+          <span class="flex items-center gap-1.5 font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 status-ping"></span>
+            API REST v1
+          </span>
+          <button id="btn-toggle-mock" class="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer">Info</button>
+        </div>
+        <p class="text-[10px] text-slate-400 font-mono">Build 2026.1 • HUB ES+</p>
+      </div>
+    </aside>
+
+    <!-- ================================================================= -->
+    <!-- DRAWER LATERAL (MOBILE / TABLET) -->
+    <!-- ================================================================= -->
+    <div id="mobile-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden transition-opacity lg:hidden"></div>
+    <div id="mobile-drawer" class="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col">
+      <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">ES+</div>
+          <span class="font-extrabold text-sm text-slate-900">HUB ES+</span>
+        </div>
+        <button id="btn-close-mobile-menu" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-xs font-semibold">
+        <a href="#dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo</a>
+        <a href="#compras" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="shopping-bag" class="w-4 h-4"></i> Compras</a>
+        <a href="#documentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="folder" class="w-4 h-4"></i> Gestão Documental</a>
+        <a href="#insumos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="boxes" class="w-4 h-4"></i> Controle de Insumos</a>
+        <a href="#ocorrencias" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="alert-circle" class="w-4 h-4"></i> Ocorrências Técnicas</a>
+        <a href="#agenda" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="calendar" class="w-4 h-4"></i> Agenda Inteligente</a>
+        <a href="#limpeza" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="sparkles" class="w-4 h-4"></i> Controle de Limpeza</a>
+        <a href="#equipamentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="monitor" class="w-4 h-4"></i> Equipamentos</a>
+        <a href="#comunicacao" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="megaphone" class="w-4 h-4"></i> Central de Comunicação</a>
+        <a href="#indicadores" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Indicadores</a>
+      </nav>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ÁREA PRINCIPAL COM TOPBAR E CONTEÚDO DINÂMICO -->
+    <!-- ================================================================= -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <!-- TOPBAR -->
+      <header class="h-16 glass-header border-b border-slate-200/80 sticky top-0 z-20 px-4 sm:px-8 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button id="btn-open-mobile-menu" class="lg:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl" aria-label="Abrir Menu">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          
+          <!-- Busca Global Rápida -->
+          <div class="relative hidden sm:block w-72 md:w-96">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input 
+              id="input-global-search" 
+              type="text" 
+              placeholder="Busca rápida no HUB ES+ (Pressione Enter)..." 
+              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-100/75 border border-transparent focus:border-slate-300 focus:bg-white focus:outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 sm:gap-4">
+          <!-- Botão de Notificações -->
+          <button id="btn-topbar-notifications" class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors" aria-label="Notificações">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+          </button>
+
+          <!-- Perfil do Usuário Logado -->
+          <div class="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+              AB
+            </div>
+            <div class="hidden md:block text-left">
+              <span class="block text-xs font-bold text-slate-800 leading-tight">Ana Beatriz Souza</span>
+              <span class="block text-[10px] text-slate-400 font-medium">Administração Geral</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTEÚDO DINÂMICO DOS MÓDULOS -->
+      <main id="main-content" class="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
+        <!-- Renderizado dinamicamente pelo AppRouter -->
+      </main>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- BOTTOM NAV (MOBILE ONLY) -->
+  <!-- ================================================================= -->
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 flex items-center justify-around py-2 px-2 text-[10px] font-medium text-slate-500">
+    <a href="#dashboard" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+      <span>Início</span>
+    </a>
+    <a href="#compras" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
+      <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+      <span>Compras</span>
+    </a>
+    <a href="#ocorrencias" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
+      <i data-lucide="alert-circle" class="w-4 h-4"></i>
+      <span>Ocorrências</span>
+    </a>
+    <a href="#agenda" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
+      <i data-lucide="calendar" class="w-4 h-4"></i>
+      <span>Agenda</span>
+    </a>
+    <a href="#documentos" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
+      <i data-lucide="folder" class="w-4 h-4"></i>
+      <span>Docs</span>
+    </a>
+  </nav>
+
+  <!-- ================================================================= -->
+  <!-- SCRIPTS DA APLICAÇÃO (EM ORDEM DE DEPENDÊNCIA) -->
+  <!-- ================================================================= -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/mock.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/ui.js"></script>
+
+  <!-- Módulos da Plataforma HUB ES+ -->
+  <script src="assets/js/modules/dashboard.js"></script>
+  <script src="assets/js/modules/documentos.js"></script>
+  <script src="assets/js/modules/insumos.js"></script>
+  <script src="assets/js/modules/compras.js"></script>
+  <script src="assets/js/modules/agenda.js"></script>
+  <script src="assets/js/modules/ocorrencias.js"></script>
+  <script src="assets/js/modules/comunicacao.js"></script>
+  <script src="assets/js/modules/indicadores.js"></script>
+  <script src="assets/js/modules/limpeza.js"></script>
+  <script src="assets/js/modules/equipamentos.js"></script>
+
+  <!-- Roteador Principal -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
