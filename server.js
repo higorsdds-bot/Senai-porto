@@ -7,7 +7,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initPool, testConnection } = require('./src/config/database');
+const { getPool, testConnection } = require('./src/config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -43,34 +43,34 @@ app.use(express.static(path.join(__dirname, '.')));
 app.use('/uploads', express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
 // ─── ROTAS DA API ─────────────────────────────────────────────────────────────
-const authRouter         = require('./src/routes/auth');
-const usuariosRouter     = require('./src/routes/usuarios');
-const setoresRouter      = require('./src/routes/setores');
-const limpezaRouter      = require('./src/routes/limpeza');
-const comprasRouter      = require('./src/routes/compras');
+const authRouter = require('./src/routes/auth');
+const usuariosRouter = require('./src/routes/usuarios');
+const setoresRouter = require('./src/routes/setores');
+const limpezaRouter = require('./src/routes/limpeza');
+const comprasRouter = require('./src/routes/compras');
 const equipamentosRouter = require('./src/routes/equipamentos');
-const documentosRouter   = require('./src/routes/documentos');
-const ocorrenciasRouter  = require('./src/routes/ocorrencias');
-const eventosRouter      = require('./src/routes/eventos');
-const insumosRouter      = require('./src/routes/insumos');
-const comunicadosRouter  = require('./src/routes/comunicados');
-const dashboardRouter    = require('./src/routes/dashboard');
-const auditoriaRouter    = require('./src/routes/auditoria');
+const documentosRouter = require('./src/routes/documentos');
+const ocorrenciasRouter = require('./src/routes/ocorrencias');
+const eventosRouter = require('./src/routes/eventos');
+const insumosRouter = require('./src/routes/insumos');
+const comunicadosRouter = require('./src/routes/comunicados');
+const dashboardRouter = require('./src/routes/dashboard');
+const auditoriaRouter = require('./src/routes/auditoria');
 
 const BASE = '/api/v1';
-app.use(`${BASE}/auth`,         authRouter);
-app.use(`${BASE}/usuarios`,     usuariosRouter);
-app.use(`${BASE}/setores`,      setoresRouter);
-app.use(`${BASE}/limpeza`,      limpezaRouter);
-app.use(`${BASE}/compras`,      comprasRouter);
+app.use(`${BASE}/auth`, authRouter);
+app.use(`${BASE}/usuarios`, usuariosRouter);
+app.use(`${BASE}/setores`, setoresRouter);
+app.use(`${BASE}/limpeza`, limpezaRouter);
+app.use(`${BASE}/compras`, comprasRouter);
 app.use(`${BASE}/equipamentos`, equipamentosRouter);
-app.use(`${BASE}/documentos`,   documentosRouter);
-app.use(`${BASE}/ocorrencias`,  ocorrenciasRouter);
-app.use(`${BASE}/eventos`,      eventosRouter);
-app.use(`${BASE}/insumos`,      insumosRouter);
-app.use(`${BASE}/comunicados`,  comunicadosRouter);
-app.use(`${BASE}/dashboard`,    dashboardRouter);
-app.use(`${BASE}/auditoria`,    auditoriaRouter);
+app.use(`${BASE}/documentos`, documentosRouter);
+app.use(`${BASE}/ocorrencias`, ocorrenciasRouter);
+app.use(`${BASE}/eventos`, eventosRouter);
+app.use(`${BASE}/insumos`, insumosRouter);
+app.use(`${BASE}/comunicados`, comunicadosRouter);
+app.use(`${BASE}/dashboard`, dashboardRouter);
+app.use(`${BASE}/auditoria`, auditoriaRouter);
 
 // ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
@@ -85,13 +85,12 @@ app.get('/api/health', async (req, res) => {
 
 // ─── ROTA CATCH-ALL (SPA) ────────────────────────────────────────────────────
 // Devolve o index.html para qualquer rota não capturada (necessário para hash routing)
-app.get('*', (req, res) => {
+app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ success: false, message: 'Endpoint não encontrado.' });
   }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
 // ─── ERROR HANDLER GLOBAL ────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err.message || err);
@@ -125,8 +124,7 @@ async function start() {
 
     // Inicializar pool de conexões
     console.log('[SERVER] Inicializando pool de conexões MySQL...');
-    initPool();
-
+    getPool();
     // Testar conexão
     const dbOk = await testConnection();
     if (!dbOk) {
