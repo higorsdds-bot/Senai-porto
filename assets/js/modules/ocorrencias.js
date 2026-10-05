@@ -91,14 +91,14 @@ window.OcorrenciasModule = {
         </div>
 
         <!-- Tabela -->
-        ${filtered.length === 0 ? 
-          window.UI.renderEmptyState({
-            title: 'Nenhuma ocorrência encontrada',
-            description: 'Todas as ocorrências registradas já foram resolvidas ou não correspondem ao filtro.',
-            actionLabel: 'Abrir Novo Chamado',
-            onActionClick: () => this._openFormModal(container)
-          })
-          : `
+        ${filtered.length === 0 ?
+        window.UI.renderEmptyState({
+          title: 'Nenhuma ocorrência encontrada',
+          description: 'Todas as ocorrências registradas já foram resolvidas ou não correspondem ao filtro.',
+          actionLabel: 'Abrir Novo Chamado',
+          onActionClick: () => this._openFormModal(container)
+        })
+        : `
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
@@ -113,8 +113,8 @@ window.OcorrenciasModule = {
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${paginatedItems.map(item => {
-                    const solicitante = this.usuarios.find(u => Number(u.id) === Number(item.usuario_id))?.nome || 'Usuário #' + item.usuario_id;
-                    return `
+          const solicitante = this.usuarios.find(u => Number(u.id) === Number(item.usuario_id))?.nome || 'Usuário #' + item.usuario_id;
+          return `
                       <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
                         <td class="px-6 py-4 font-semibold text-slate-800">
@@ -149,7 +149,7 @@ window.OcorrenciasModule = {
                         </td>
                       </tr>
                     `;
-                  }).join('')}
+        }).join('')}
                 </tbody>
               </table>
             </div>
