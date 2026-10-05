@@ -3,7 +3,7 @@
  */
 const CONFIG = {
   // URL base da API REST backend (mesmo servidor)
-  API_BASE_URL: '/api/v1',
+  API_BASE_URL: '/api/v1/auth/login',
 
   // Banco já está na nuvem (TiDB Cloud) - modo mock DESLIGADO
   USE_MOCK: false,
