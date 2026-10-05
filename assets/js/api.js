@@ -241,7 +241,7 @@ class ApiService {
 
   async createComunicado(data) {
     return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('unicados', data));
+      () => window.MockDB.create('comunicados', data));
   }
 
   async deleteComunicado(id) {
