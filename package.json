@@ -2,11 +2,12 @@
   "name": "senai-porto",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js"
+    "start": "node server.js",
+    "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js"
   },
   "repository": {
     "type": "git",

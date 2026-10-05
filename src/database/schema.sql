@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS ocorrencias (
   local          VARCHAR(255) NOT NULL,
   descricao      TEXT NULL,
   tipo           VARCHAR(100) NULL,
+  foto_url       VARCHAR(500) NULL,
   status         ENUM('aberto','em_andamento','resolvido') NOT NULL DEFAULT 'aberto',
   deleted_at     DATETIME NULL,
   created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,

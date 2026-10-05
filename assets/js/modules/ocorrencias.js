@@ -1,310 +1,208 @@
 /**
- * HUB ES+ - Módulo 6: Ocorrências Técnicas
- * Tabela: ocorrencias (id, usuario_id, local, status)
- * Funcionalidades: listagem de chamados prediais e técnicos, status (aberto, em_andamento, resolvido),
- * vínculo usuario_id, filtro por local/status, busca em tempo real e modais CRUD.
+ * HUB ES+ - Módulo de Ocorrências Técnicas
+ * Registro com foto (câmera no celular / arquivo no PC).
  */
+window.Modules = window.Modules || {};
 
-window.OcorrenciasModule = {
-  items: [],
-  usuarios: [],
-  searchTerm: '',
-  statusFilter: '',
-  currentPage: 1,
-  pageSize: 6,
+window.Modules.ocorrencias = {
+  _fotoSelecionada: null,
+  _fotoPreviewUrl: null,
 
   async render(container) {
-    container.innerHTML = window.UI.renderTableSkeleton(5, 5);
-
-    try {
-      const [ocorrencias, usuarios] = await Promise.all([
-        window.API.getOcorrencias(),
-        window.API.getUsuarios()
-      ]);
-      this.items = ocorrencias;
-      this.usuarios = usuarios;
-      this._renderView(container);
-    } catch (err) {
-      console.error('Erro ao carregar ocorrências:', err);
-      container.innerHTML = window.UI.renderEmptyState({
-        title: 'Falha na comunicação',
-        description: 'Não foi possível carregar os chamados técnicos.',
-        actionLabel: 'Recarregar',
-        onActionClick: () => this.render(container)
-      });
-    }
-  },
-
-  _renderView(container) {
-    let filtered = this.items.filter(item => {
-      const matchLocal = (item.local || '').toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchStatus = !this.statusFilter || item.status === this.statusFilter;
-      return matchLocal && matchStatus;
-    });
-
-    const totalPages = Math.ceil(filtered.length / this.pageSize) || 1;
-    if (this.currentPage > totalPages) this.currentPage = totalPages;
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const paginatedItems = filtered.slice(startIndex, startIndex + this.pageSize);
-
     container.innerHTML = `
       <div class="space-y-6">
-        <!-- Cabeçalho -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700 tracking-wide uppercase">
-                Suporte & Manutenção
-              </span>
-              <span class="text-xs text-slate-400">• ${this.items.length} chamados</span>
-            </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Ocorrências Técnicas</h1>
-            <p class="text-xs text-slate-500 font-medium">Registro e acompanhamento de incidentes de infraestrutura e TI</p>
+            <h2 class="text-lg font-extrabold text-slate-900">Ocorrências Técnicas</h2>
+            <p class="text-xs text-slate-400 font-semibold">Registre e acompanhe problemas com evidência fotográfica.</p>
           </div>
-          <button id="btn-nova-ocorrencia" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl shadow-md shadow-rose-600/20 transition-all">
-            <i data-lucide="alert-octagon" class="w-4 h-4"></i>
-            Registrar Ocorrência
+          <button id="btn-nova-ocorrencia" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i> Nova Ocorrência
           </button>
         </div>
 
-        <!-- Barra de Busca e Filtro -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="relative w-full sm:w-80">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input 
-              id="input-busca-ocorrencia" 
-              type="text" 
-              placeholder="Buscar por local ou espaço..." 
-              value="${this.searchTerm}"
-              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-            />
-          </div>
-
-          <div class="w-full sm:w-auto">
-            <select id="select-filtro-status-ocorrencia" class="w-full sm:w-48 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white">
-              <option value="">Todos os Status</option>
-              <option value="aberto" ${this.statusFilter === 'aberto' ? 'selected' : ''}>Aberto</option>
-              <option value="em_andamento" ${this.statusFilter === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
-              <option value="resolvido" ${this.statusFilter === 'resolvido' ? 'selected' : ''}>Resolvido</option>
-            </select>
-          </div>
+        <div class="flex gap-2">
+          <input id="oc-busca" type="text" placeholder="Buscar por local ou descrição..."
+            class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+          <select id="oc-filtro-status" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+            <option value="">Todos os status</option>
+            <option value="aberto">Aberto</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="resolvido">Resolvido</option>
+          </select>
         </div>
 
-        <!-- Tabela -->
-        ${filtered.length === 0 ?
-        window.UI.renderEmptyState({
-          title: 'Nenhuma ocorrência encontrada',
-          description: 'Todas as ocorrências registradas já foram resolvidas ou não correspondem ao filtro.',
-          actionLabel: 'Abrir Novo Chamado',
-          onActionClick: () => this._openFormModal(container)
-        })
-        : `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                  <tr>
-                    <th class="px-6 py-3.5">ID</th>
-                    <th class="px-6 py-3.5">Local da Ocorrência</th>
-                    <th class="px-6 py-3.5">Usuário Solicitante</th>
-                    <th class="px-6 py-3.5">Status</th>
-                    <th class="px-6 py-3.5 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  ${paginatedItems.map(item => {
-          const solicitante = this.usuarios.find(u => Number(u.id) === Number(item.usuario_id))?.nome || 'Usuário #' + item.usuario_id;
-          return `
-                      <tr class="hover:bg-slate-50/60 transition-colors">
-                        <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-800">
-                          <div class="flex items-center gap-2">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-                            <span>${item.local}</span>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-600">
-                          <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px] flex items-center justify-center">
-                              ${solicitante.charAt(0)}
-                            </div>
-                            <span>${solicitante}</span>
-                          </div>
-                        </td>
-                        <td class="px-6 py-4">
-                          ${window.UI.renderBadge(item.status)}
-                        </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                          <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.OcorrenciasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Atualizar Status">
-                              <i data-lucide="activity" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.OcorrenciasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
-                              <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.OcorrenciasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
-                              <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-        }).join('')}
-                </tbody>
-              </table>
+        <div id="oc-form-wrap" class="hidden bg-white rounded-2xl border border-slate-200 shadow-hub-sm p-6">
+          <h3 class="text-sm font-extrabold text-slate-900 mb-4">Registrar Ocorrência</h3>
+          <form id="form-ocorrencia" class="grid grid-cols-1 sm:grid-cols-2 gap-4" novalidate>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1.5">Local *</label>
+              <input name="local" required minlength="3"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                placeholder="Ex: Sala 203, Corredor B...">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1.5">Tipo</label>
+              <input name="tipo"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                placeholder="Ex: Elétrica, Hidráulica, TI...">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-500 mb-1.5">Descrição</label>
+              <textarea name="descricao" rows="3"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                placeholder="Descreva o problema..."></textarea>
             </div>
 
-            <!-- Paginação -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-              <span>Exibindo ${startIndex + 1} - ${Math.min(startIndex + this.pageSize, filtered.length)} de ${filtered.length}</span>
-              <div class="flex items-center gap-1.5">
-                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-oc-prev" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Anterior</button>
-                <span class="px-2 font-medium">${this.currentPage} / ${totalPages}</span>
-                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-oc-next" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Próxima</button>
+            <!-- FOTO: câmera no celular / arquivo no PC -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-500 mb-1.5">Foto da ocorrência (opcional)</label>
+              <div class="flex flex-wrap items-center gap-3">
+                <label class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+                  <i data-lucide="camera" class="w-4 h-4"></i> Tirar Foto
+                  <input id="oc-foto-captura" type="file" accept="image/*" capture="environment" class="hidden">
+                </label>
+                <label class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+                  <i data-lucide="image" class="w-4 h-4"></i> Escolher Arquivo
+                  <input id="oc-foto-arquivo" type="file" accept="image/*" class="hidden">
+                </label>
+                <img id="oc-foto-preview" class="hidden w-20 h-20 object-cover rounded-xl border border-slate-200" alt="Prévia da foto">
+                <button type="button" id="oc-foto-remover" class="hidden text-xs font-bold text-red-600 hover:text-red-700">Remover</button>
               </div>
+              <p class="text-[11px] text-slate-400 mt-2">No celular, "Tirar Foto" abre a câmera. Formatos: JPG, PNG, WebP. Máx. 10MB.</p>
             </div>
+
+            <div class="sm:col-span-2 flex gap-2 pt-2">
+              <button type="submit" id="oc-btn-salvar"
+                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors disabled:opacity-60">
+                Salvar Ocorrência
+              </button>
+              <button type="button" id="oc-btn-cancelar"
+                class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 py-2.5 rounded-xl transition-colors">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="oc-lista" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>`;
+
+    this._bind(container);
+    await this._carregar(container);
+    if (window.lucide) lucide.createIcons();
+  },
+
+  _bind(container) {
+    const formWrap = container.querySelector('#oc-form-wrap');
+    container.querySelector('#btn-nova-ocorrencia').addEventListener('click', () => formWrap.classList.toggle('hidden'));
+    container.querySelector('#oc-btn-cancelar').addEventListener('click', () => { this._limparFoto(); formWrap.classList.add('hidden'); });
+    container.querySelector('#oc-busca').addEventListener('input', () => this._carregar(container));
+    container.querySelector('#oc-filtro-status').addEventListener('change', () => this._carregar(container));
+
+    const aoEscolherFoto = (input) => {
+      input.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { alert('Selecione um arquivo de imagem.'); return; }
+        if (file.size > 10 * 1024 * 1024) { alert('Imagem muito grande. Máximo 10MB.'); return; }
+        this._fotoSelecionada = file;
+        if (this._fotoPreviewUrl) URL.revokeObjectURL(this._fotoPreviewUrl);
+        this._fotoPreviewUrl = URL.createObjectURL(file);
+        const prev = container.querySelector('#oc-foto-preview');
+        prev.src = this._fotoPreviewUrl;
+        prev.classList.remove('hidden');
+        container.querySelector('#oc-foto-remover').classList.remove('hidden');
+      });
+    };
+    aoEscolherFoto(container.querySelector('#oc-foto-captura'));
+    aoEscolherFoto(container.querySelector('#oc-foto-arquivo'));
+
+    container.querySelector('#oc-foto-remover').addEventListener('click', () => this._limparFoto());
+
+    container.querySelector('#form-ocorrencia').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const btn = container.querySelector('#oc-btn-salvar');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        const fd = new FormData();
+        fd.append('local', form.local.value.trim());
+        fd.append('tipo', form.tipo.value.trim());
+        fd.append('descricao', form.descricao.value.trim());
+        if (this._fotoSelecionada) fd.append('foto', this._fotoSelecionada);
+
+        const res = await window.API.createOcorrencia(fd);
+        if (!res?.success) throw new Error(res?.message || 'Erro ao salvar.');
+        form.reset();
+        this._limparFoto();
+        formWrap.classList.add('hidden');
+        await this._carregar(container);
+      } catch (err) {
+        alert(err.message || 'Erro ao registrar ocorrência.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Salvar Ocorrência';
+      }
+    });
+  },
+
+  _limparFoto() {
+    this._fotoSelecionada = null;
+    if (this._fotoPreviewUrl) { URL.revokeObjectURL(this._fotoPreviewUrl); this._fotoPreviewUrl = null; }
+    const prev = document.getElementById('oc-foto-preview');
+    if (prev) { prev.src = ''; prev.classList.add('hidden'); }
+    document.getElementById('oc-foto-remover')?.classList.add('hidden');
+    const c = document.getElementById('oc-foto-captura'); if (c) c.value = '';
+    const a = document.getElementById('oc-foto-arquivo'); if (a) a.value = '';
+  },
+
+  _statusBadge(status) {
+    const map = {
+      aberto: 'bg-amber-50 text-amber-700 border-amber-200',
+      em_andamento: 'bg-blue-50 text-blue-700 border-blue-200',
+      resolvido: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    };
+    const label = { aberto: 'Aberto', em_andamento: 'Em Andamento', resolvido: 'Resolvido' }[status] || status;
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${map[status] || 'bg-slate-50 text-slate-600 border-slate-200'}">${label}</span>`;
+  },
+
+  async _carregar(container) {
+    const lista = container.querySelector('#oc-lista');
+    const q = container.querySelector('#oc-busca').value.trim();
+    const status = container.querySelector('#oc-filtro-status').value;
+    lista.innerHTML = '<p class="text-sm text-slate-400 col-span-full py-8 text-center">Carregando...</p>';
+    try {
+      const res = await window.API.getOcorrencias({ q, status });
+      const itens = res?.data || [];
+      if (!itens.length) {
+        lista.innerHTML = '<p class="text-sm text-slate-400 col-span-full py-8 text-center">Nenhuma ocorrência encontrada.</p>';
+        return;
+      }
+      lista.innerHTML = itens.map(o => `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-hub-sm p-5 flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h4 class="text-sm font-extrabold text-slate-900 truncate">${this._esc(o.local)}</h4>
+              ${o.tipo ? `<span class="text-[11px] font-semibold text-slate-400">${this._esc(o.tipo)}</span>` : ''}
+            </div>
+            ${this._statusBadge(o.status)}
           </div>
-        `}
-      </div>
-    `;
-
-    if (window.lucide) {
-      window.lucide.createIcons({ root: container });
+          ${o.foto_url ? `
+            <a href="${this._esc(o.foto_url)}" target="_blank" rel="noopener">
+              <img src="${this._esc(o.foto_url)}" alt="Foto da ocorrência" class="w-full h-40 object-cover rounded-xl border border-slate-200">
+            </a>` : ''}
+          ${o.descricao ? `<p class="text-xs text-slate-600 leading-relaxed">${this._esc(o.descricao)}</p>` : ''}
+          <div class="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>${o.usuario_nome ? 'Por ' + this._esc(o.usuario_nome) : ''}</span>
+            <span>${o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : ''}</span>
+          </div>
+        </div>`).join('');
+    } catch (err) {
+      lista.innerHTML = `<p class="text-sm text-red-500 col-span-full py-8 text-center">${this._esc(err.message || 'Erro ao carregar.')}</p>`;
     }
-
-    container.querySelector('#input-busca-ocorrencia')?.addEventListener('input', (e) => {
-      this.searchTerm = e.target.value;
-      this.currentPage = 1;
-      this._renderView(container);
-    });
-
-    container.querySelector('#select-filtro-status-ocorrencia')?.addEventListener('change', (e) => {
-      this.statusFilter = e.target.value;
-      this.currentPage = 1;
-      this._renderView(container);
-    });
-
-    container.querySelector('#btn-oc-prev')?.addEventListener('click', () => { this.currentPage--; this._renderView(container); });
-    container.querySelector('#btn-oc-next')?.addEventListener('click', () => { this.currentPage++; this._renderView(container); });
-    container.querySelector('#btn-nova-ocorrencia')?.addEventListener('click', () => this._openFormModal(container));
   },
 
-  _openFormModal(container, editId = null) {
-    const isEdit = !!editId;
-    const item = isEdit ? this.items.find(i => Number(i.id) === Number(editId)) : null;
-
-    const modalContent = `
-      <form id="form-ocorrencia" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Local da Ocorrência *</label>
-          <input 
-            type="text" 
-            name="local" 
-            required 
-            value="${item ? item.local : ''}" 
-            placeholder="Ex: Laboratório Maker - Bancada 04" 
-            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Usuário Solicitante (usuario_id) *</label>
-          <select name="usuario_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white">
-            <option value="">Selecione o usuário...</option>
-            ${this.usuarios.map(u => `
-              <option value="${u.id}" ${item && Number(item.usuario_id) === Number(u.id) ? 'selected' : ''}>${u.nome} (${u.email})</option>
-            `).join('')}
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Status da Ocorrência *</label>
-          <select name="status" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white">
-            <option value="aberto" ${item && item.status === 'aberto' ? 'selected' : ''}>Aberto</option>
-            <option value="em_andamento" ${item && item.status === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
-            <option value="resolvido" ${item && item.status === 'resolvido' ? 'selected' : ''}>Resolvido</option>
-          </select>
-        </div>
-      </form>
-    `;
-
-    window.UI.openModal({
-      title: isEdit ? 'Editar Ocorrência' : 'Registrar Nova Ocorrência',
-      subtitle: 'Mapeamento direto com a tabela ocorrencias do banco',
-      contentHtml: modalContent,
-      saveLabel: isEdit ? 'Salvar Alterações' : 'Abrir Chamado',
-      onSave: async () => {
-        const form = document.getElementById('form-ocorrencia');
-        if (!window.UI.validateForm(form)) return false;
-
-        const formData = new FormData(form);
-        const payload = {
-          local: formData.get('local').trim(),
-          usuario_id: Number(formData.get('usuario_id')),
-          status: formData.get('status')
-        };
-
-        if (isEdit) {
-          // TODO: conectar endpoint PUT /ocorrencias/:id
-          await window.API.updateOcorrencia(editId, payload);
-          window.UI.toast({ title: 'Ocorrência Atualizada', message: 'Dados salvos com sucesso.' });
-        } else {
-          // TODO: conectar endpoint POST /ocorrencias
-          await window.API.createOcorrencia(payload);
-          window.UI.toast({ title: 'Chamado Aberto', message: 'A ocorrência foi registrada para a equipe técnica.' });
-        }
-
-        await this.render(container);
-        return true;
-      }
-    });
-  },
-
-  _openStatusModal(container, id) {
-    const item = this.items.find(i => Number(i.id) === Number(id));
-    if (!item) return;
-
-    const modalContent = `
-      <div class="space-y-4">
-        <p class="text-xs text-slate-600">Alterar status da ocorrência em: <strong class="text-slate-800">${item.local}</strong></p>
-        <div class="space-y-2">
-          ${['aberto', 'em_andamento', 'resolvido'].map(st => `
-            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
-              <input type="radio" name="oc_status_radio" value="${st}" ${item.status === st ? 'checked' : ''} class="text-rose-600 focus:ring-rose-500">
-              <span class="text-xs font-semibold uppercase">${st.replace('_', ' ')}</span>
-            </label>
-          `).join('')}
-        </div>
-      </div>
-    `;
-
-    window.UI.openModal({
-      title: 'Status do Chamado',
-      contentHtml: modalContent,
-      saveLabel: 'Atualizar Status',
-      maxWidth: 'max-w-sm',
-      onSave: async () => {
-        const checked = document.querySelector('input[name="oc_status_radio"]:checked');
-        if (!checked) return;
-        // TODO: conectar endpoint PUT /ocorrencias/:id
-        await window.API.updateOcorrencia(id, { status: checked.value });
-        window.UI.toast({ title: 'Status Atualizado', message: `Chamado agora está ${checked.value.replace('_', ' ')}.` });
-        await this.render(container);
-        return true;
-      }
-    });
-  },
-
-  _confirmDelete(container, id) {
-    window.UI.confirmModal({
-      title: 'Excluir Ocorrência?',
-      message: 'Tem certeza que deseja apagar o registro deste chamado técnico?',
-      onConfirm: async () => {
-        // TODO: conectar endpoint DELETE /ocorrencias/:id
-        await window.API.deleteOcorrencia(id);
-        window.UI.toast({ title: 'Ocorrência Excluída', message: 'Chamado removido com sucesso.', type: 'warning' });
-        await this.render(container);
-      }
-    });
+  _esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 };
