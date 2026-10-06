@@ -45,7 +45,7 @@ async function loadPermissoesPorPerfil() {
 async function hasPermission(usuario, permissaoChave) {
   if (!usuario) return false;
   // ADMIN tem permissão total (bypass)
-  if (usuario.perfil === 'ADMIN') return true;
+  if (['ADMIN', 'ADMINISTRADOR'].includes(usuario.perfil)) return true;
 
   const perms = await loadPermissoesPorPerfil();
   const permSet = perms[usuario.perfil];
@@ -81,7 +81,7 @@ function requirePermission(permissaoChave) {
 async function getPermissoesDoUsuario(usuario) {
   if (!usuario) return [];
   const perms = await loadPermissoesPorPerfil();
-  if (usuario.perfil === 'ADMIN') {
+  if (['ADMIN', 'ADMINISTRADOR'].includes(usuario.perfil)) {
     // Admin: retorna todas as chaves cadastradas
     const allKeys = Object.values(perms).flatMap(s => [...s]);
     return [...new Set(allKeys)];

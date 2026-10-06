@@ -225,15 +225,15 @@ CREATE TABLE IF NOT EXISTS comunicados (
 
 -- ============================================================
 -- TABELA: auditoria
--- ============================================================
-CREATE TABLE IF NOT EXISTS auditoria (
-  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id  BIGINT NULL,
-  acao        VARCHAR(100) NOT NULL,
-  entidade    VARCHAR(100) NULL,
-  entidade_id BIGINT NULL,
-  descricao   TEXT NULL,
-  ip          VARCHAR(45) NULL,
-  user_agent  TEXT NULL,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  -- ============================================================
+  CREATE TABLE IF NOT EXISTS auditoria (
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id  BIGINT NULL,
+    acao        VARCHAR(100) NOT NULL,
+    entidade    VARCHAR(100) NULL,
+    entidade_id BIGINT NULL,
+    descricao   TEXT NULL,
+    ip          VARCHAR(45) NULL,
+    user_agent  TEXT NULL,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
