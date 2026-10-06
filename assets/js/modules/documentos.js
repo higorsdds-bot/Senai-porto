@@ -91,14 +91,14 @@ window.DocumentosModule = {
         </div>
 
         <!-- Tabela de Documentos -->
-        ${filtered.length === 0 ? 
-          window.UI.renderEmptyState({
-            title: 'Nenhum documento encontrado',
-            description: 'Tente alterar os termos de busca ou o setor selecionado.',
-            actionLabel: 'Cadastrar Documento',
-            onActionClick: () => this._openFormModal(container)
-          })
-          : `
+        ${filtered.length === 0 ?
+        window.UI.renderEmptyState({
+          title: 'EM MANUTENÇÃO! AGUARDE O TI TERMINAR',
+          description: 'FORA DO AR',
+          actionLabel: 'Cadastrar Documento',
+          onActionClick: () => this._openFormModal(container)
+        })
+        : `
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
@@ -112,8 +112,8 @@ window.DocumentosModule = {
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${paginatedItems.map(item => {
-                    const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || 'Não definido';
-                    return `
+          const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || 'Não definido';
+          return `
                       <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-6 py-4 font-semibold text-slate-800">
                           <div class="flex items-center gap-3">
@@ -144,7 +144,7 @@ window.DocumentosModule = {
                         </td>
                       </tr>
                     `;
-                  }).join('')}
+        }).join('')}
                 </tbody>
               </table>
             </div>
