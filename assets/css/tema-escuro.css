@@ -1,6 +1,14 @@
 /* ==============================================================================
-   HUB ES+ — TEMA ESCURO (baseado na identidade SECULT)
-   Paleta: fundo azul-marinho profundo + acento verde-água (teal)
+   HUB ES+ / SECULT — TEMA ESCURO (paleta oficial do Figma)
+   ------------------------------------------------------------------------------
+   Paleta extraída do design SECULT:
+     Texto claro ....... #F7F3EC (off-white)   · títulos e textos principais
+     Texto secundário .. #9FBCC3 (cinza-azulado)· subtítulos e labels
+     Texto suave ....... #E8E4DD (bege claro)   · textos de apoio
+     Acento malva ...... #B6A2B7                · detalhes/badges
+     Botão primário .... gradiente #355D5F → #1F3A3D → #28474A
+     Borda sutil ....... #C4DDD4 a 20% de opacidade
+
    Ativado quando <html class="dark"> — o tema claro permanece intacto.
    ============================================================================== */
 
@@ -10,53 +18,66 @@ html.dark {
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
 html.dark body {
-    background-color: #0b1424;
-    /* fundo principal: navy profundo */
-    color: #e2e8f0;
+    background-color: #0c1618;
+    /* fundo: verde-navy profundo */
+    color: #f7f3ec;
 }
 
-/* ─── Superfícies (cards, painéis, modais) ─────────────────────────────────── */
+/* ─── Superfícies (cards, painéis, modais, sidebar, header) ────────────────── */
 html.dark .bg-white {
-    background-color: #16223a !important;
-    /* card: navy médio */
-    color: #e2e8f0;
+    background-color: #152427 !important;
+    /* card: teal-escuro elevado */
+    color: #f7f3ec;
 }
 
 html.dark .bg-slate-50,
 html.dark .bg-gray-50 {
-    background-color: #0f1a30 !important;
+    background-color: #101d20 !important;
 }
 
 html.dark .bg-slate-100,
 html.dark .bg-gray-100 {
-    background-color: #1b2a47 !important;
+    background-color: #1a2e32 !important;
 }
 
 html.dark .bg-hub-surface,
 html.dark .bg-hub-navy {
-    background-color: #0b1424 !important;
+    background-color: #0c1618 !important;
 }
 
-/* ─── Textos ───────────────────────────────────────────────────────────────── */
+html.dark header,
+html.dark aside,
+html.dark nav {
+    background-color: #0f1c1f;
+    border-color: rgba(196, 221, 212, 0.14);
+}
+
+/* ─── Tipografia ───────────────────────────────────────────────────────────── */
+html.dark h1,
+html.dark h2,
+html.dark h3,
 html.dark .text-slate-900,
 html.dark .text-gray-900,
 html.dark .text-slate-800,
 html.dark .text-gray-800 {
-    color: #f1f5f9 !important;
+    color: #f7f3ec !important;
+    /* off-white */
 }
 
 html.dark .text-slate-700,
 html.dark .text-gray-700,
 html.dark .text-slate-600,
 html.dark .text-gray-600 {
-    color: #cbd5e1 !important;
+    color: #9fbcc3 !important;
+    /* cinza-azulado */
 }
 
 html.dark .text-slate-500,
 html.dark .text-gray-500,
 html.dark .text-slate-400,
 html.dark .text-gray-400 {
-    color: #94a3b8 !important;
+    color: #b6a2b7 !important;
+    /* malva suave */
 }
 
 /* ─── Bordas e divisores ───────────────────────────────────────────────────── */
@@ -65,107 +86,137 @@ html.dark .border-slate-200,
 html.dark .border-gray-200,
 html.dark .border-slate-100,
 html.dark .border-gray-100,
-html.dark .border-hub-border {
-    border-color: #263553 !important;
+html.dark .border-hub-border,
+html.dark .border-l,
+html.dark .border-b,
+html.dark .border-t,
+html.dark .border-r {
+    border-color: rgba(196, 221, 212, 0.16) !important;
+    /* #C4DDD4 a ~16-20% */
 }
 
 html.dark .divide-slate-100>*+*,
 html.dark .divide-slate-200>*+* {
-    border-color: #263553 !important;
+    border-color: rgba(196, 221, 212, 0.12) !important;
 }
 
 /* ─── Inputs e formulários ─────────────────────────────────────────────────── */
 html.dark input,
 html.dark select,
 html.dark textarea {
-    background-color: #0f1a30;
-    border-color: #2b3d5f;
-    color: #f1f5f9;
+    background-color: #101d20;
+    border: 1px solid rgba(196, 221, 212, 0.22);
+    color: #f7f3ec;
 }
 
 html.dark input::placeholder,
 html.dark textarea::placeholder {
-    color: #64748b;
+    color: #6b8288;
 }
 
 html.dark input:focus,
 html.dark select:focus,
 html.dark textarea:focus {
-    border-color: #14b8a6;
-    /* acento teal no foco */
-    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+    border-color: #355d5f;
+    box-shadow: 0 0 0 3px rgba(53, 93, 95, 0.35);
     outline: none;
 }
 
-/* ─── Acento principal (botões primários ganham o teal SECULT) ─────────────── */
+/* ─── Botão primário: gradiente oficial SECULT ─────────────────────────────── */
 html.dark .bg-blue-600,
-html.dark .bg-hub-blue {
-    background-color: #0f766e !important;
-    /* teal escuro */
+html.dark .bg-hub-blue,
+html.dark button[type="submit"] {
+    background: linear-gradient(135deg, #355d5f 0%, #1f3a3d 55%, #28474a 100%) !important;
+    border: 1px solid rgba(196, 221, 212, 0.20) !important;
+    color: #f7f3ec !important;
 }
 
 html.dark .bg-blue-600:hover,
 html.dark .bg-hub-blue:hover,
-html.dark .hover\:bg-blue-700:hover {
-    background-color: #0d9488 !important;
-    /* teal hover */
+html.dark .hover\:bg-blue-700:hover,
+html.dark button[type="submit"]:hover {
+    background: linear-gradient(135deg, #417073 0%, #28474a 55%, #32545a 100%) !important;
 }
 
+/* Gradientes de logo/avatar (ex: ES+, AB) ganham os tons claros da paleta */
 html.dark .from-blue-700 {
-    --tw-gradient-from: #0f766e !important;
+    --tw-gradient-from: #355d5f !important;
 }
 
 html.dark .to-sky-500 {
-    --tw-gradient-to: #14b8a6 !important;
+    --tw-gradient-to: #9fbcc3 !important;
+}
+
+html.dark .from-blue-600 {
+    --tw-gradient-from: #355d5f !important;
+}
+
+html.dark .to-indigo-600 {
+    --tw-gradient-to: #b6a2b7 !important;
 }
 
 /* ─── Tabelas e listas ─────────────────────────────────────────────────────── */
-html.dark thead,
-html.dark .bg-slate-50\/60 {
-    background-color: #101d36 !important;
+html.dark thead {
+    background-color: #101d20 !important;
 }
 
 html.dark tbody tr:hover,
-html.dark .hover\:bg-slate-50:hover {
-    background-color: #1b2a47 !important;
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover {
+    background-color: #1a2e32 !important;
 }
 
-/* ─── Header / sidebar escuros ─────────────────────────────────────────────── */
-html.dark header,
-html.dark aside,
-html.dark nav {
-    background-color: #0d1830;
-    border-color: #22314f;
+html.dark .hover\:text-slate-800:hover {
+    color: #f7f3ec !important;
 }
 
-/* ─── Sombras mais suaves no escuro ────────────────────────────────────────── */
+/* ─── Badges/alertas suaves (fundo claro colorido → versão escura) ─────────── */
+html.dark .bg-red-50 {
+    background-color: rgba(190, 70, 70, 0.15) !important;
+}
+
+html.dark .bg-green-50,
+html.dark .bg-emerald-50 {
+    background-color: rgba(53, 93, 95, 0.25) !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-yellow-50 {
+    background-color: rgba(200, 160, 90, 0.15) !important;
+}
+
+html.dark .bg-blue-50 {
+    background-color: rgba(40, 71, 74, 0.35) !important;
+}
+
+/* ─── Sombras mais profundas no escuro ─────────────────────────────────────── */
 html.dark .shadow-hub-lg,
 html.dark .shadow-hub-md,
 html.dark .shadow-lg,
 html.dark .shadow-md {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* ─── Scrollbar discreta ───────────────────────────────────────────────────── */
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 html.dark ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
 
 html.dark ::-webkit-scrollbar-track {
-    background: #0b1424;
+    background: #0c1618;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-    background: #2b3d5f;
+    background: #28474a;
     border-radius: 8px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-    background: #14b8a6;
+    background: #355d5f;
 }
 
-/* ─── Botão de alternância de tema (no header) ─────────────────────────────── */
+/* ─── Botão de alternância de tema (header) ────────────────────────────────── */
 #btn-tema {
     width: 2.5rem;
     height: 2.5rem;
@@ -173,29 +224,25 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #0f766e;
-    /* teal SECULT */
-    color: #ffffff;
-    /* lua BRANCA no tema claro */
-    border: none;
+    background: linear-gradient(135deg, #355d5f 0%, #1f3a3d 55%, #28474a 100%);
+    border: 1px solid rgba(196, 221, 212, 0.20);
+    color: #f7f3ec;
+    /* lua clara no tema claro */
     cursor: pointer;
-    transition: background .2s ease, color .2s ease, transform .15s ease;
+    transition: transform .15s ease, filter .2s ease;
 }
 
 #btn-tema:hover {
-    background: #14b8a6;
+    filter: brightness(1.2);
     transform: scale(1.06);
 }
 
 html.dark #btn-tema {
-    background: #fbbf24;
-    /* âmbar no tema escuro */
-    color: #0f172a;
-    /* sol PRETO no tema escuro */
-}
-
-html.dark #btn-tema:hover {
-    background: #fcd34d;
+    background: #f7f3ec;
+    /* botão claro no tema escuro */
+    border-color: transparent;
+    color: #0c1618;
+    /* sol escuro */
 }
 
 /* Troca lua <-> sol conforme o tema */
@@ -205,4 +252,14 @@ html.dark .icone-lua {
 
 html:not(.dark) .icone-sol {
     display: none;
+}
+
+/* ─── Tela de login (criada dinamicamente pelo auth.js) ────────────────────── */
+html.dark #tela-login {
+    background-color: #0c1618 !important;
+}
+
+html.dark #tela-login>div {
+    background: linear-gradient(180deg, #152427 0%, #101d20 100%) !important;
+    border: 1px solid rgba(196, 221, 212, 0.16);
 }
