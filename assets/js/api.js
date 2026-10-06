@@ -52,7 +52,12 @@ class ApiService {
         err.errors = errorBody.errors || null;
         throw err;
       }
-      return await response.json();
+      const json = await response.json();
+      // A API real devolve { success, data }; o mock devolve o dado puro.
+      // Desembrulha para os módulos receberem sempre o dado direto (array/objeto).
+      return (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json)
+        ? json.data
+        : json;
     } catch (error) {
       if (mockHandler && !error.status) {
         console.warn(`[API FALLBACK] Mock para ${endpoint}`);
@@ -71,7 +76,9 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ email, senha })
     });
-    return data; // { success, data: { token, usuario, permissoes } }
+    // request() já desembrulhou -> data = { token, usuario, permissoes }
+    // Reembala porque o auth.js espera res.success e res.data.token
+    return { success: true, data };
   }
 
   async logout() {
