@@ -11,6 +11,180 @@
 
    Ativado quando <html class="dark"> — o tema claro permanece intacto.
    ============================================================================== */
+:root {
+    --prata: #C8CDD0;
+    --prata-suave: rgba(200, 205, 208, 0.35);
+
+    --dourado: #C9A227;
+    --dourado-suave: rgba(201, 162, 39, 0.35);
+}
+
+/* ─── Transição entre temas ───────────────────────────────────────────────── */
+
+/* ==========================================================================
+   TRANSIÇÃO ENTRE TEMAS
+   ========================================================================== */
+
+html,
+body,
+header,
+aside,
+nav,
+main,
+section,
+article,
+div,
+button,
+input,
+select,
+textarea,
+table,
+thead,
+tbody,
+tr,
+td,
+th {
+    transition:
+        background-color 0.35s ease,
+        color 0.35s ease,
+        border-color 0.35s ease,
+        box-shadow 0.35s ease;
+}
+
+
+/* ==========================================================================
+   ACABAMENTO PRATA
+   ========================================================================== */
+
+html.dark .tema-borda {
+    border-color: rgba(200, 205, 208, 0.38) !important;
+
+    box-shadow:
+        0 0 0 1px rgba(200, 205, 208, 0.05),
+        0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+
+/* ==========================================================================
+   DETALHE DOURADO
+   ========================================================================== */
+
+html.dark .tema-logo {
+    border: 1px solid rgba(201, 162, 39, 0.65) !important;
+
+    box-shadow:
+        0 0 10px rgba(201, 162, 39, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+
+/* ==========================================================================
+   HEADER — PRATA + DETALHE DOURADO
+   ========================================================================== */
+
+html.dark header {
+    border-bottom-color: rgba(200, 205, 208, 0.35) !important;
+
+    box-shadow:
+        0 1px 0 rgba(201, 162, 39, 0.20),
+        0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+
+/* ==========================================================================
+   SIDEBAR — BORDA PRATA
+   ========================================================================== */
+
+html.dark aside {
+    border-right-color: rgba(200, 205, 208, 0.30) !important;
+}
+
+
+/* ==========================================================================
+   BOTÃO DE TEMA
+   ========================================================================== */
+
+#btn-tema {
+    transition:
+        transform 0.25s ease,
+        filter 0.25s ease,
+        background-color 0.35s ease,
+        border-color 0.35s ease,
+        color 0.35s ease,
+        box-shadow 0.35s ease;
+}
+
+#btn-tema:hover {
+    border-color: #c9a227 !important;
+
+    box-shadow:
+        0 0 10px rgba(201, 162, 39, 0.20);
+
+    transform: scale(1.06);
+}
+
+
+/* ==========================================================================
+   INPUTS — PRATA NORMAL / DOURADO NO FOCO
+   ========================================================================== */
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    border-color: rgba(200, 205, 208, 0.25) !important;
+
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        background-color 0.35s ease;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+    border-color: #c9a227 !important;
+
+    box-shadow:
+        0 0 0 3px rgba(201, 162, 39, 0.12),
+        0 0 12px rgba(201, 162, 39, 0.08) !important;
+}
+
+
+/* ==========================================================================
+   BORDA DOURADA PARA DESTAQUES
+   ========================================================================== */
+
+html.dark .borda-dourada {
+    border: 1px solid #c9a227 !important;
+
+    box-shadow:
+        0 0 10px rgba(201, 162, 39, 0.10);
+}
+
+
+/* ==========================================================================
+   REDUZ ANIMAÇÕES PARA QUEM PREFERE MENOS MOVIMENTO
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    html,
+    body,
+    header,
+    aside,
+    nav,
+    main,
+    section,
+    article,
+    div,
+    button,
+    input,
+    select,
+    textarea {
+        transition: none !important;
+    }
+}
+
 
 html.dark {
     color-scheme: dark;
@@ -36,8 +210,24 @@ html.dark .bg-gray-50 {
 }
 
 html.dark .bg-slate-100,
-html.dark .bg-gray-100 {
+html.dark .bg-gray-100,
+html.dark .bg-slate-200,
+html.dark .bg-gray-200 {
     background-color: #1a2e32 !important;
+}
+
+/* variantes com opacidade (bg-white/50, bg-slate-100/60 etc.) */
+html.dark [class*="bg-white/"],
+html.dark [class*="bg-slate-100/"],
+html.dark [class*="bg-slate-50/"],
+html.dark [class*="bg-gray-100/"] {
+    background-color: rgba(21, 36, 39, 0.85) !important;
+}
+
+/* header com efeito vidro */
+html.dark .glass-header {
+    background-color: rgba(12, 22, 24, 0.85) !important;
+    backdrop-filter: blur(12px);
 }
 
 html.dark .bg-hub-surface,
@@ -81,6 +271,7 @@ html.dark .text-gray-400 {
 }
 
 /* ─── Bordas e divisores ───────────────────────────────────────────────────── */
+
 html.dark .border,
 html.dark .border-slate-200,
 html.dark .border-gray-200,
@@ -91,13 +282,24 @@ html.dark .border-l,
 html.dark .border-b,
 html.dark .border-t,
 html.dark .border-r {
-    border-color: rgba(196, 221, 212, 0.16) !important;
-    /* #C4DDD4 a ~16-20% */
+    border-color: var(--prata-suave) !important;
 }
+
+/* Divisores internos */
 
 html.dark .divide-slate-100>*+*,
 html.dark .divide-slate-200>*+* {
-    border-color: rgba(196, 221, 212, 0.12) !important;
+    border-color: rgba(200, 205, 208, 0.18) !important;
+}
+
+/* ─── Borda dourada de destaque ───────────────────────────────────────────── */
+
+html.dark .borda-dourada {
+    border: 1px solid var(--dourado) !important;
+
+    box-shadow:
+        0 0 0 1px rgba(201, 162, 39, 0.08),
+        0 0 12px rgba(201, 162, 39, 0.08);
 }
 
 /* ─── Inputs e formulários ─────────────────────────────────────────────────── */
@@ -245,13 +447,25 @@ html.dark #btn-tema {
     /* sol escuro */
 }
 
-/* Troca lua <-> sol conforme o tema */
-html.dark .icone-lua {
-    display: none;
+/* Troca lua <-> sol conforme o tema (força sobre a classe .hidden do Tailwind) */
+html.dark .icone-lua,
+html.dark svg.icone-lua {
+    display: none !important;
 }
 
-html:not(.dark) .icone-sol {
-    display: none;
+html.dark .icone-sol,
+html.dark svg.icone-sol {
+    display: inline-flex !important;
+}
+
+html:not(.dark) .icone-sol,
+html:not(.dark) svg.icone-sol {
+    display: none !important;
+}
+
+html:not(.dark) .icone-lua,
+html:not(.dark) svg.icone-lua {
+    display: inline-flex !important;
 }
 
 /* ─── Tela de login (criada dinamicamente pelo auth.js) ────────────────────── */
@@ -262,4 +476,68 @@ html.dark #tela-login {
 html.dark #tela-login>div {
     background: linear-gradient(180deg, #152427 0%, #101d20 100%) !important;
     border: 1px solid rgba(196, 221, 212, 0.16);
+}
+
+/* ─── Detalhes DOURADOS (acentos do tema escuro) ───────────────────────────── */
+/* links "Ver todos" / "Ver →" */
+html.dark .text-blue-600,
+html.dark .text-blue-500,
+html.dark a {
+    color: #d4af37;
+}
+
+html.dark a:hover,
+html.dark .text-blue-600:hover {
+    color: #e6c766;
+}
+
+/* item ativo do menu lateral: filete dourado */
+html.dark aside a[class*="bg-blue"],
+html.dark aside .bg-blue-600,
+html.dark aside .bg-blue-50 {
+    background: rgba(212, 175, 55, 0.12) !important;
+    box-shadow: inset 3px 0 0 #d4af37 !important;
+    color: #e6c766 !important;
+}
+
+/* badges "tempo real" e similares */
+html.dark .bg-blue-100,
+html.dark .bg-indigo-100 {
+    background-color: rgba(212, 175, 55, 0.14) !important;
+    color: #e6c766 !important;
+}
+
+/* scrollbar hover dourado */
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #d4af37;
+}
+
+/* anel de foco dourado em botões secundários/links */
+html.dark a:focus-visible,
+html.dark button:focus-visible {
+    outline: 2px solid rgba(212, 175, 55, 0.6);
+    outline-offset: 2px;
+}
+
+/* ─── Chips de ícone dos cards (fundo claro colorido → versão escura) ──────── */
+html.dark .bg-rose-50,
+html.dark .bg-pink-50 {
+    background-color: rgba(190, 70, 90, 0.18) !important;
+}
+
+html.dark .bg-orange-50 {
+    background-color: rgba(210, 140, 60, 0.18) !important;
+}
+
+html.dark .bg-sky-50 {
+    background-color: rgba(90, 150, 170, 0.18) !important;
+}
+
+html.dark .bg-indigo-50,
+html.dark .bg-purple-50 {
+    background-color: rgba(150, 130, 180, 0.18) !important;
+}
+
+html.dark .bg-teal-50 {
+    background-color: rgba(53, 93, 95, 0.30) !important;
 }
