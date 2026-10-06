@@ -1,0 +1,200 @@
+/* ==============================================================================
+   HUB ES+ — TEMA ESCURO (baseado na identidade SECULT)
+   Paleta: fundo azul-marinho profundo + acento verde-água (teal)
+   Ativado quando <html class="dark"> — o tema claro permanece intacto.
+   ============================================================================== */
+
+html.dark {
+    color-scheme: dark;
+}
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+html.dark body {
+    background-color: #0b1424;
+    /* fundo principal: navy profundo */
+    color: #e2e8f0;
+}
+
+/* ─── Superfícies (cards, painéis, modais) ─────────────────────────────────── */
+html.dark .bg-white {
+    background-color: #16223a !important;
+    /* card: navy médio */
+    color: #e2e8f0;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50 {
+    background-color: #0f1a30 !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+    background-color: #1b2a47 !important;
+}
+
+html.dark .bg-hub-surface,
+html.dark .bg-hub-navy {
+    background-color: #0b1424 !important;
+}
+
+/* ─── Textos ───────────────────────────────────────────────────────────────── */
+html.dark .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-slate-800,
+html.dark .text-gray-800 {
+    color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-gray-700,
+html.dark .text-slate-600,
+html.dark .text-gray-600 {
+    color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500,
+html.dark .text-slate-400,
+html.dark .text-gray-400 {
+    color: #94a3b8 !important;
+}
+
+/* ─── Bordas e divisores ───────────────────────────────────────────────────── */
+html.dark .border,
+html.dark .border-slate-200,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-gray-100,
+html.dark .border-hub-border {
+    border-color: #263553 !important;
+}
+
+html.dark .divide-slate-100>*+*,
+html.dark .divide-slate-200>*+* {
+    border-color: #263553 !important;
+}
+
+/* ─── Inputs e formulários ─────────────────────────────────────────────────── */
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: #0f1a30;
+    border-color: #2b3d5f;
+    color: #f1f5f9;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #64748b;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+    border-color: #14b8a6;
+    /* acento teal no foco */
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.25);
+    outline: none;
+}
+
+/* ─── Acento principal (botões primários ganham o teal SECULT) ─────────────── */
+html.dark .bg-blue-600,
+html.dark .bg-hub-blue {
+    background-color: #0f766e !important;
+    /* teal escuro */
+}
+
+html.dark .bg-blue-600:hover,
+html.dark .bg-hub-blue:hover,
+html.dark .hover\:bg-blue-700:hover {
+    background-color: #0d9488 !important;
+    /* teal hover */
+}
+
+html.dark .from-blue-700 {
+    --tw-gradient-from: #0f766e !important;
+}
+
+html.dark .to-sky-500 {
+    --tw-gradient-to: #14b8a6 !important;
+}
+
+/* ─── Tabelas e listas ─────────────────────────────────────────────────────── */
+html.dark thead,
+html.dark .bg-slate-50\/60 {
+    background-color: #101d36 !important;
+}
+
+html.dark tbody tr:hover,
+html.dark .hover\:bg-slate-50:hover {
+    background-color: #1b2a47 !important;
+}
+
+/* ─── Header / sidebar escuros ─────────────────────────────────────────────── */
+html.dark header,
+html.dark aside,
+html.dark nav {
+    background-color: #0d1830;
+    border-color: #22314f;
+}
+
+/* ─── Sombras mais suaves no escuro ────────────────────────────────────────── */
+html.dark .shadow-hub-lg,
+html.dark .shadow-hub-md,
+html.dark .shadow-lg,
+html.dark .shadow-md {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ─── Scrollbar discreta ───────────────────────────────────────────────────── */
+html.dark ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #0b1424;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #2b3d5f;
+    border-radius: 8px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #14b8a6;
+}
+
+/* ─── Botão flutuante de alternância de tema ───────────────────────────────── */
+#btn-tema {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f766e;
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.45);
+    cursor: pointer;
+    border: none;
+    transition: transform .15s ease, background .2s ease;
+}
+
+#btn-tema:hover {
+    background: #14b8a6;
+    transform: scale(1.08);
+}
+
+html.dark #btn-tema {
+    background: #f59e0b;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+}
+
+html.dark #btn-tema:hover {
+    background: #fbbf24;
+}
