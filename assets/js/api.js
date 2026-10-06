@@ -248,6 +248,33 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('comunicados', id));
   }
+
+
+  // =========================================================================
+  // LIMPEZA
+  // =========================================================================
+  async getLimpeza() {
+    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'GET' }, () => window.MockDB.getAll('limpeza'));
+  }
+
+  async createLimpeza(data) {
+    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'POST', body: JSON.stringify(data) },
+      () => window.MockDB.create('limpeza', data));
+  }
+
+  async updateLimpeza(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
+      () => window.MockDB.update('limpeza', id, data));
+  }
+
+  async deleteLimpeza(id) {
+    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'DELETE' },
+      () => window.MockDB.delete('limpeza', id));
+  }
+
 }
+
+
+
 
 window.API = new ApiService();
