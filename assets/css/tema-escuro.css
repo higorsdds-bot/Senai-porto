@@ -165,36 +165,44 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     background: #14b8a6;
 }
 
-/* ─── Botão flutuante de alternância de tema ───────────────────────────────── */
+/* ─── Botão de alternância de tema (no header) ─────────────────────────────── */
 #btn-tema {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    z-index: 9999;
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 9999px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     background: #0f766e;
-    color: #fff;
-    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.45);
-    cursor: pointer;
+    /* teal SECULT */
+    color: #ffffff;
+    /* lua BRANCA no tema claro */
     border: none;
-    transition: transform .15s ease, background .2s ease;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease, transform .15s ease;
 }
 
 #btn-tema:hover {
     background: #14b8a6;
-    transform: scale(1.08);
+    transform: scale(1.06);
 }
 
 html.dark #btn-tema {
-    background: #f59e0b;
-    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+    background: #fbbf24;
+    /* âmbar no tema escuro */
+    color: #0f172a;
+    /* sol PRETO no tema escuro */
 }
 
 html.dark #btn-tema:hover {
-    background: #fbbf24;
+    background: #fcd34d;
+}
+
+/* Troca lua <-> sol conforme o tema */
+html.dark .icone-lua {
+    display: none;
+}
+
+html:not(.dark) .icone-sol {
+    display: none;
 }

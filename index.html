@@ -51,7 +51,6 @@
       }
     };
   </script>
-  <script src="assets/js/tema.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -243,6 +242,14 @@
             <i data-lucide="bell" class="w-4 h-4"></i>
             <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
           </button>
+
+          <!-- Botão de tema -->
+          <button id="btn-tema" type="button" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+            <i data-lucide="moon" class="w-4 h-4 icone-lua"></i>
+            <i data-lucide="sun" class="w-4 h-4 icone-sol hidden"></i>
+          </button>
+
+
           <!-- Perfil do Usuário Logado -->
           <div class="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">
             <div
@@ -301,6 +308,7 @@
   <!-- SCRIPTS DA APLICAÇÃO (EM ORDEM DE DEPENDÊNCIA) -->
   <!-- ================================================================= -->
   <script src="assets/js/config.js"></script>
+  <script src="assets/js/tema.js"></script>
   <script src="assets/js/mock.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/auth.js"></script>
