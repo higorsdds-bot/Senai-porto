@@ -212,9 +212,9 @@ router.patch('/:id/status', requirePermission('usuarios.bloquear'), async (req, 
   const { status } = req.body;
   const id = req.params.id;
 
-  if (!['ATIVO', 'INATIVO', 'BLOQUEADO'].includes(status)) {
+  if (!['ATIVO', 'INATIVO', 'BLOQUEADO', 'PENDENTE'].includes(status)) {
     return res.status(422).json({
-      success: false, message: 'Status inválido. Use ATIVO, INATIVO ou BLOQUEADO.'
+      success: false, message: 'Status inválido. Use ATIVO, INATIVO, BLOQUEADO ou PENDENTE.'
     });
   }
 

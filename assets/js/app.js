@@ -39,7 +39,7 @@ class AppRouter {
       },
       'ocorrencias': {
         title: 'Ocorrências Técnicas',
-        module: window.OcorrenciasModule,
+        module: window.OcorrenciasModule || (window.Modules && window.Modules.ocorrencias),
         navId: 'nav-ocorrencias'
       },
       'comunicacao': {
@@ -61,6 +61,12 @@ class AppRouter {
         title: 'Controle de Equipamentos',
         module: window.EquipamentosModule,
         navId: 'nav-equipamentos'
+      },
+      'auditoria': {
+        title: 'Auditoria & Governança',
+        module: window.AuditoriaModule || (window.Modules && window.Modules.auditoria),
+        navId: 'nav-auditoria',
+        adminOnly: true
       }
     };
   }
@@ -90,16 +96,34 @@ class AppRouter {
     this.currentRoute = hash;
     const target = this.routes[hash];
 
+    // Guarda de rota para módulos restritos a ADMIN
+    if (target.adminOnly && !window.Auth?.isAdmin()) {
+      if (window.UI?.toast) {
+        window.UI.toast({
+          title: 'Acesso Restrito',
+          message: 'O módulo de Auditoria é restrito a Administradores.',
+          type: 'error'
+        });
+      }
+      window.location.hash = '#dashboard';
+      return;
+    }
+
     // Atualiza links ativos na Sidebar
     this._updateActiveNav(target.navId);
 
     // Fecha o menu mobile se estiver aberto
     this._closeMobileMenu();
 
-    // Renderiza o módulo alvo
-    if (target.module && typeof target.module.render === 'function') {
+    // Renderiza o módulo alvo com fallback dinâmico
+    const mod = target.module
+      || (hash === 'ocorrencias' && (window.OcorrenciasModule || window.Modules?.ocorrencias))
+      || (hash === 'auditoria' && (window.AuditoriaModule || window.Modules?.auditoria))
+      || window[hash.charAt(0).toUpperCase() + hash.slice(1) + 'Module'];
+
+    if (mod && typeof mod.render === 'function') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      target.module.render(this.contentContainer);
+      mod.render(this.contentContainer);
     } else {
       console.warn(`Módulo ${hash} não possui método render.`);
     }
@@ -185,7 +209,9 @@ class AppRouter {
             window.location.hash = '#documentos';
           } else if (query.includes('ocorr') || query.includes('suporte')) {
             window.location.hash = '#ocorrencias';
-          } else if (query.includes('evento') || query.includes('audit')) {
+          } else if (query.includes('audit') || query.includes('govern')) {
+            window.location.hash = '#auditoria';
+          } else if (query.includes('evento')) {
             window.location.hash = '#agenda';
           } else if (query.includes('equip') || query.includes('patrimonio')) {
             window.location.hash = '#equipamentos';

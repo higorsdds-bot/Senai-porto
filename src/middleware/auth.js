@@ -57,7 +57,9 @@ async function authMiddleware(req, res, next) {
         success: false,
         message: usuario.status === 'BLOQUEADO'
           ? 'Conta bloqueada. Contate o administrador.'
-          : 'Conta inativa.'
+          : usuario.status === 'PENDENTE'
+            ? 'Sua conta está pendente de aprovação por um administrador.'
+            : 'Conta inativa. Contate o administrador.'
       });
     }
 

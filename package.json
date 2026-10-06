@@ -7,7 +7,7 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js"
+    "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js && node src/database/migrate-auditoria-ocorrencias.js"
   },
   "repository": {
     "type": "git",

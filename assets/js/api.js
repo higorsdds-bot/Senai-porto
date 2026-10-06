@@ -94,6 +94,22 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.AUTH}/me`, { method: 'GET' });
   }
 
+  async solicitarCadastro(dados) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/solicitar-cadastro`, {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async heartbeat() {
+    try {
+      return await this.request(`${CONFIG.ENDPOINTS.AUTH}/heartbeat`, { method: 'POST' });
+    } catch (_) {
+      // Falha silenciosa de heartbeat
+      return null;
+    }
+  }
+
   // =========================================================================
   // USUÁRIOS / SETORES
   // =========================================================================
@@ -277,6 +293,58 @@ class ApiService {
   async deleteLimpeza(id) {
     return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('limpeza', id));
+  }
+
+  // =========================================================================
+  // AUDITORIA (Restrito a ADMIN)
+  // =========================================================================
+  async getAuditoriaLogs(filtros = {}) {
+    const params = new URLSearchParams();
+    if (filtros.usuario_id) params.set('usuario_id', filtros.usuario_id);
+    if (filtros.acao) params.set('acao', filtros.acao);
+    if (filtros.entidade) params.set('entidade', filtros.entidade);
+    if (filtros.data_inicio) params.set('data_inicio', filtros.data_inicio);
+    if (filtros.data_fim) params.set('data_fim', filtros.data_fim);
+    if (filtros.q) params.set('q', filtros.q);
+    if (filtros.page) params.set('page', filtros.page);
+    if (filtros.limit) params.set('limit', filtros.limit);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}${qs}`, { method: 'GET' });
+  }
+
+  async getAuditoriaUsuariosOnline() {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/usuarios-online`, { method: 'GET' });
+  }
+
+  async getAuditoriaUsuarios(filtros = {}) {
+    const params = new URLSearchParams();
+    if (filtros.status) params.set('status', filtros.status);
+    if (filtros.perfil) params.set('perfil', filtros.perfil);
+    if (filtros.q) params.set('q', filtros.q);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/usuarios${qs}`, { method: 'GET' });
+  }
+
+  async getAuditoriaHistoricoUsuario(usuarioId) {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/usuarios/${usuarioId}/historico`, { method: 'GET' });
+  }
+
+  async getAuditoriaSolicitacoes() {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes-pendentes`, { method: 'GET' });
+  }
+
+  async aprovarSolicitacaoCadastro(id, dados = {}) {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes/${id}/aprovar`, {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async rejeitarSolicitacaoCadastro(id, dados = {}) {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes/${id}/rejeitar`, {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    });
   }
 
 }

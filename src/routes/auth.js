@@ -87,6 +87,19 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Conta inativa. Contate o administrador.' });
     }
 
+    if (usuario.status === 'PENDENTE') {
+      await registrarAuditoria({
+        usuario_id: usuario.id,
+        acao: 'LOGIN_FALHOU',
+        descricao: 'Tentativa de login com conta pendente de aprovação.',
+        ip, user_agent: userAgent
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'Sua solicitação de cadastro está pendente de aprovação por um administrador.'
+      });
+    }
+
     if (usuario.status === 'BLOQUEADO') {
       await registrarAuditoria({
         usuario_id: usuario.id,
@@ -202,5 +215,85 @@ router.post('/heartbeat', authMiddleware, async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao registrar heartbeat.' });
   }
 });
+
+// ─── POST /api/v1/auth/solicitar-cadastro ─────────────────────────────────────
+router.post('/solicitar-cadastro', async (req, res) => {
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || null;
+  const { nome, email, senha, setor_id } = req.body;
+
+  const erros = {};
+  if (!nome || String(nome).trim().length < 3) {
+    erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    erros.email = 'E-mail informado é inválido.';
+  }
+  if (!senha || String(senha).length < 8) {
+    erros.senha = 'A senha precisa ter pelo menos 8 caracteres.';
+  }
+
+  if (Object.keys(erros).length > 0) {
+    return res.status(422).json({
+      success: false,
+      message: 'Dados inválidos.',
+      errors: erros
+    });
+  }
+
+  try {
+    const pool = getPool();
+    const cleanEmail = String(email).toLowerCase().trim();
+
+    // Verifica se já existe cadastro com esse email
+    const [existing] = await pool.query(
+      `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
+      [cleanEmail]
+    );
+
+    if (existing.length > 0) {
+      if (existing[0].status === 'PENDENTE') {
+        return res.status(409).json({
+          success: false,
+          message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a aprovação do administrador.'
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        message: 'Este e-mail já está cadastrado no sistema.'
+      });
+    }
+
+    const senhaHash = await bcrypt.hash(String(senha), 12);
+
+    const [result] = await pool.query(
+      `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)
+       VALUES (?, ?, ?, 'OPERADOR', ?, 'PENDENTE')`,
+      [String(nome).trim(), cleanEmail, senhaHash, setor_id || null]
+    );
+
+    await registrarAuditoria({
+      usuario_id: null,
+      acao: 'SOLICITACAO_CADASTRO',
+      entidade: 'usuarios',
+      entidade_id: result.insertId,
+      descricao: `Novo pedido de cadastro para "${String(nome).trim()}" (${cleanEmail}). Status: PENDENTE.`,
+      ip,
+      user_agent: userAgent
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Solicitação de cadastro enviada com sucesso! Aguarde a aprovação do administrador para acessar o sistema.',
+      data: { id: result.insertId }
+    });
+  } catch (err) {
+    console.error('[AUTH] Erro ao solicitar cadastro:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao processar solicitação de cadastro.' });
+  }
+});
+
+// Alias /registro para conveniência
+router.post('/registro', (req, res) => res.redirect(307, '/api/v1/auth/solicitar-cadastro'));
 
 module.exports = router;
