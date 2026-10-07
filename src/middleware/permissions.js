@@ -31,6 +31,20 @@ const MODULE_PERMISSIONS = {
   auditoria: ['auditoria.visualizar']
 };
 
+const FIXED_PROFILE_PERMISSIONS = {
+  ADMINISTRACAO: [
+    'compras.visualizar_pedidos',
+    'compras.receber',
+    'eventos.visualizar',
+    'insumos.visualizar',
+    'insumos.baixar'
+  ],
+  LIMPEZA: [
+    'compras.visualizar_proprias',
+    'compras.criar'
+  ]
+};
+
 async function loadPermissoesPorPerfil() {
   const now = Date.now();
   if (now - _permCacheTime < PERM_CACHE_TTL && Object.keys(_permCache).length > 0) {
@@ -70,8 +84,13 @@ async function hasPermission(usuario, permissaoChave) {
   // ADMIN tem permissão total (bypass)
   if (['ADMIN', 'ADMINISTRADOR'].includes(normalizeProfile(usuario.perfil))) return true;
 
+  const perfil = normalizeProfile(usuario.perfil);
+  if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
+    return FIXED_PROFILE_PERMISSIONS[perfil].includes(permissaoChave);
+  }
+
   const perms = await loadPermissoesPorPerfil();
-  const permSet = perms[normalizeProfile(usuario.perfil)];
+  const permSet = perms[perfil];
   if (!permSet) return false;
   return permSet.has(permissaoChave);
 }
@@ -120,13 +139,18 @@ function requireAnyPermission(...permissoesChave) {
  */
 async function getPermissoesDoUsuario(usuario) {
   if (!usuario) return [];
+  const perfil = normalizeProfile(usuario.perfil);
+  if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
+    return [...FIXED_PROFILE_PERMISSIONS[perfil]];
+  }
+
   const perms = await loadPermissoesPorPerfil();
-  if (['ADMIN', 'ADMINISTRADOR'].includes(normalizeProfile(usuario.perfil))) {
+  if (['ADMIN', 'ADMINISTRADOR'].includes(perfil)) {
     // Admin: retorna todas as chaves cadastradas
     const allKeys = Object.values(perms).flatMap(s => [...s]);
     return [...new Set(allKeys)];
   }
-  const permSet = perms[normalizeProfile(usuario.perfil)];
+  const permSet = perms[perfil];
   return permSet ? [...permSet] : [];
 }
 
