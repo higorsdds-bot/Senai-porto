@@ -138,6 +138,17 @@ class ApiService {
       () => window.MockDB.update('compras', id, data));
   }
 
+  async updateStatusCompra(id, status) {
+    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+  }
+
+  async registrarEntradaCompra(id) {
+    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}/entrada`, { method: 'PATCH' });
+  }
+
   async deleteCompra(id) {
     return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('compras', id));
@@ -238,6 +249,13 @@ class ApiService {
   // =========================================================================
   async getInsumos() {
     return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'GET' }, () => window.MockDB.getAll('insumos'));
+  }
+
+  async movimentarInsumo(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}/movimentar`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 
   async createInsumo(data) {

@@ -92,7 +92,7 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
   if (!nome || nome.trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = 'Email inválido.';
   if (!senha || senha.length < 8) erros.senha = 'Senha precisa ter pelo menos 8 caracteres.';
-  if (!perfil || !['ADMIN', 'GESTOR', 'OPERADOR'].includes(perfil)) erros.perfil = 'Perfil inválido.';
+  if (!perfil || !['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'].includes(perfil)) erros.perfil = 'Perfil inválido.';
 
   if (Object.keys(erros).length > 0) {
     return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
@@ -157,7 +157,7 @@ router.put('/:id', requirePermission('usuarios.editar'), async (req, res) => {
 
   if (!nome || nome.trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = 'Email inválido.';
-  if (!perfil || !['ADMIN', 'GESTOR', 'OPERADOR'].includes(perfil)) erros.perfil = 'Perfil inválido.';
+  if (!perfil || !['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'].includes(perfil)) erros.perfil = 'Perfil inválido.';
 
   if (Object.keys(erros).length > 0) {
     return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });

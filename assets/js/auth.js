@@ -6,6 +6,8 @@
 class AuthManager {
     constructor() {
         this.usuario = null;
+        this.permissoes = [];
+        this.permissionsReady = false;
         this._heartbeatInterval = null;
     }
 
@@ -17,7 +19,11 @@ class AuthManager {
         if (!this.usuario) {
             const raw = localStorage.getItem(CONFIG.STORAGE_USUARIO);
             if (raw) {
-                try { this.usuario = JSON.parse(raw); } catch { this.usuario = null; }
+                try {
+                    this.usuario = JSON.parse(raw);
+                    this.permissoes = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
+                    this.permissionsReady = Array.isArray(this.usuario?.permissoes);
+                } catch { this.usuario = null; }
             }
         }
         return this.usuario;
@@ -34,12 +40,23 @@ class AuthManager {
         return p === 'ADMIN' || p === 'ADMINISTRADOR';
     }
 
+    hasPermission(chave) {
+        return this.isAdmin() || this.permissoes.includes(chave);
+    }
+
+    hasAnyPermission(chaves = []) {
+        return this.isAdmin() || chaves.some(chave => this.permissoes.includes(chave));
+    }
+
     async login(email, senha) {
         const res = await window.API.login(email, senha);
         if (res?.success && res.data?.token) {
+            const usuario = { ...res.data.usuario, permissoes: res.data.permissoes || [] };
             localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
-            localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(res.data.usuario));
-            this.usuario = res.data.usuario;
+            localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+            this.usuario = usuario;
+            this.permissoes = usuario.permissoes;
+            this.permissionsReady = true;
             this.iniciarHeartbeat();
             return res.data;
         }
@@ -57,6 +74,8 @@ class AuthManager {
         localStorage.removeItem(CONFIG.STORAGE_TOKEN);
         localStorage.removeItem(CONFIG.STORAGE_USUARIO);
         this.usuario = null;
+        this.permissoes = [];
+        this.permissionsReady = false;
         this.renderizarTelaLogin();
     }
 
@@ -90,8 +109,27 @@ class AuthManager {
         this.ocultarTelaLogin();
         this.preencherInfoUsuario();
         this.iniciarHeartbeat();
+        this._atualizarPermissoes();
         this.atualizarVisibilidadeAdmin();
         return true;
+    }
+
+    async _atualizarPermissoes() {
+        try {
+            const session = await window.API.me();
+            if (!session?.usuario) throw new Error('Resposta de sessão inválida.');
+            this.permissoes = Array.isArray(session.permissoes) ? session.permissoes : [];
+            this.usuario = { ...session.usuario, permissoes: this.permissoes };
+            this.permissionsReady = true;
+            localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(this.usuario));
+            this.preencherInfoUsuario();
+            window.App?.handleRoute();
+        } catch (err) {
+            console.error('[AUTH] Não foi possível atualizar as permissões da sessão:', err.message);
+            if (!this.estaLogado()) return;
+            this.permissionsReady = true;
+            window.App?.handleRoute();
+        }
     }
 
     preencherInfoUsuario() {
@@ -99,7 +137,17 @@ class AuthManager {
         if (!u) return;
         document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = u.nome);
         document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = u.email);
-        document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = u.perfil || '');
+        const nomesPerfil = {
+            ADMIN: 'Administrador Geral',
+            ADMINISTRADOR: 'Administrador Geral',
+            ADMINISTRACAO: 'Administração',
+            LIMPEZA: 'Limpeza',
+            GESTOR: 'Gestor',
+            OPERADOR: 'Operador'
+        };
+        document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
+            el.textContent = nomesPerfil[String(u.perfil || '').toUpperCase()] || u.perfil || '';
+        });
         this.atualizarVisibilidadeAdmin();
     }
 
@@ -112,6 +160,7 @@ class AuthManager {
                 el.classList.add('hidden');
             }
         });
+        window.App?.atualizarVisibilidadeRotas();
     }
 
     ocultarTelaLogin() {

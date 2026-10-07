@@ -43,11 +43,15 @@ async function migrate() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    // Divide em statements individuais e ignora comentários/vazios
-    const statements = schema
+    // Remove comentários SQL de linha antes de separar os comandos por ponto e vírgula.
+    const schemaWithoutLineComments = schema
+      .split(/\r?\n/)
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+    const statements = schemaWithoutLineComments
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--') && !s.startsWith('/*'));
+      .filter(s => s.length > 0 && !s.startsWith('/*'));
 
     for (const stmt of statements) {
       if (stmt.trim()) {

@@ -33,7 +33,7 @@ async function loadPermissoesPorPerfil() {
     return cache;
   } catch (err) {
     console.error('[PERMISSIONS] Erro ao carregar permissões:', err.message);
-    return _permCache; // Retorna cache antigo em caso de erro
+    return {};
   }
 }
 
@@ -75,6 +75,23 @@ function requirePermission(permissaoChave) {
   };
 }
 
+function requireAnyPermission(...permissoesChave) {
+  return async (req, res, next) => {
+    try {
+      for (const permissaoChave of permissoesChave) {
+        if (await hasPermission(req.usuario, permissaoChave)) return next();
+      }
+      return res.status(403).json({
+        success: false,
+        message: `Acesso negado. Necessária uma destas permissões: ${permissoesChave.join(', ')}`
+      });
+    } catch (err) {
+      console.error('[PERMISSIONS] Erro ao verificar permissões:', err.message);
+      return res.status(500).json({ success: false, message: 'Erro interno de autorização.' });
+    }
+  };
+}
+
 /**
  * Retorna a lista de chaves de permissão de um usuário (para o frontend montar menus).
  */
@@ -90,4 +107,4 @@ async function getPermissoesDoUsuario(usuario) {
   return permSet ? [...permSet] : [];
 }
 
-module.exports = { hasPermission, requirePermission, getPermissoesDoUsuario, loadPermissoesPorPerfil };
+module.exports = { hasPermission, requirePermission, requireAnyPermission, getPermissoesDoUsuario, loadPermissoesPorPerfil };

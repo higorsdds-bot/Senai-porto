@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { hasPermission, requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
@@ -122,42 +122,65 @@ router.put('/:id', requirePermission('insumos.editar'), async (req, res) => {
 });
 
 // POST /api/v1/insumos/:id/movimentar
-router.post('/:id/movimentar', requirePermission('insumos.movimentar'), async (req, res) => {
+router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insumos.baixar'), async (req, res) => {
   const { tipo, quantidade, observacao } = req.body;
   const tiposValidos = ['ENTRADA', 'SAIDA', 'AJUSTE'];
+  const podeMovimentarTudo = await hasPermission(req.usuario, 'insumos.movimentar');
+  if (!podeMovimentarTudo && tipo !== 'SAIDA') {
+    return res.status(403).json({
+      success: false,
+      message: 'Este perfil pode registrar somente saídas/baixas de estoque.'
+    });
+  }
   const erros = {};
   if (!tiposValidos.includes(tipo)) erros.tipo = `Use: ${tiposValidos.join(', ')}`;
-  const qtd = parseInt(quantidade);
-  if (!qtd || qtd <= 0) erros.quantidade = 'Quantidade deve ser maior que zero.';
+  const qtd = Number(quantidade);
+  if (!Number.isSafeInteger(qtd) || qtd <= 0) erros.quantidade = 'Quantidade deve ser um inteiro maior que zero.';
   if (Object.keys(erros).length > 0) {
     return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
   }
   try {
     const pool = getPool();
-    // Verificar estoque atual para SAIDA
-    const [insumoRows] = await pool.query(`SELECT nome, quantidade FROM insumos WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [req.params.id]);
-    if (!insumoRows.length) return res.status(404).json({ success: false, message: 'Insumo não encontrado.' });
-    const insumo = insumoRows[0];
-
-    if (tipo === 'SAIDA' && insumo.quantidade < qtd) {
-      return res.status(422).json({
-        success: false,
-        message: `Estoque insuficiente. Disponível: ${insumo.quantidade} ${qtd > 1 ? 'unidades' : 'unidade'}.`,
-        errors: { quantidade: 'Quantidade maior que o estoque disponível.' }
-      });
-    }
-
-    // Calcular nova quantidade
+    const conn = await pool.getConnection();
+    let insumo;
     let novaQtd;
-    if (tipo === 'ENTRADA') novaQtd = insumo.quantidade + qtd;
-    else if (tipo === 'SAIDA') novaQtd = insumo.quantidade - qtd;
-    else novaQtd = qtd; // AJUSTE = define quantidade diretamente
+    try {
+      await conn.beginTransaction();
+      const [insumoRows] = await conn.query(
+        `SELECT nome, quantidade FROM insumos WHERE id = ? AND deleted_at IS NULL LIMIT 1 FOR UPDATE`,
+        [req.params.id]
+      );
+      if (!insumoRows.length) {
+        await conn.rollback();
+        return res.status(404).json({ success: false, message: 'Insumo não encontrado.' });
+      }
+      insumo = insumoRows[0];
 
-    await pool.query(`UPDATE insumos SET quantidade = ?, updated_at = NOW() WHERE id = ?`, [novaQtd, req.params.id]);
-    await pool.query(
-      `INSERT INTO estoque_movimentacoes (insumo_id, usuario_id, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)`,
-      [req.params.id, req.usuario.id, tipo, qtd, observacao?.trim() || null]
-    );
+      if (tipo === 'SAIDA' && insumo.quantidade < qtd) {
+        await conn.rollback();
+        return res.status(422).json({
+          success: false,
+          message: `Estoque insuficiente. Disponível: ${insumo.quantidade} ${qtd > 1 ? 'unidades' : 'unidade'}.`,
+          errors: { quantidade: 'Quantidade maior que o estoque disponível.' }
+        });
+      }
+
+      if (tipo === 'ENTRADA') novaQtd = insumo.quantidade + qtd;
+      else if (tipo === 'SAIDA') novaQtd = insumo.quantidade - qtd;
+      else novaQtd = qtd;
+
+      await conn.query(`UPDATE insumos SET quantidade = ?, updated_at = NOW() WHERE id = ?`, [novaQtd, req.params.id]);
+      await conn.query(
+        `INSERT INTO estoque_movimentacoes (insumo_id, usuario_id, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)`,
+        [req.params.id, req.usuario.id, tipo, qtd, observacao?.trim() || null]
+      );
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
     await registrarAuditoria({
       usuario_id: req.usuario.id, acao: 'MOVIMENTAR_ESTOQUE', entidade: 'insumos', entidade_id: parseInt(req.params.id),
       descricao: `${tipo} de ${qtd} ${insumo.nome}. Estoque: ${insumo.quantidade} → ${novaQtd}.`,

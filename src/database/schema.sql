@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   nome             VARCHAR(200) NOT NULL,
   email            VARCHAR(200) NOT NULL UNIQUE,
   senha            VARCHAR(255) NOT NULL,
+  -- Mantido VARCHAR para adicionar perfis via seed sem alterar enum em produção.
   perfil           VARCHAR(50) NOT NULL DEFAULT 'OPERADOR',
   setor_id         BIGINT NULL,
   status           ENUM('ATIVO','INATIVO','BLOQUEADO','PENDENTE') NOT NULL DEFAULT 'PENDENTE',

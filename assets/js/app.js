@@ -15,58 +15,69 @@ class AppRouter {
       'dashboard': {
         title: 'Dashboard Executivo',
         module: window.DashboardModule,
-        navId: 'nav-dashboard'
+        navId: 'nav-dashboard',
+        permissions: ['dashboard.visualizar']
       },
       'documentos': {
         title: 'Gestão Documental',
         module: window.DocumentosModule,
-        navId: 'nav-documentos'
+        navId: 'nav-documentos',
+        permissions: ['documentos.visualizar']
       },
       'insumos': {
         title: 'Controle de Insumos',
         module: window.InsumosModule,
-        navId: 'nav-insumos'
+        navId: 'nav-insumos',
+        permissions: ['insumos.visualizar']
       },
       'compras': {
         title: 'Compras & Suprimentos',
         module: window.ComprasModule,
-        navId: 'nav-compras'
+        navId: 'nav-compras',
+        permissions: ['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias']
       },
       'agenda': {
         title: 'Agenda Inteligente',
         module: window.AgendaModule,
-        navId: 'nav-agenda'
+        navId: 'nav-agenda',
+        permissions: ['eventos.visualizar']
       },
       'ocorrencias': {
         title: 'Ocorrências Técnicas',
         module: window.OcorrenciasModule || (window.Modules && window.Modules.ocorrencias),
-        navId: 'nav-ocorrencias'
+        navId: 'nav-ocorrencias',
+        permissions: ['ocorrencias.visualizar']
       },
       'comunicacao': {
         title: 'Central de Comunicação',
         module: window.ComunicacaoModule,
-        navId: 'nav-comunicacao'
+        navId: 'nav-comunicacao',
+        permissions: ['comunicados.visualizar']
       },
       'indicadores': {
         title: 'Painel de Indicadores',
         module: window.IndicadoresModule,
-        navId: 'nav-indicadores'
+        navId: 'nav-indicadores',
+        permissions: ['indicadores.visualizar']
       },
       'limpeza': {
         title: 'Controle de Limpeza',
         module: window.LimpezaModule,
-        navId: 'nav-limpeza'
+        navId: 'nav-limpeza',
+        permissions: ['limpeza.visualizar']
       },
       'equipamentos': {
         title: 'Controle de Equipamentos',
         module: window.EquipamentosModule,
-        navId: 'nav-equipamentos'
+        navId: 'nav-equipamentos',
+        permissions: ['equipamentos.visualizar']
       },
       'auditoria': {
         title: 'Auditoria & Governança',
         module: window.AuditoriaModule || (window.Modules && window.Modules.auditoria),
         navId: 'nav-auditoria',
-        adminOnly: true
+        adminOnly: true,
+        permissions: ['auditoria.visualizar']
       }
     };
   }
@@ -80,6 +91,10 @@ class AppRouter {
 
     // Inicialização da interface e eventos globais
     this._setupGlobalEvents();
+    window.addEventListener('hub:login', () => {
+      this.atualizarVisibilidadeRotas();
+      this.handleRoute();
+    });
 
     // Rota inicial
     this.handleRoute();
@@ -96,16 +111,28 @@ class AppRouter {
     this.currentRoute = hash;
     const target = this.routes[hash];
 
-    // Guarda de rota para módulos restritos a ADMIN
-    if (target.adminOnly && !window.Auth?.isAdmin()) {
+    if (window.Auth?.estaLogado() && !window.Auth.permissionsReady) {
+      this.contentContainer.innerHTML = '<p class="p-6 text-sm text-slate-600">Carregando permissões do usuário...</p>';
+      this.atualizarVisibilidadeRotas();
+      return;
+    }
+
+    if (window.Auth?.permissionsReady && !this._canAccess(target)) {
       if (window.UI?.toast) {
         window.UI.toast({
           title: 'Acesso Restrito',
-          message: 'O módulo de Auditoria é restrito a Administradores.',
+          message: 'Seu perfil não possui permissão para acessar este módulo.',
           type: 'error'
         });
       }
-      window.location.hash = '#dashboard';
+      const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
+      if (allowed) {
+        const nextRoute = allowed[0];
+        if (hash !== nextRoute) window.location.hash = `#${nextRoute}`;
+        else this.contentContainer.innerHTML = '<p class="p-6 text-sm text-slate-600">Seu perfil não possui módulos disponíveis.</p>';
+      } else {
+        this.contentContainer.innerHTML = '<p class="p-6 text-sm text-slate-600">Seu perfil não possui módulos disponíveis.</p>';
+      }
       return;
     }
 
@@ -126,6 +153,22 @@ class AppRouter {
       mod.render(this.contentContainer);
     } else {
       console.warn(`Módulo ${hash} não possui método render.`);
+    }
+  }
+
+  _canAccess(route) {
+    if (!route) return false;
+    if (route.adminOnly && !window.Auth?.isAdmin()) return false;
+    return !route.permissions || window.Auth?.hasAnyPermission(route.permissions);
+  }
+
+  atualizarVisibilidadeRotas() {
+    for (const [hash, route] of Object.entries(this.routes)) {
+      const visible = !window.Auth?.estaLogado() ||
+        (window.Auth.permissionsReady && this._canAccess(route));
+      document.querySelectorAll(`nav a[href="#${hash}"]`).forEach(link => {
+        link.classList.toggle('hidden', !visible);
+      });
     }
   }
 

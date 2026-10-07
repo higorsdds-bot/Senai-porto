@@ -11,7 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { hasPermission, requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
@@ -28,12 +28,21 @@ const SELECT_COMPRAS = `
 `;
 
 // GET /api/v1/compras
-router.get('/', requirePermission('compras.visualizar'), async (req, res) => {
+router.get('/', requireAnyPermission('compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias'), async (req, res) => {
   try {
     const pool = getPool();
     const { status, setor_id, q } = req.query;
     let conds = ['c.deleted_at IS NULL'];
     let params = [];
+    const visualizaTodas = await hasPermission(req.usuario, 'compras.visualizar');
+    const visualizaProprias = await hasPermission(req.usuario, 'compras.visualizar_proprias');
+    const visualizaPedidos = await hasPermission(req.usuario, 'compras.visualizar_pedidos');
+    if (!visualizaTodas && visualizaProprias) {
+      conds.push('c.solicitante_id = ?');
+      params.push(req.usuario.id);
+    } else if (!visualizaTodas && visualizaPedidos) {
+      conds.push(`c.status IN ('aprovado', 'entregue')`);
+    }
 
     if (status) { conds.push('c.status = ?'); params.push(status); }
     if (setor_id) { conds.push('c.setor_id = ?'); params.push(setor_id); }
@@ -59,7 +68,7 @@ router.get('/', requirePermission('compras.visualizar'), async (req, res) => {
 });
 
 // GET /api/v1/compras/:id
-router.get('/:id', requirePermission('compras.visualizar'), async (req, res) => {
+router.get('/:id', requireAnyPermission('compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias'), async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
@@ -70,8 +79,19 @@ router.get('/:id', requirePermission('compras.visualizar'), async (req, res) => 
        FROM compras c
        LEFT JOIN usuarios u ON u.id = c.solicitante_id
        LEFT JOIN setores s ON s.id = c.setor_id
-       WHERE c.id = ? AND c.deleted_at IS NULL LIMIT 1`,
-      [req.params.id]
+       WHERE c.id = ? AND c.deleted_at IS NULL
+         AND (
+           ? = 1
+           OR (? = 1 AND c.solicitante_id = ?)
+           OR (? = 1 AND c.status IN ('aprovado', 'entregue'))
+         ) LIMIT 1`,
+      [
+        req.params.id,
+        (await hasPermission(req.usuario, 'compras.visualizar')) ? 1 : 0,
+        (await hasPermission(req.usuario, 'compras.visualizar_proprias')) ? 1 : 0,
+        req.usuario.id,
+        (await hasPermission(req.usuario, 'compras.visualizar_pedidos')) ? 1 : 0
+      ]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: 'Compra não encontrada.' });
     return res.json({ success: true, data: rows[0] });
@@ -83,18 +103,47 @@ router.get('/:id', requirePermission('compras.visualizar'), async (req, res) => 
 // POST /api/v1/compras
 router.post('/', requirePermission('compras.criar'), async (req, res) => {
   const { produto, descricao, quantidade, valor_estimado, setor_id } = req.body;
-  if (!produto || produto.trim().length < 3) {
+  const isAdminGeral = ['ADMIN', 'ADMINISTRADOR'].includes(String(req.usuario.perfil).toUpperCase());
+  const statusInicial = isAdminGeral ? 'aprovado' : 'pendente';
+  const qtd = quantidade == null ? 1 : Number(quantidade);
+  if (typeof produto !== 'string' || produto.trim().length < 3) {
     return res.status(422).json({ success: false, message: 'Produto inválido.', errors: { produto: 'Mínimo 3 caracteres.' } });
+  }
+  if (!Number.isInteger(qtd) || qtd < 1) {
+    return res.status(422).json({ success: false, message: 'Quantidade inválida.', errors: { quantidade: 'Informe um inteiro maior que zero.' } });
   }
   try {
     const pool = getPool();
     const [result] = await pool.query(
       `INSERT INTO compras (produto, descricao, quantidade, valor_estimado, solicitante_id, setor_id, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'pendente')`,
-      [produto.trim(), descricao?.trim() || null, quantidade || 1, valor_estimado || null, req.usuario.id, setor_id || null]
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        produto.trim(),
+        descricao?.trim() || null,
+        qtd,
+        valor_estimado || null,
+        req.usuario.id,
+        (await hasPermission(req.usuario, 'compras.visualizar_proprias')) &&
+          !(await hasPermission(req.usuario, 'compras.visualizar'))
+          ? req.usuario.setor_id
+          : (setor_id || req.usuario.setor_id || null),
+        statusInicial
+      ]
     );
-    await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'CRIAR_COMPRA', entidade: 'compras', entidade_id: result.insertId, descricao: `Compra "${produto.trim()}" criada.`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });
-    return res.status(201).json({ success: true, message: 'Solicitação de compra criada.', data: { id: result.insertId } });
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: isAdminGeral ? 'GERAR_PEDIDO_COMPRA' : 'SOLICITAR_COMPRA',
+      entidade: 'compras',
+      entidade_id: result.insertId,
+      descricao: `${isAdminGeral ? 'Pedido' : 'Solicitação'} "${produto.trim()}" criada.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+    return res.status(201).json({
+      success: true,
+      message: isAdminGeral ? 'Pedido de compra gerado para entrada.' : 'Solicitação de compra criada.',
+      data: { id: result.insertId }
+    });
   } catch (err) {
     console.error('[COMPRAS] POST:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao criar compra.' });
@@ -141,6 +190,39 @@ router.patch('/:id/status', requirePermission('compras.aprovar'), async (req, re
     return res.json({ success: true, message: `Status alterado para ${status}.` });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Erro ao alterar status.' });
+  }
+});
+
+// Administração registra a entrada apenas de pedidos previamente aprovados.
+router.patch('/:id/entrada', requirePermission('compras.receber'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [result] = await pool.query(
+      `UPDATE compras
+       SET status = 'entregue', updated_at = NOW()
+       WHERE id = ? AND status = 'aprovado' AND deleted_at IS NULL`,
+      [req.params.id]
+    );
+    if (!result.affectedRows) {
+      return res.status(409).json({
+        success: false,
+        message: 'A entrada só pode ser registrada para um pedido aprovado e ainda não recebido.'
+      });
+    }
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'REGISTRAR_ENTRADA_COMPRA',
+      entidade: 'compras',
+      entidade_id: parseInt(req.params.id, 10),
+      descricao: `Entrada do pedido #${req.params.id} registrada.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+    return res.json({ success: true, message: 'Entrada do pedido registrada.' });
+  } catch (err) {
+    console.error('[COMPRAS] ENTRADA:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao registrar entrada do pedido.' });
   }
 });
 

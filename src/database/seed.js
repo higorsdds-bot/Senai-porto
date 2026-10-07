@@ -33,6 +33,9 @@ const PERMISSOES = [
   { chave: 'compras.criar',            nome: 'Criar Compra' },
   { chave: 'compras.editar',           nome: 'Editar Compra' },
   { chave: 'compras.aprovar',          nome: 'Aprovar Compra' },
+  { chave: 'compras.receber',          nome: 'Dar Entrada em Pedido de Compra' },
+  { chave: 'compras.visualizar_pedidos', nome: 'Visualizar Pedidos para Entrada' },
+  { chave: 'compras.visualizar_proprias', nome: 'Visualizar Próprias Solicitações de Compra' },
   { chave: 'compras.excluir',          nome: 'Excluir Compra' },
   { chave: 'equipamentos.visualizar',  nome: 'Visualizar Equipamentos' },
   { chave: 'equipamentos.criar',       nome: 'Criar Equipamento' },
@@ -56,6 +59,7 @@ const PERMISSOES = [
   { chave: 'insumos.editar',           nome: 'Editar Insumo' },
   { chave: 'insumos.excluir',          nome: 'Excluir Insumo' },
   { chave: 'insumos.movimentar',       nome: 'Movimentar Estoque' },
+  { chave: 'insumos.baixar',           nome: 'Dar Baixa em Estoque' },
   { chave: 'comunicados.visualizar',   nome: 'Visualizar Comunicados' },
   { chave: 'comunicados.criar',        nome: 'Criar Comunicado' },
   { chave: 'comunicados.excluir',      nome: 'Excluir Comunicado' },
@@ -96,6 +100,14 @@ const PERFIL_PERMISSOES = {
     'eventos.visualizar',
     'insumos.visualizar', 'insumos.movimentar',
     'comunicados.visualizar'
+  ],
+  ADMINISTRACAO: [
+    'compras.visualizar_pedidos', 'compras.receber',
+    'eventos.visualizar',
+    'insumos.visualizar', 'insumos.baixar'
+  ],
+  LIMPEZA: [
+    'compras.visualizar_proprias', 'compras.criar'
   ]
 };
 

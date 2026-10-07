@@ -17,10 +17,10 @@ window.InsumosModule = {
     container.innerHTML = window.UI.renderTableSkeleton(5, 5);
 
     try {
-      const [insumos, setores] = await Promise.all([
-        window.API.getInsumos(),
-        window.API.getSetores()
-      ]);
+      const insumos = await window.API.getInsumos();
+      const setores = window.Auth.hasPermission('setores.visualizar')
+        ? await window.API.getSetores()
+        : [];
       this.items = insumos;
       this.setores = setores;
       this._renderView(container);
@@ -36,6 +36,11 @@ window.InsumosModule = {
   },
 
   _renderView(container) {
+    const canCreate = window.Auth.hasPermission('insumos.criar');
+    const canEdit = window.Auth.hasPermission('insumos.editar');
+    const canDelete = window.Auth.hasPermission('insumos.excluir');
+    const canStockOut = window.Auth.hasPermission('insumos.baixar');
+    const canMoveStock = window.Auth.hasPermission('insumos.movimentar');
     let filtered = this.items.filter(item => {
       const matchNome = (item.nome || '').toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchSetor = !this.setorFilter || Number(item.setor_id) === Number(this.setorFilter);
@@ -70,10 +75,10 @@ window.InsumosModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Controle de Insumos</h1>
             <p class="text-xs text-slate-500 font-medium">Controle de materiais de consumo com monitoramento automático de estoque mínimo</p>
           </div>
-          <button id="btn-novo-insumo" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-md shadow-emerald-600/20 transition-all">
+          ${canCreate ? `<button id="btn-novo-insumo" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-md shadow-emerald-600/20 transition-all">
             <i data-lucide="package-plus" class="w-4 h-4"></i>
             Cadastrar Insumo
-          </button>
+          </button>` : ''}
         </div>
 
         <!-- Barra de Busca e Filtros -->
@@ -95,12 +100,12 @@ window.InsumosModule = {
               <span class="text-slate-700">Apenas Alertas Críticos</span>
             </label>
 
-            <select id="select-filtro-setor-insumo" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white">
+            ${this.setores.length ? `<select id="select-filtro-setor-insumo" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white">
               <option value="">Todos os Setores</option>
               ${this.setores.map(s => `
                 <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
               `).join('')}
-            </select>
+            </select>` : ''}
           </div>
         </div>
 
@@ -109,8 +114,8 @@ window.InsumosModule = {
           window.UI.renderEmptyState({
             title: 'Nenhum insumo encontrado',
             description: 'Nenhum material atende aos filtros de busca ou estoque selecionados.',
-            actionLabel: 'Novo Insumo',
-            onActionClick: () => this._openFormModal(container)
+            actionLabel: canCreate ? 'Novo Insumo' : null,
+            onActionClick: canCreate ? () => this._openFormModal(container) : null
           })
           : `
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -129,7 +134,7 @@ window.InsumosModule = {
                 <tbody class="divide-y divide-slate-100">
                   ${paginatedItems.map(item => {
                     const isCritical = item.quantidade <= item.estoque_minimo;
-                    const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || 'Setor Geral';
+                    const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
                     return `
                       <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
@@ -154,15 +159,15 @@ window.InsumosModule = {
                         <td class="px-6 py-4 text-slate-600">${setor}</td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.InsumosModule._openAdjustModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Ajustar Quantidade">
+                            ${canStockOut || canMoveStock ? `<button onclick="window.InsumosModule._openAdjustModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="${canStockOut && !canMoveStock ? 'Dar baixa no estoque' : 'Movimentar estoque'}">
                               <i data-lucide="plus-minus" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.InsumosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
+                            </button>` : ''}
+                            ${canEdit ? `<button onclick="window.InsumosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.InsumosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                            </button>` : ''}
+                            ${canDelete ? `<button onclick="window.InsumosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            </button>` : ''}
                           </div>
                         </td>
                       </tr>
@@ -319,16 +324,24 @@ window.InsumosModule = {
     const item = this.items.find(i => Number(i.id) === Number(id));
     if (!item) return;
 
+    const onlyStockOut = window.Auth.hasPermission('insumos.baixar') &&
+      !window.Auth.hasPermission('insumos.movimentar');
     const modalContent = `
       <div class="space-y-4">
-        <p class="text-xs text-slate-600">Ajuste de saldo físico para: <strong class="text-slate-800">${item.nome}</strong></p>
+        <p class="text-xs text-slate-600">${onlyStockOut ? 'Registre o consumo/saída de:' : 'Movimente o estoque de:'} <strong class="text-slate-800">${item.nome}</strong> (saldo atual: ${item.quantidade} ${item.unidade})</p>
+        ${onlyStockOut ? '' : `<div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Tipo de movimentação</label>
+          <select id="select-tipo-movimentacao" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+            <option value="ENTRADA">Entrada</option><option value="SAIDA">Saída</option><option value="AJUSTE">Ajuste de saldo</option>
+          </select>
+        </div>`}
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Nova Quantidade (${item.unidade})</label>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">${onlyStockOut ? `Quantidade de saída (${item.unidade})` : 'Quantidade (para ajuste, informe o saldo final)'}</label>
           <input 
             type="number" 
             id="input-novo-saldo" 
-            min="0"
-            value="${item.quantidade}" 
+            min="1"
+            value="1"
             class="w-full px-3.5 py-2 text-sm font-bold font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           />
         </div>
@@ -336,18 +349,19 @@ window.InsumosModule = {
     `;
 
     window.UI.openModal({
-      title: 'Ajuste de Saldo de Estoque',
+      title: onlyStockOut ? 'Dar Baixa em Material' : 'Movimentar Estoque',
       contentHtml: modalContent,
-      saveLabel: 'Salvar Novo Saldo',
+      saveLabel: onlyStockOut ? 'Registrar Saída' : 'Registrar Movimentação',
       maxWidth: 'max-w-sm',
       onSave: async () => {
         const val = document.getElementById('input-novo-saldo').value;
-        const newQtd = Number(val);
-        if (isNaN(newQtd) || newQtd < 0) return false;
-
-        // TODO: conectar endpoint PUT /insumos/:id
-        await window.API.updateInsumo(id, { quantidade: newQtd });
-        window.UI.toast({ title: 'Estoque Ajustado', message: `Novo saldo: ${newQtd} ${item.unidade}.` });
+        const quantidade = Number(val);
+        if (!Number.isInteger(quantidade) || quantidade <= 0) return false;
+        const tipo = onlyStockOut
+          ? 'SAIDA'
+          : document.getElementById('select-tipo-movimentacao').value;
+        await window.API.movimentarInsumo(id, { tipo, quantidade });
+        window.UI.toast({ title: 'Estoque atualizado', message: `Movimentação de ${tipo.toLowerCase()} registrada.` });
         await this.render(container);
         return true;
       }

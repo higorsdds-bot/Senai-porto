@@ -16,10 +16,11 @@ window.AgendaModule = {
     container.innerHTML = window.UI.renderCardsSkeleton(4);
 
     try {
-      const [eventos, usuarios] = await Promise.all([
-        window.API.getEventos(),
-        window.API.getUsuarios()
-      ]);
+      const eventos = await window.API.getEventos();
+      const usuarios = window.Auth.hasPermission('eventos.criar') &&
+        window.Auth.hasPermission('usuarios.visualizar')
+        ? await window.API.getUsuarios()
+        : [];
       this.items = eventos;
       this.usuarios = usuarios;
       this._renderView(container);
@@ -35,6 +36,9 @@ window.AgendaModule = {
   },
 
   _renderView(container) {
+    const canCreate = window.Auth.hasPermission('eventos.criar');
+    const canEdit = window.Auth.hasPermission('eventos.editar');
+    const canDelete = window.Auth.hasPermission('eventos.excluir');
     let filtered = this.items.filter(item => {
       const matchLocal = (item.local || '').toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchStatus = !this.statusFilter || item.status === this.statusFilter;
@@ -56,10 +60,10 @@ window.AgendaModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Agenda Inteligente</h1>
             <p class="text-xs text-slate-500 font-medium">Gestão de auditórios, laboratórios e programações do ecossistema HUB ES+</p>
           </div>
-          <button id="btn-novo-evento" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
+          ${canCreate ? `<button id="btn-novo-evento" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
             <i data-lucide="calendar-plus" class="w-4 h-4"></i>
             Agendar Evento
-          </button>
+          </button>` : ''}
         </div>
 
         <!-- Filtros e Busca -->
@@ -84,12 +88,12 @@ window.AgendaModule = {
               <option value="cancelado" ${this.statusFilter === 'cancelado' ? 'selected' : ''}>Cancelado</option>
             </select>
 
-            <select id="select-filtro-resp-evento" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            ${this.usuarios.length ? `<select id="select-filtro-resp-evento" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
               <option value="">Todos os Responsáveis</option>
               ${this.usuarios.map(u => `
                 <option value="${u.id}" ${Number(this.responsavelFilter) === Number(u.id) ? 'selected' : ''}>${u.nome}</option>
               `).join('')}
-            </select>
+            </select>` : ''}
           </div>
         </div>
 
@@ -98,13 +102,13 @@ window.AgendaModule = {
           window.UI.renderEmptyState({
             title: 'Nenhum evento agendado',
             description: 'Não constam eventos nos critérios ou datas selecionadas.',
-            actionLabel: 'Novo Agendamento',
-            onActionClick: () => this._openFormModal(container)
+            actionLabel: canCreate ? 'Novo Agendamento' : null,
+            onActionClick: canCreate ? () => this._openFormModal(container) : null
           })
           : `
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             ${filtered.map(item => {
-              const resp = this.usuarios.find(u => Number(u.id) === Number(item.responsavel_id))?.nome || 'Responsável #' + item.responsavel_id;
+              const resp = this.usuarios.find(u => Number(u.id) === Number(item.responsavel_id))?.nome || item.responsavel_nome || 'Responsável #' + item.responsavel_id;
               const dateObj = new Date(item.data);
               const dataFmt = isNaN(dateObj) ? item.data : dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
               const horaFmt = isNaN(dateObj) ? '' : dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -143,12 +147,12 @@ window.AgendaModule = {
                   <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <span class="text-[11px] font-mono text-slate-400">#EVT-${item.id}</span>
                     <div class="flex items-center gap-1">
-                      <button onclick="window.AgendaModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
+                      ${canEdit ? `<button onclick="window.AgendaModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
-                      </button>
-                      <button onclick="window.AgendaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                      </button>` : ''}
+                      ${canDelete ? `<button onclick="window.AgendaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
-                      </button>
+                      </button>` : ''}
                     </div>
                   </div>
                 </div>

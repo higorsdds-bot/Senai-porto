@@ -19,13 +19,11 @@ window.ComprasModule = {
     container.innerHTML = window.UI.renderTableSkeleton(5, 5);
 
     try {
-      const [compras, usuarios, setores] = await Promise.all([
-        window.API.getCompras(),
-        window.API.getUsuarios(),
-        window.API.getSetores()
-      ]);
+      const compras = await window.API.getCompras();
+      const setores = window.Auth.hasPermission('setores.visualizar')
+        ? await window.API.getSetores()
+        : [];
       this.items = compras;
-      this.usuarios = usuarios;
       this.setores = setores;
       this._renderView(container);
     } catch (err) {
@@ -40,6 +38,16 @@ window.ComprasModule = {
   },
 
   _renderView(container) {
+    const ownRequestsOnly = window.Auth.hasPermission('compras.visualizar_proprias') &&
+      !window.Auth.hasPermission('compras.visualizar');
+    const orderEntryOnly = window.Auth.hasPermission('compras.visualizar_pedidos') &&
+      !window.Auth.hasPermission('compras.visualizar');
+    const isAdminGeral = window.Auth.isAdmin();
+    const canCreate = window.Auth.hasPermission('compras.criar');
+    const canApprove = window.Auth.hasPermission('compras.aprovar');
+    const canReceive = window.Auth.hasPermission('compras.receber');
+    const canEdit = window.Auth.hasPermission('compras.editar');
+    const canDelete = window.Auth.hasPermission('compras.excluir');
     let filtered = this.items.filter(item => {
       const matchText = (item.produto || '').toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchStatus = !this.statusFilter || item.status === this.statusFilter;
@@ -63,13 +71,13 @@ window.ComprasModule = {
               </span>
               <span class="text-xs text-slate-400">• ${this.items.length} pedidos</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Gestão de Compras</h1>
-            <p class="text-xs text-slate-500 font-medium">Fluxo de requisição, autorização e entrega de materiais e serviços</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">${ownRequestsOnly ? 'Solicitação de Materiais de Consumo' : orderEntryOnly ? 'Entrada em Pedidos de Compra' : 'Gestão de Compras'}</h1>
+            <p class="text-xs text-slate-500 font-medium">${ownRequestsOnly ? 'Solicite materiais e acompanhe o status das suas solicitações.' : orderEntryOnly ? 'Consulte pedidos aprovados e registre a entrada dos materiais.' : 'Pedidos gerados, aprovação e entrada de materiais.'}</p>
           </div>
-          <button id="btn-nova-compra" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
+          ${canCreate ? `<button id="btn-nova-compra" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            Nova Solicitação
-          </button>
+            ${ownRequestsOnly ? 'Solicitar Material' : isAdminGeral ? 'Gerar Pedido' : 'Nova Solicitação'}
+          </button>` : ''}
         </div>
 
         <!-- Filtros e Busca -->
@@ -94,12 +102,12 @@ window.ComprasModule = {
               <option value="cancelado" ${this.statusFilter === 'cancelado' ? 'selected' : ''}>Cancelado</option>
             </select>
 
-            <select id="select-filtro-setor-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            ${this.setores.length ? `<select id="select-filtro-setor-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
               <option value="">Todos os Setores</option>
               ${this.setores.map(s => `
                 <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
               `).join('')}
-            </select>
+            </select>` : ''}
           </div>
         </div>
 
@@ -108,8 +116,8 @@ window.ComprasModule = {
           window.UI.renderEmptyState({
             title: 'Nenhuma solicitação de compra',
             description: 'Nenhum pedido atende aos filtros selecionados.',
-            actionLabel: 'Criar Solicitação',
-            onActionClick: () => this._openFormModal(container)
+            actionLabel: canCreate ? 'Criar Solicitação' : null,
+            onActionClick: canCreate ? () => this._openFormModal(container) : null
           })
           : `
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -119,43 +127,43 @@ window.ComprasModule = {
                   <tr>
                     <th class="px-6 py-3.5">ID</th>
                     <th class="px-6 py-3.5">Produto / Descrição</th>
-                    <th class="px-6 py-3.5">Solicitante</th>
-                    <th class="px-6 py-3.5">Setor</th>
+                    ${ownRequestsOnly ? '' : '<th class="px-6 py-3.5">Solicitante</th><th class="px-6 py-3.5">Setor</th>'}
                     <th class="px-6 py-3.5">Status</th>
                     <th class="px-6 py-3.5 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${paginatedItems.map(item => {
-                    const solicitante = this.usuarios.find(u => Number(u.id) === Number(item.solicitante_id))?.nome || 'Usuário #' + item.solicitante_id;
-                    const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || 'Setor #' + item.setor_id;
                     return `
                       <tr class="hover:bg-slate-50/60 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
                         <td class="px-6 py-4 font-semibold text-slate-800">
                           <span class="max-w-xs line-clamp-1">${item.produto}</span>
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
+                        ${ownRequestsOnly ? '' : `<td class="px-6 py-4 text-slate-600">
                           <div class="flex items-center gap-1.5">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
-                            ${solicitante}
+                            ${item.solicitante_nome || '—'}
                           </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-600">${setor}</td>
+                        <td class="px-6 py-4 text-slate-600">${item.setor_nome || '—'}</td>`}
                         <td class="px-6 py-4">
                           ${window.UI.renderBadge(item.status)}
                         </td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.ComprasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Mudar Status">
+                            ${canReceive && item.status === 'aprovado' ? `<button onclick="window.ComprasModule._registrarEntrada(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Dar entrada no pedido">
+                              <i data-lucide="package-check" class="w-4 h-4"></i>
+                            </button>` : ''}
+                            ${canApprove ? `<button onclick="window.ComprasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Mudar Status">
                               <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
+                            </button>` : ''}
+                            ${canEdit ? `<button onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.ComprasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                            </button>` : ''}
+                            ${canDelete ? `<button onclick="window.ComprasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            </button>` : ''}
                           </div>
                         </td>
                       </tr>
@@ -220,48 +228,40 @@ window.ComprasModule = {
             name="produto" 
             required 
             value="${item ? item.produto : ''}" 
-            placeholder="Ex: Câmera PTZ para videoconferências" 
+            placeholder="Ex: detergente, papel toalha ou material operacional"
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Solicitante (solicitante_id) *</label>
-            <select name="solicitante_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-              <option value="">Selecione o solicitante...</option>
-              ${this.usuarios.map(u => `
-                <option value="${u.id}" ${item && Number(item.solicitante_id) === Number(u.id) ? 'selected' : ''}>${u.nome}</option>
-              `).join('')}
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Setor de Destino (setor_id) *</label>
-            <select name="setor_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-              <option value="">Selecione o setor...</option>
-              ${this.setores.map(s => `
-                <option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
-              `).join('')}
-            </select>
-          </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição</label>
+          <textarea name="descricao" rows="2" class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200">${item?.descricao || ''}</textarea>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Status do Pedido *</label>
-          <select name="status" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
-            <option value="pendente" ${item && item.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-            <option value="aprovado" ${item && item.status === 'aprovado' ? 'selected' : ''}>Aprovado</option>
-            <option value="entregue" ${item && item.status === 'entregue' ? 'selected' : ''}>Entregue</option>
-            <option value="cancelado" ${item && item.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Quantidade *</label>
+            <input type="number" name="quantidade" min="1" required value="${item ? item.quantidade : 1}" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200">
+          </div>
+          ${this.setores.length ? `<div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Setor de Destino</label>
+            <select name="setor_id" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+              <option value="">Meu setor</option>
+              ${this.setores.map(s => `<option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>`).join('')}
+            </select>
+          </div>` : ''}
         </div>
       </form>
     `;
 
     window.UI.openModal({
-      title: isEdit ? 'Editar Pedido de Compra' : 'Nova Solicitação de Compra',
-      subtitle: 'Estruturado estritamente segundo a tabela compras do banco de dados',
+      title: isEdit ? 'Editar Pedido de Compra' : (
+        (window.Auth.hasPermission('compras.visualizar_proprias') &&
+          !window.Auth.hasPermission('compras.visualizar'))
+          ? 'Solicitar Material de Consumo'
+          : window.Auth.isAdmin() ? 'Gerar Pedido de Compra' : 'Nova Solicitação de Compra'
+      ),
+      subtitle: 'O registro será vinculado automaticamente ao usuário autenticado.',
       contentHtml: modalContent,
       saveLabel: isEdit ? 'Salvar Alterações' : 'Enviar Solicitação',
       onSave: async () => {
@@ -271,17 +271,15 @@ window.ComprasModule = {
         const formData = new FormData(form);
         const payload = {
           produto: formData.get('produto').trim(),
-          solicitante_id: Number(formData.get('solicitante_id')),
-          setor_id: Number(formData.get('setor_id')),
-          status: formData.get('status')
+          descricao: formData.get('descricao')?.trim() || null,
+          quantidade: Number(formData.get('quantidade')),
+          setor_id: formData.get('setor_id') ? Number(formData.get('setor_id')) : null
         };
 
         if (isEdit) {
-          // TODO: conectar endpoint PUT /compras/:id
           await window.API.updateCompra(editId, payload);
           window.UI.toast({ title: 'Pedido Atualizado', message: 'Solicitação de compra salva com sucesso.' });
         } else {
-          // TODO: conectar endpoint POST /compras
           await window.API.createCompra(payload);
           window.UI.toast({ title: 'Solicitação Enviada', message: 'Pedido registrado no fluxo de compras.' });
         }
@@ -319,12 +317,22 @@ window.ComprasModule = {
         const checked = document.querySelector('input[name="quick_status"]:checked');
         if (!checked) return;
         // TODO: conectar endpoint PUT /compras/:id
-        await window.API.updateCompra(id, { status: checked.value });
+        await window.API.updateStatusCompra(id, checked.value);
         window.UI.toast({ title: 'Status Atualizado', message: `Pedido agora está ${checked.value}.` });
         await this.render(container);
         return true;
       }
     });
+  },
+
+  async _registrarEntrada(container, id) {
+    try {
+      await window.API.registrarEntradaCompra(id);
+      window.UI.toast({ title: 'Entrada registrada', message: 'Pedido marcado como entregue.' });
+      await this.render(container);
+    } catch (err) {
+      window.UI.toast({ title: 'Não foi possível registrar', message: err.message, type: 'error' });
+    }
   },
 
   _confirmDelete(container, id) {

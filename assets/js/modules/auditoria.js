@@ -164,7 +164,9 @@ const AuditoriaModule = {
               <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold">
                 <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
                 <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
-                <option value="ADMIN">ADMINISTRADOR (Acesso Total e Auditoria)</option>
+                <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
+                <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
+                <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
               </select>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

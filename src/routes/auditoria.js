@@ -203,7 +203,8 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
-    const perfilFinal = perfil && ['ADMIN', 'GESTOR', 'OPERADOR'].includes(perfil) ? perfil : 'OPERADOR';
+    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
+    const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : 'OPERADOR';
 
     await pool.query(
       `UPDATE usuarios
