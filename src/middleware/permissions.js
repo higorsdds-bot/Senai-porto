@@ -9,6 +9,28 @@ let _permCache = {};
 let _permCacheTime = 0;
 const PERM_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
+function normalizeProfile(perfil) {
+  return String(perfil || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
+const MODULE_PERMISSIONS = {
+  dashboard: ['dashboard.visualizar'],
+  compras: ['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias'],
+  insumos: ['insumos.visualizar'],
+  agenda: ['eventos.visualizar'],
+  documentos: ['documentos.visualizar'],
+  ocorrencias: ['ocorrencias.visualizar'],
+  comunicacao: ['comunicados.visualizar'],
+  indicadores: ['indicadores.visualizar'],
+  limpeza: ['limpeza.visualizar'],
+  equipamentos: ['equipamentos.visualizar'],
+  auditoria: ['auditoria.visualizar']
+};
+
 async function loadPermissoesPorPerfil() {
   const now = Date.now();
   if (now - _permCacheTime < PERM_CACHE_TTL && Object.keys(_permCache).length > 0) {
@@ -25,8 +47,9 @@ async function loadPermissoesPorPerfil() {
 
     const cache = {};
     for (const row of rows) {
-      if (!cache[row.perfil]) cache[row.perfil] = new Set();
-      cache[row.perfil].add(row.chave);
+      const perfil = normalizeProfile(row.perfil);
+      if (!cache[perfil]) cache[perfil] = new Set();
+      cache[perfil].add(row.chave);
     }
     _permCache = cache;
     _permCacheTime = now;
@@ -45,10 +68,10 @@ async function loadPermissoesPorPerfil() {
 async function hasPermission(usuario, permissaoChave) {
   if (!usuario) return false;
   // ADMIN tem permissão total (bypass)
-  if (['ADMIN', 'ADMINISTRADOR'].includes(usuario.perfil)) return true;
+  if (['ADMIN', 'ADMINISTRADOR'].includes(normalizeProfile(usuario.perfil))) return true;
 
   const perms = await loadPermissoesPorPerfil();
-  const permSet = perms[usuario.perfil];
+  const permSet = perms[normalizeProfile(usuario.perfil)];
   if (!permSet) return false;
   return permSet.has(permissaoChave);
 }
@@ -98,13 +121,27 @@ function requireAnyPermission(...permissoesChave) {
 async function getPermissoesDoUsuario(usuario) {
   if (!usuario) return [];
   const perms = await loadPermissoesPorPerfil();
-  if (['ADMIN', 'ADMINISTRADOR'].includes(usuario.perfil)) {
+  if (['ADMIN', 'ADMINISTRADOR'].includes(normalizeProfile(usuario.perfil))) {
     // Admin: retorna todas as chaves cadastradas
     const allKeys = Object.values(perms).flatMap(s => [...s]);
     return [...new Set(allKeys)];
   }
-  const permSet = perms[usuario.perfil];
+  const permSet = perms[normalizeProfile(usuario.perfil)];
   return permSet ? [...permSet] : [];
 }
 
-module.exports = { hasPermission, requirePermission, requireAnyPermission, getPermissoesDoUsuario, loadPermissoesPorPerfil };
+async function getModulosDoUsuario(usuario) {
+  const permissoes = new Set(await getPermissoesDoUsuario(usuario));
+  return Object.entries(MODULE_PERMISSIONS)
+    .filter(([, requiredPermissions]) => requiredPermissions.some(permission => permissoes.has(permission)))
+    .map(([module]) => module);
+}
+
+module.exports = {
+  hasPermission,
+  requirePermission,
+  requireAnyPermission,
+  getPermissoesDoUsuario,
+  getModulosDoUsuario,
+  loadPermissoesPorPerfil
+};

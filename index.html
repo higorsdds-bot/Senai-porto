@@ -85,7 +85,7 @@
       <!-- Links de Navegação -->
       <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-6 text-xs font-semibold">
         <!-- Grupo 1: Geral -->
-        <div>
+        <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Visão Executiva</span>
           <div class="mt-2 space-y-1">
             <a href="#dashboard" data-nav-id="nav-dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
@@ -100,16 +100,16 @@
         </div>
 
         <!-- Grupo 2: Operações e Demandas -->
-        <div>
+        <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Operações & Demandas</span>
           <div class="mt-2 space-y-1">
             <a href="#compras" data-nav-id="nav-compras" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-              <span>Compras</span>
+              <span data-module-label="compras">Compras</span>
             </a>
             <a href="#insumos" data-nav-id="nav-insumos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="boxes" class="w-4 h-4"></i>
-              <span>Controle de Insumos</span>
+              <span data-module-label="insumos">Controle de Insumos</span>
             </a>
             <a href="#ocorrencias" data-nav-id="nav-ocorrencias" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="alert-circle" class="w-4 h-4"></i>
@@ -123,7 +123,7 @@
         </div>
 
         <!-- Grupo 3: Infraestrutura e Governança -->
-        <div>
+        <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Infra & Governança</span>
           <div class="mt-2 space-y-1">
             <a href="#documentos" data-nav-id="nav-documentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
@@ -187,11 +187,11 @@
         <a href="#dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
             data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo</a>
         <a href="#compras" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="shopping-bag"
-            class="w-4 h-4"></i> Compras</a>
+            class="w-4 h-4"></i> <span data-module-label="compras">Compras</span></a>
         <a href="#documentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="folder"
             class="w-4 h-4"></i> Gestão Documental</a>
         <a href="#insumos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="boxes"
-            class="w-4 h-4"></i> Controle de Insumos</a>
+            class="w-4 h-4"></i> <span data-module-label="insumos">Controle de Insumos</span></a>
         <a href="#ocorrencias" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
             data-lucide="alert-circle" class="w-4 h-4"></i> Ocorrências Técnicas</a>
         <a href="#agenda" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="calendar"
@@ -254,8 +254,8 @@
               AB
             </div>
             <div class="hidden md:block text-left">
-              <span class="block text-xs font-bold text-slate-800 leading-tight">Ana Beatriz Souza</span>
-              <span class="block text-[10px] text-slate-400 font-medium">Administração Geral</span>
+              <span data-usuario-nome class="block text-xs font-bold text-slate-800 leading-tight">Usuário</span>
+              <span data-usuario-perfil class="block text-[10px] text-slate-400 font-medium"></span>
             </div>
 
             <!-- BOTÃO SAIR -->

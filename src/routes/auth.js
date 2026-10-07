@@ -11,7 +11,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getPool } = require('../config/database');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
-const { getPermissoesDoUsuario } = require('../middleware/permissions');
+const { getPermissoesDoUsuario, getModulosDoUsuario } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
@@ -137,6 +137,7 @@ router.post('/login', async (req, res) => {
 
     // Buscar permissões
     const permissoes = await getPermissoesDoUsuario({ perfil: usuario.perfil });
+    const modulos = await getModulosDoUsuario({ perfil: usuario.perfil });
 
     // Registrar auditoria
     await registrarAuditoria({
@@ -159,7 +160,8 @@ router.post('/login', async (req, res) => {
           setor_id: usuario.setor_id,
           setor_nome: usuario.setor_nome
         },
-        permissoes
+        permissoes,
+        modulos
       }
     });
   } catch (err) {
@@ -186,6 +188,7 @@ router.post('/logout', authMiddleware, async (req, res) => {
 // ─── GET /api/v1/auth/me ─────────────────────────────────────────────────────
 router.get('/me', authMiddleware, async (req, res) => {
   const permissoes = await getPermissoesDoUsuario(req.usuario);
+  const modulos = await getModulosDoUsuario(req.usuario);
   return res.json({
     success: true,
     data: {
@@ -197,7 +200,8 @@ router.get('/me', authMiddleware, async (req, res) => {
         setor_id: req.usuario.setor_id,
         setor_nome: req.usuario.setor_nome
       },
-      permissoes
+      permissoes,
+      modulos
     }
   });
 });

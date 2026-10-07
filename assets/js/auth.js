@@ -7,6 +7,7 @@ class AuthManager {
     constructor() {
         this.usuario = null;
         this.permissoes = [];
+        this.modulos = [];
         this.permissionsReady = false;
         this._heartbeatInterval = null;
     }
@@ -22,6 +23,7 @@ class AuthManager {
                 try {
                     this.usuario = JSON.parse(raw);
                     this.permissoes = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
+                    this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
                     this.permissionsReady = Array.isArray(this.usuario?.permissoes);
                 } catch { this.usuario = null; }
             }
@@ -48,14 +50,25 @@ class AuthManager {
         return this.isAdmin() || chaves.some(chave => this.permissoes.includes(chave));
     }
 
+    canAccessModule(moduleName, permissionKeys = []) {
+        if (this.isAdmin()) return true;
+        if (this.modulos.length > 0) return this.modulos.includes(moduleName);
+        return this.hasAnyPermission(permissionKeys);
+    }
+
     async login(email, senha) {
         const res = await window.API.login(email, senha);
         if (res?.success && res.data?.token) {
-            const usuario = { ...res.data.usuario, permissoes: res.data.permissoes || [] };
+            const usuario = {
+                ...res.data.usuario,
+                permissoes: res.data.permissoes || [],
+                modulos: res.data.modulos || []
+            };
             localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
             localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
             this.usuario = usuario;
             this.permissoes = usuario.permissoes;
+            this.modulos = usuario.modulos;
             this.permissionsReady = true;
             this.iniciarHeartbeat();
             return res.data;
@@ -75,6 +88,7 @@ class AuthManager {
         localStorage.removeItem(CONFIG.STORAGE_USUARIO);
         this.usuario = null;
         this.permissoes = [];
+        this.modulos = [];
         this.permissionsReady = false;
         this.renderizarTelaLogin();
     }
@@ -119,7 +133,8 @@ class AuthManager {
             const session = await window.API.me();
             if (!session?.usuario) throw new Error('Resposta de sessão inválida.');
             this.permissoes = Array.isArray(session.permissoes) ? session.permissoes : [];
-            this.usuario = { ...session.usuario, permissoes: this.permissoes };
+            this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
+            this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
             this.permissionsReady = true;
             localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(this.usuario));
             this.preencherInfoUsuario();

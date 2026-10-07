@@ -16,60 +16,70 @@ class AppRouter {
         title: 'Dashboard Executivo',
         module: window.DashboardModule,
         navId: 'nav-dashboard',
+        moduleKey: 'dashboard',
         permissions: ['dashboard.visualizar']
       },
       'documentos': {
         title: 'Gestão Documental',
         module: window.DocumentosModule,
         navId: 'nav-documentos',
+        moduleKey: 'documentos',
         permissions: ['documentos.visualizar']
       },
       'insumos': {
         title: 'Controle de Insumos',
         module: window.InsumosModule,
         navId: 'nav-insumos',
+        moduleKey: 'insumos',
         permissions: ['insumos.visualizar']
       },
       'compras': {
         title: 'Compras & Suprimentos',
         module: window.ComprasModule,
         navId: 'nav-compras',
+        moduleKey: 'compras',
         permissions: ['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias']
       },
       'agenda': {
         title: 'Agenda Inteligente',
         module: window.AgendaModule,
         navId: 'nav-agenda',
+        moduleKey: 'agenda',
         permissions: ['eventos.visualizar']
       },
       'ocorrencias': {
         title: 'Ocorrências Técnicas',
         module: window.OcorrenciasModule || (window.Modules && window.Modules.ocorrencias),
         navId: 'nav-ocorrencias',
+        moduleKey: 'ocorrencias',
         permissions: ['ocorrencias.visualizar']
       },
       'comunicacao': {
         title: 'Central de Comunicação',
         module: window.ComunicacaoModule,
         navId: 'nav-comunicacao',
+        moduleKey: 'comunicacao',
         permissions: ['comunicados.visualizar']
       },
       'indicadores': {
         title: 'Painel de Indicadores',
         module: window.IndicadoresModule,
         navId: 'nav-indicadores',
+        moduleKey: 'indicadores',
         permissions: ['indicadores.visualizar']
       },
       'limpeza': {
         title: 'Controle de Limpeza',
         module: window.LimpezaModule,
         navId: 'nav-limpeza',
+        moduleKey: 'limpeza',
         permissions: ['limpeza.visualizar']
       },
       'equipamentos': {
         title: 'Controle de Equipamentos',
         module: window.EquipamentosModule,
         navId: 'nav-equipamentos',
+        moduleKey: 'equipamentos',
         permissions: ['equipamentos.visualizar']
       },
       'auditoria': {
@@ -77,6 +87,7 @@ class AppRouter {
         module: window.AuditoriaModule || (window.Modules && window.Modules.auditoria),
         navId: 'nav-auditoria',
         adminOnly: true,
+        moduleKey: 'auditoria',
         permissions: ['auditoria.visualizar']
       }
     };
@@ -159,7 +170,7 @@ class AppRouter {
   _canAccess(route) {
     if (!route) return false;
     if (route.adminOnly && !window.Auth?.isAdmin()) return false;
-    return !route.permissions || window.Auth?.hasAnyPermission(route.permissions);
+    return !route.permissions || window.Auth?.canAccessModule(route.moduleKey, route.permissions);
   }
 
   atualizarVisibilidadeRotas() {
@@ -170,6 +181,27 @@ class AppRouter {
         link.classList.toggle('hidden', !visible);
       });
     }
+    document.querySelectorAll('[data-nav-group]').forEach(group => {
+      const hasVisibleLink = [...group.querySelectorAll('a[href^="#"]')]
+        .some(link => !link.classList.contains('hidden'));
+      group.classList.toggle('hidden', !hasVisibleLink);
+    });
+
+    const perfil = String(window.Auth?.getUsuario()?.perfil || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+    const isLimpeza = perfil === 'LIMPEZA';
+    const isAdministracao = perfil === 'ADMINISTRACAO';
+    document.querySelectorAll('[data-module-label="compras"]').forEach(label => {
+      label.textContent = isLimpeza
+        ? 'Solicitação de Materiais'
+        : isAdministracao ? 'Entrada em Pedidos' : 'Compras';
+    });
+    document.querySelectorAll('[data-module-label="insumos"]').forEach(label => {
+      label.textContent = isAdministracao ? 'Dar Baixa em Materiais' : 'Controle de Insumos';
+    });
   }
 
   _updateActiveNav(activeNavId) {
