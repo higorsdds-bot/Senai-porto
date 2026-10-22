@@ -35,6 +35,8 @@ const AuditoriaModule = {
       return;
     }
 
+    this._container = container;
+
     container.innerHTML = `
       <div class="space-y-6">
         <!-- HEADER DO MÓDULO -->
@@ -260,6 +262,92 @@ const AuditoriaModule = {
           </form>
         </div>
       </div>
+
+      <!-- MODAL DE EDIÇÃO DE USUÁRIO & CARGO (ADMIN) -->
+      <div id="modal-editar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-100">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="user-cog" class="w-4 h-4 text-blue-600"></i> Editar Usuário & Cargo
+            </h3>
+            <button type="button" id="btn-fechar-modal-edicao" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <form id="form-editar-usuario" class="space-y-4" novalidate>
+            <input type="hidden" id="edit-user-id">
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+              <input type="text" id="edit-user-nome" required minlength="3"
+                placeholder="Ex: Carlos Eduardo de Oliveira"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+              <input type="email" id="edit-user-email" required
+                placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Cargo / Perfil de Acesso *</label>
+                <select id="edit-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                  <option value="OPERADOR">OPERADOR (Operações Básicas)</option>
+                  <option value="GESTOR">GESTOR (Gestão Operacional)</option>
+                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
+                  <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+                  <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
+                <select id="edit-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                  <option value="">Sem setor definido</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Status da Conta *</label>
+              <select id="edit-user-status" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <option value="ATIVO">ATIVO (Acesso liberado)</option>
+                <option value="INATIVO">INATIVO (Acesso pausado)</option>
+                <option value="BLOQUEADO">BLOQUEADO (Acesso revogado)</option>
+                <option value="PENDENTE">PENDENTE (Aguardando liberação)</option>
+              </select>
+            </div>
+
+            <div class="border-t border-slate-100 pt-3">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-700">Redefinir Senha (Opcional)</label>
+                <button type="button" id="btn-gerar-senha-edit" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="key" class="w-3 h-3"></i> Gerar Senha Segura
+                </button>
+              </div>
+              <input type="password" id="edit-user-senha" minlength="8"
+                placeholder="Deixe em branco para manter a senha atual"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white font-mono">
+              <p class="text-[11px] text-slate-400 mt-1">Preencha apenas caso deseje alterar a senha do usuário (mínimo 8 caracteres).</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button type="button" id="btn-cancelar-modal-edicao"
+                class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button type="submit" id="btn-salvar-edicao-usuario"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     `;
 
     this._bind(container);
@@ -317,7 +405,9 @@ const AuditoriaModule = {
           document.getElementById('modal-aprovar-usuario')?.classList.add('hidden');
           await this._carregarTudo(container);
         } catch (err) {
-          alert(err.message || 'Erro ao aprovar cadastro.');
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Erro na aprovação', message: err.message || 'Erro ao aprovar cadastro.', type: 'error' });
+          }
         } finally {
           btn.disabled = false;
           btn.textContent = 'Confirmar Liberação';
@@ -332,7 +422,7 @@ const AuditoriaModule = {
     container.querySelector('#btn-fechar-modal-cadastro')?.addEventListener('click', fecharModalCad);
     container.querySelector('#btn-cancelar-modal-cadastro')?.addEventListener('click', fecharModalCad);
 
-    // Gerador de senha aleatória
+    // Gerador de senha aleatória no cadastro
     container.querySelector('#btn-gerar-senha-cad')?.addEventListener('click', () => {
       const inputSenha = container.querySelector('#cad-user-senha');
       if (inputSenha) {
@@ -396,6 +486,93 @@ const AuditoriaModule = {
         } finally {
           btnSalvar.disabled = false;
           btnSalvar.innerHTML = `<i data-lucide="user-check" class="w-4 h-4"></i> Salvar Usuário`;
+          if (window.lucide) lucide.createIcons({ root: btnSalvar });
+        }
+      });
+    }
+
+    // Modal de Edição de Usuário & Cargo
+    const modalEdit = container.querySelector('#modal-editar-usuario');
+    const fecharModalEdit = () => modalEdit?.classList.add('hidden');
+
+    container.querySelector('#btn-fechar-modal-edicao')?.addEventListener('click', fecharModalEdit);
+    container.querySelector('#btn-cancelar-modal-edicao')?.addEventListener('click', fecharModalEdit);
+
+    // Gerador de senha aleatória na edição
+    container.querySelector('#btn-gerar-senha-edit')?.addEventListener('click', () => {
+      const inputSenha = container.querySelector('#edit-user-senha');
+      if (inputSenha) {
+        inputSenha.type = 'text';
+        inputSenha.value = this._gerarSenhaAleatoria();
+        inputSenha.select();
+      }
+    });
+
+    // Submit da Edição de Usuário & Cargo
+    const formEdit = container.querySelector('#form-editar-usuario');
+    if (formEdit) {
+      formEdit.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = container.querySelector('#edit-user-id')?.value;
+        const nome = container.querySelector('#edit-user-nome')?.value.trim();
+        const email = container.querySelector('#edit-user-email')?.value.trim();
+        const perfil = container.querySelector('#edit-user-perfil')?.value;
+        const setor_id = container.querySelector('#edit-user-setor')?.value;
+        const status = container.querySelector('#edit-user-status')?.value;
+        const senha = container.querySelector('#edit-user-senha')?.value;
+        const btnSalvar = container.querySelector('#btn-salvar-edicao-usuario');
+
+        if (!nome || nome.length < 3) {
+          if (window.UI?.toast) window.UI.toast({ title: 'Campo obrigatório', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          if (window.UI?.toast) window.UI.toast({ title: 'E-mail inválido', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          return;
+        }
+        if (!perfil) {
+          if (window.UI?.toast) window.UI.toast({ title: 'Cargo obrigatório', message: 'Selecione o cargo/perfil de permissão do usuário.', type: 'warning' });
+          return;
+        }
+        if (senha && senha.length < 8) {
+          if (window.UI?.toast) window.UI.toast({ title: 'Senha curta', message: 'A nova senha precisa ter pelo menos 8 caracteres.', type: 'warning' });
+          return;
+        }
+
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Salvando...`;
+
+        const payload = {
+          nome,
+          email,
+          perfil,
+          setor_id: setor_id ? Number(setor_id) : null,
+          status: status || 'ATIVO'
+        };
+        if (senha && senha.length >= 8) {
+          payload.senha = senha;
+        }
+
+        try {
+          await window.API.updateUsuario(id, payload);
+
+          if (window.UI?.toast) {
+            window.UI.toast({
+              title: 'Usuário Atualizado',
+              message: `As informações e o cargo de "${nome}" foram atualizados com sucesso!`,
+              type: 'success'
+            });
+          }
+
+          fecharModalEdit();
+          await this._carregarTudo(container);
+        } catch (err) {
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Erro ao salvar', message: err.message || 'Erro ao atualizar usuário.', type: 'error' });
+          }
+        } finally {
+          btnSalvar.disabled = false;
+          btnSalvar.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações`;
           if (window.lucide) lucide.createIcons({ root: btnSalvar });
         }
       });
@@ -606,9 +783,12 @@ const AuditoriaModule = {
     try {
       const res = await window.API.getAuditoriaUsuarios();
       const usuarios = Array.isArray(res) ? res : (res?.data || []);
+      this._usuarios = usuarios;
 
       const kpiTotal = container.querySelector('#kpi-total-usuarios');
       if (kpiTotal) kpiTotal.textContent = usuarios.length;
+
+      const usuarioAtual = window.Auth?.getUsuario?.();
 
       wrap.innerHTML = `
         <div class="flex items-center gap-2 mb-3">
@@ -627,27 +807,38 @@ const AuditoriaModule = {
                 <tr class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Nome</th>
                   <th class="py-3 px-4">E-mail</th>
-                  <th class="py-3 px-4">Perfil</th>
+                  <th class="py-3 px-4">Cargo / Perfil</th>
+                  <th class="py-3 px-4">Setor</th>
                   <th class="py-3 px-4">Status</th>
                   <th class="py-3 px-4">Ações Auditadas</th>
                   <th class="py-3 px-4">Último Acesso</th>
-                  <th class="py-3 px-4 text-right">Auditoria</th>
+                  <th class="py-3 px-4 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody id="tbody-usuarios" class="divide-y divide-slate-100">
-                ${usuarios.map(u => `
+                ${usuarios.map(u => {
+                  const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
+                  const isAtivo = u.status === 'ATIVO';
+
+                  return `
                   <tr class="hover:bg-slate-50/60 transition-colors user-row" data-nome="${this._esc(u.nome).toLowerCase()}" data-email="${this._esc(u.email).toLowerCase()}">
                     <td class="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-[11px] font-bold">
+                      <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-[11px] font-bold shrink-0">
                         ${this._iniciais(u.nome)}
                       </div>
-                      <span>${this._esc(u.nome)}</span>
+                      <div class="flex flex-col">
+                        <span>${this._esc(u.nome)}</span>
+                        ${isMe ? '<span class="text-[9px] font-extrabold text-blue-600 uppercase tracking-wider">(Sua Conta)</span>' : ''}
+                      </div>
                     </td>
                     <td class="py-3 px-4 font-mono text-slate-600">${this._esc(u.email)}</td>
                     <td class="py-3 px-4">
                       <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${u.perfil === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 text-slate-700'}">
                         ${this._esc(u.perfil)}
                       </span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-600">
+                      ${this._esc(u.setor_nome || 'Não definido')}
                     </td>
                     <td class="py-3 px-4">
                       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${this._statusBadgeUser(u.status)}">
@@ -662,17 +853,53 @@ const AuditoriaModule = {
                     <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">
                       ${u.ultimo_acesso ? new Date(u.ultimo_acesso).toLocaleString('pt-BR') : 'Nunca'}
                     </td>
-                    <td class="py-3 px-4 text-right">
-                      <button type="button" onclick="AuditoriaModule.abrirHistoricoUsuario(${u.id})"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-600 border border-slate-200 hover:border-blue-200 rounded-xl font-bold text-xs transition-all cursor-pointer">
-                        <i data-lucide="history" class="w-3.5 h-3.5"></i> Histórico
-                      </button>
+                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                      <div class="inline-flex items-center justify-end gap-1">
+                        <!-- Alternar Status (Ativo / Inativo) -->
+                        ${isAtivo ? `
+                          <button type="button" ${isMe ? 'disabled' : `onclick="AuditoriaModule.alternarStatus(${u.id}, 'INATIVO', '${this._esc(u.nome)}')"`}
+                            title="${isMe ? 'Você não pode inativar sua própria conta' : 'Inativar usuário'}"
+                            class="p-1.5 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-500 hover:text-amber-600 transition-colors ${isMe ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}">
+                            <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+                          </button>
+                        ` : `
+                          <button type="button" onclick="AuditoriaModule.alternarStatus(${u.id}, 'ATIVO', '${this._esc(u.nome)}')"
+                            title="Ativar usuário"
+                            class="p-1.5 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-slate-500 hover:text-emerald-600 transition-colors cursor-pointer">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                          </button>
+                        `}
+
+                        <!-- Editar Usuário & Trocar Cargo -->
+                        <button type="button" onclick="AuditoriaModule.abrirModalEdicao(${u.id})"
+                          title="Editar dados e trocar cargo"
+                          class="p-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-blue-600 transition-colors cursor-pointer">
+                          <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
+                        </button>
+
+                        <!-- Histórico de Auditoria -->
+                        <button type="button" onclick="AuditoriaModule.abrirHistoricoUsuario(${u.id})"
+                          title="Ver histórico de auditoria"
+                          class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer">
+                          <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                        </button>
+
+                        <!-- Excluir Usuário (Soft Delete) -->
+                        <button type="button" ${isMe ? 'disabled' : `onclick="AuditoriaModule.excluirUsuario(${u.id}, '${this._esc(u.nome)}')"`}
+                          title="${isMe ? 'Você não pode excluir sua própria conta' : 'Excluir usuário'}"
+                          class="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-colors ${isMe ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}">
+                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
                     </td>
-                  </tr>`).join('')}
+                  </tr>`;
+                }).join('')}
               </tbody>
             </table>
           </div>
         </div>`;
+
+      if (window.lucide) lucide.createIcons({ root: wrap });
 
       // Filtro local instantâneo
       container.querySelector('#input-filtro-usuarios')?.addEventListener('input', (e) => {
@@ -843,6 +1070,157 @@ const AuditoriaModule = {
     if (window.lucide) lucide.createIcons();
   },
 
+  // ─── EDIÇÃO DE USUÁRIO & CARGO (ADMIN) ──────────────────────────────────────
+  async abrirModalEdicao(id) {
+    const modal = document.getElementById('modal-editar-usuario');
+    const form = document.getElementById('form-editar-usuario');
+    if (!modal) return;
+    if (form) form.reset();
+
+    // Carregar setores se necessário
+    const selectSetor = document.getElementById('edit-user-setor');
+    if (selectSetor && (!this._setores || !this._setores.length)) {
+      try {
+        const res = await window.API.getSetores();
+        this._setores = Array.isArray(res) ? res : (res?.data || []);
+      } catch (_) {
+        this._setores = [];
+      }
+    }
+
+    // Buscar usuário da lista em memória ou da API
+    let u = (this._usuarios || []).find(item => Number(item.id) === Number(id));
+    if (!u) {
+      try {
+        const res = await window.API.getUsuarioById(id);
+        u = res?.data || res;
+      } catch (err) {
+        if (window.UI?.toast) {
+          window.UI.toast({ title: 'Erro', message: 'Não foi possível carregar os dados do usuário.', type: 'error' });
+        }
+        return;
+      }
+    }
+
+    if (!u) return;
+
+    // Preencher campos
+    document.getElementById('edit-user-id').value = u.id;
+    document.getElementById('edit-user-nome').value = u.nome || '';
+    document.getElementById('edit-user-email').value = u.email || '';
+    document.getElementById('edit-user-perfil').value = u.perfil || 'OPERADOR';
+    document.getElementById('edit-user-status').value = u.status || 'ATIVO';
+
+    const inputSenha = document.getElementById('edit-user-senha');
+    if (inputSenha) {
+      inputSenha.type = 'password';
+      inputSenha.value = '';
+    }
+
+    if (selectSetor) {
+      selectSetor.innerHTML = '<option value="">Sem setor definido</option>' +
+        (this._setores || []).map(s =>
+          `<option value="${s.id}" ${Number(s.id) === Number(u.setor_id) ? 'selected' : ''}>${this._esc(s.nome)}</option>`
+        ).join('');
+    }
+
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  },
+
+  async alternarStatus(id, novoStatus, nome) {
+    const usuarioAtual = window.Auth?.getUsuario?.();
+    if (usuarioAtual && Number(usuarioAtual.id) === Number(id)) {
+      if (window.UI?.toast) {
+        window.UI.toast({
+          title: 'Operação não permitida',
+          message: 'Você não pode alterar o status da sua própria conta.',
+          type: 'warning'
+        });
+      }
+      return;
+    }
+
+    const isAtivar = novoStatus === 'ATIVO';
+    const acaoTexto = isAtivar ? 'Ativar' : 'Inativar';
+
+    if (window.UI?.confirmModal) {
+      window.UI.confirmModal({
+        title: `${acaoTexto} Usuário`,
+        message: isAtivar
+          ? `Deseja reativar o acesso de "${nome}" ao sistema?`
+          : `Deseja inativar o acesso de "${nome}"? O colaborador perderá o acesso ao sistema até ser reativado.`,
+        confirmText: `Sim, ${acaoTexto}`,
+        danger: !isAtivar,
+        onConfirm: async () => {
+          try {
+            await window.API.updateUsuarioStatus(id, novoStatus);
+            if (window.UI?.toast) {
+              window.UI.toast({
+                title: `Usuário ${isAtivar ? 'Ativado' : 'Inativado'}`,
+                message: `O status de "${nome}" foi alterado para ${novoStatus}.`,
+                type: 'success'
+              });
+            }
+            if (this._container) await this._carregarTudo(this._container);
+          } catch (err) {
+            if (window.UI?.toast) {
+              window.UI.toast({
+                title: 'Erro ao alterar status',
+                message: err.message || 'Falha na alteração de status.',
+                type: 'error'
+              });
+            }
+          }
+        }
+      });
+    }
+  },
+
+  async excluirUsuario(id, nome) {
+    const usuarioAtual = window.Auth?.getUsuario?.();
+    if (usuarioAtual && Number(usuarioAtual.id) === Number(id)) {
+      if (window.UI?.toast) {
+        window.UI.toast({
+          title: 'Operação não permitida',
+          message: 'Você não pode excluir sua própria conta de administrador.',
+          type: 'warning'
+        });
+      }
+      return;
+    }
+
+    if (window.UI?.confirmModal) {
+      window.UI.confirmModal({
+        title: 'Excluir Usuário',
+        message: `Tem certeza que deseja remover o usuário "${nome}"? Esta operação desativará o usuário (Soft Delete) mantendo todo o histórico de auditoria preservado.`,
+        confirmText: 'Sim, Excluir',
+        danger: true,
+        onConfirm: async () => {
+          try {
+            await window.API.deleteUsuario(id);
+            if (window.UI?.toast) {
+              window.UI.toast({
+                title: 'Usuário Removido',
+                message: `O usuário "${nome}" foi removido com sucesso.`,
+                type: 'success'
+              });
+            }
+            if (this._container) await this._carregarTudo(this._container);
+          } catch (err) {
+            if (window.UI?.toast) {
+              window.UI.toast({
+                title: 'Erro ao excluir usuário',
+                message: err.message || 'Falha ao remover usuário.',
+                type: 'error'
+              });
+            }
+          }
+        }
+      });
+    }
+  },
+
   _gerarSenhaAleatoria() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
     let pass = '';
@@ -856,6 +1234,7 @@ const AuditoriaModule = {
     const s = String(status).toUpperCase();
     if (s === 'ATIVO') return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
     if (s === 'PENDENTE') return 'bg-amber-50 text-amber-700 border border-amber-200';
+    if (s === 'INATIVO') return 'bg-slate-100 text-slate-700 border border-slate-300';
     if (s === 'BLOQUEADO') return 'bg-rose-50 text-rose-700 border border-rose-200';
     return 'bg-slate-50 text-slate-600 border border-slate-200';
   },

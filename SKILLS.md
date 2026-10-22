@@ -264,7 +264,14 @@ Garantir o ciclo de vida completo de acesso e segurança dos usuários.
    - O Admin clica em **Aprovar**, escolhe o Perfil (`GESTOR`, `OPERADOR`, etc.) e o Setor.
    - Endpoint: `PATCH /api/v1/auditoria/usuarios-pendentes/:id/aprovar`.
    - O status é alterado para `ATIVO` e uma auditoria de `APROVAR_CADASTRO` é registrada.
-4. **Heartbeat em Tempo Real:**
+4. **Gestão de Usuários e Troca de Cargos pelo Administrador:**
+   - No módulo **Auditoria & Governança**, a aba **Todos os Usuários & Histórico** permite:
+     * **Cadastro Direto:** O Admin pode cadastrar colaboradores com senha provisória e ativação imediata (`POST /api/v1/usuarios`).
+     * **Editar e Trocar de Cargo:** Modal completo para alterar nome, e-mail, perfil/cargo (`ADMIN`, `GESTOR`, `OPERADOR`, `ADMINISTRACAO`, `LIMPEZA`), setor de lotação, status e redefinição opcional de senha (`PUT /api/v1/usuarios/:id`).
+     * **Alternar Status (Ativo / Inativo):** Ações rápidas na tabela para pausar ou reativar o acesso de colaboradores com confirmação via `window.UI.confirmModal` (`PATCH /api/v1/usuarios/:id/status`).
+     * **Excluir Usuário (Soft Delete):** Remoção lógica segura com confirmação via `window.UI.confirmModal` (`DELETE /api/v1/usuarios/:id`), preservando os registros e histórico de auditoria intactos.
+     * **Proteção de Autoexclusão:** O administrador logado fica impedido de alterar seu próprio status ou excluir sua própria conta.
+5. **Heartbeat em Tempo Real:**
    - O frontend dispara a cada 60s `POST /api/v1/auth/heartbeat`.
    - O banco atualiza `ultimo_heartbeat = NOW()`.
    - O Admin monitora em tempo real na aba **Usuários Online** (considerados ativos nos últimos 5 minutos).

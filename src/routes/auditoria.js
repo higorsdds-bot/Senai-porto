@@ -105,7 +105,7 @@ router.get('/usuarios', async (req, res) => {
     const where = conds.join(' AND ');
 
     const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.perfil, u.status, u.created_at,
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.created_at,
               u.ultimo_acesso, u.ultimo_heartbeat,
               s.nome AS setor_nome,
               CASE WHEN u.ultimo_heartbeat >= NOW() - INTERVAL 5 MINUTE THEN 1 ELSE 0 END AS online,

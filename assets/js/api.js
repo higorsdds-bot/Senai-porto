@@ -133,10 +133,15 @@ class ApiService {
   }
 
   // =========================================================================
-  // USUÁRIOS / SETORES
+  // USUÁRIOS
   // =========================================================================
   async getUsuarios() {
     return this.request(CONFIG.ENDPOINTS.USUARIOS, { method: 'GET' }, () => window.MockDB.getAll('usuarios'));
+  }
+
+  async getUsuarioById(id) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, { method: 'GET' },
+      () => window.MockDB.getById('usuarios', id));
   }
 
   async createUsuario(data) {
@@ -146,6 +151,29 @@ class ApiService {
     }, () => window.MockDB.create('usuarios', data));
   }
 
+  async updateUsuario(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }, () => window.MockDB.update('usuarios', id, data));
+  }
+
+  async updateUsuarioStatus(id, status) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }, () => window.MockDB.update('usuarios', id, { status }));
+  }
+
+  async deleteUsuario(id) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
+      method: 'DELETE'
+    }, () => window.MockDB.delete('usuarios', id));
+  }
+
+  // =========================================================================
+  // SETORES
+  // =========================================================================
   async getSetores() {
     return this.request(CONFIG.ENDPOINTS.SETORES, { method: 'GET' }, () => window.MockDB.getAll('setores'));
   }
@@ -404,25 +432,6 @@ class ApiService {
       body: JSON.stringify(dados)
     });
   }
-
-  // =========================================================================
-  // SETORES
-  // =========================================================================
-  async getSetores() {
-    return this.request(CONFIG.ENDPOINTS.SETORES, { method: 'GET' },
-      () => window.MockDB.getAll('setores'));
-  }
-
-  // =========================================================================
-  // USUÁRIOS (CRUD direto pelo Admin)
-  // =========================================================================
-  async createUsuario(data) {
-    return this.request(CONFIG.ENDPOINTS.USUARIOS, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    }, () => window.MockDB.create('usuarios', data));
-  }
-
 }
 
 
