@@ -355,13 +355,16 @@ const AuditoriaModule = {
         const btnSalvar = container.querySelector('#btn-salvar-novo-usuario');
 
         if (!nome || nome.length < 3) {
-          return alert('O nome deve ter no mínimo 3 caracteres.');
+          if (window.UI?.toast) window.UI.toast({ title: 'Campo obrigatório', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return;
         }
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          return alert('Informe um e-mail corporativo válido.');
+          if (window.UI?.toast) window.UI.toast({ title: 'E-mail inválido', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          return;
         }
         if (!senha || senha.length < 8) {
-          return alert('A senha provisória precisa ter pelo menos 8 caracteres.');
+          if (window.UI?.toast) window.UI.toast({ title: 'Senha fraca', message: 'A senha provisória precisa ter pelo menos 8 caracteres.', type: 'warning' });
+          return;
         }
 
         btnSalvar.disabled = true;
@@ -383,15 +386,13 @@ const AuditoriaModule = {
               message: `O colaborador "${nome}" foi cadastrado com sucesso e já está com acesso ativo!`,
               type: 'success'
             });
-          } else {
-            alert(`Usuário "${nome}" cadastrado com sucesso!`);
           }
 
           formCad.reset();
           fecharModalCad();
           await this._carregarTudo(container);
         } catch (err) {
-          alert(err.message || 'Erro ao cadastrar novo usuário.');
+          if (window.UI?.toast) window.UI.toast({ title: 'Erro no cadastro', message: err.message || 'Erro ao cadastrar novo usuário.', type: 'error' });
         } finally {
           btnSalvar.disabled = false;
           btnSalvar.innerHTML = `<i data-lucide="user-check" class="w-4 h-4"></i> Salvar Usuário`;
@@ -516,7 +517,21 @@ const AuditoriaModule = {
   },
 
   async rejeitarCadastro(id, nome) {
-    if (!confirm(`Deseja realmente rejeitar a solicitação de cadastro do usuário "${nome}"?`)) return;
+    const confirmado = await new Promise(resolve => {
+      if (window.UI?.confirmModal) {
+        window.UI.confirmModal({
+          title: 'Rejeitar Solicitação',
+          message: `Deseja realmente rejeitar a solicitação de cadastro do usuário "${nome}"?`,
+          confirmText: 'Rejeitar',
+          cancelText: 'Cancelar',
+          onConfirm: () => resolve(true),
+          onCancel: () => resolve(false)
+        });
+      } else {
+        resolve(window.confirm(`Deseja realmente rejeitar a solicitação de cadastro do usuário "${nome}"?`));
+      }
+    });
+    if (!confirmado) return;
 
     try {
       await window.API.rejeitarSolicitacaoCadastro(id);
@@ -530,7 +545,7 @@ const AuditoriaModule = {
       const container = document.getElementById('main-content');
       if (container) await this._carregarTudo(container);
     } catch (err) {
-      alert(err.message || 'Erro ao rejeitar cadastro.');
+      if (window.UI?.toast) window.UI.toast({ title: 'Erro', message: err.message || 'Erro ao rejeitar cadastro.', type: 'error' });
     }
   },
 
@@ -599,6 +614,10 @@ const AuditoriaModule = {
         <div class="flex items-center gap-2 mb-3">
           <input id="input-filtro-usuarios" type="text" placeholder="Filtrar por nome ou e-mail..."
             class="rounded-xl border border-slate-200 px-4 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 w-full sm:w-72">
+          <button type="button" onclick="AuditoriaModule.abrirModalCadastro()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer whitespace-nowrap">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar Novo Usuário
+          </button>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-hub-sm overflow-hidden">
@@ -790,6 +809,47 @@ const AuditoriaModule = {
     } catch (err) {
       wrap.innerHTML = `<div class="p-6 text-center text-xs text-red-500">${this._esc(err.message || 'Erro ao carregar logs.')}</div>`;
     }
+  },
+
+  // ─── CADASTRO MANUAL DE USUÁRIO (ADMIN) ─────────────────────────────────────
+  async abrirModalCadastro() {
+    const modal = document.getElementById('modal-cadastrar-usuario');
+    const form = document.getElementById('form-cadastrar-usuario');
+    if (!modal) return;
+    if (form) form.reset();
+
+    // Carregar setores via window.API (padrão do projeto)
+    const selectSetor = document.getElementById('cad-user-setor');
+    if (selectSetor && (!this._setores || !this._setores.length)) {
+      try {
+        const res = await window.API.getSetores();
+        this._setores = Array.isArray(res) ? res : (res?.data || []);
+      } catch (_) {
+        this._setores = [];
+      }
+    }
+    if (selectSetor) {
+      selectSetor.innerHTML = '<option value="">Sem setor definido</option>' +
+        (this._setores || []).map(s =>
+          `<option value="${s.id}">${this._esc(s.nome)}</option>`
+        ).join('');
+    }
+
+    // Resetar campo de senha para type password
+    const inputSenha = document.getElementById('cad-user-senha');
+    if (inputSenha) inputSenha.type = 'password';
+
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+  },
+
+  _gerarSenhaAleatoria() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
   },
 
   _statusBadgeUser(status) {

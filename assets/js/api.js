@@ -405,6 +405,24 @@ class ApiService {
     });
   }
 
+  // =========================================================================
+  // SETORES
+  // =========================================================================
+  async getSetores() {
+    return this.request(CONFIG.ENDPOINTS.SETORES, { method: 'GET' },
+      () => window.MockDB.getAll('setores'));
+  }
+
+  // =========================================================================
+  // USUÁRIOS (CRUD direto pelo Admin)
+  // =========================================================================
+  async createUsuario(data) {
+    return this.request(CONFIG.ENDPOINTS.USUARIOS, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, () => window.MockDB.create('usuarios', data));
+  }
+
 }
 
 
