@@ -14,6 +14,28 @@ class ApiService {
     return localStorage.getItem(window.CONFIG.STORAGE_TOKEN) || null;
   }
 
+  /**
+   * Resolve a URL completa de um upload/arquivo estático considerando o host da API.
+   * Suporta caminhos relativos (/uploads/...) mesmo quando o frontend roda em porta diferente.
+   */
+  resolveAssetUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    if (this.baseUrl && this.baseUrl.startsWith('http')) {
+      try {
+        const parsed = new URL(this.baseUrl);
+        return `${parsed.origin}${cleanUrl}`;
+      } catch (_) {}
+    }
+    if (typeof window !== 'undefined' && window.location && window.location.port === '5500') {
+      return `http://localhost:3001${cleanUrl}`;
+    }
+    return cleanUrl;
+  }
+
   async _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -214,7 +236,18 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.OCORRENCIAS, {
       method: 'POST',
       body: isForm ? data : JSON.stringify(data)
-    }, () => window.MockDB.create('ocorrencias', isForm ? Object.fromEntries(data) : data));
+    }, () => {
+      let payload = data;
+      if (isForm) {
+        payload = Object.fromEntries(data);
+        if (payload.foto_base64 && !payload.foto_url) {
+          payload.foto_url = payload.foto_base64;
+        } else if (payload.foto && payload.foto instanceof File && !payload.foto_url) {
+          payload.foto_url = URL.createObjectURL(payload.foto);
+        }
+      }
+      return window.MockDB.create('ocorrencias', payload);
+    });
   }
 
   async updateOcorrencia(id, data) {

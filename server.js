@@ -89,6 +89,9 @@ app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ success: false, message: 'Endpoint não encontrado.' });
   }
+  if (req.path.startsWith('/uploads/')) {
+    return res.status(404).json({ success: false, message: 'Arquivo de upload não encontrado.' });
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 // ─── ERROR HANDLER GLOBAL ────────────────────────────────────────────────────

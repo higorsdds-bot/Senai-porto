@@ -28,7 +28,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  limits: { 
+    fileSize: 25 * 1024 * 1024,  // 25MB para arquivos
+    fieldSize: 25 * 1024 * 1024  // 25MB para campos de texto (foto em Base64 via webcam)
+  },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'foto') {
       const permitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/gif'];

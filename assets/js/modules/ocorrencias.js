@@ -495,8 +495,8 @@ const OcorrenciasModule = {
             <!-- EVIDÊNCIA FOTOGRÁFICA -->
             ${o.foto_url ? `
               <div class="relative rounded-xl overflow-hidden border border-slate-200 group/img">
-                <img src="${this._esc(o.foto_url)}" alt="Evidência Fotográfica" class="w-full h-40 object-cover group-hover/img:scale-105 transition-transform duration-300">
-                <a href="${this._esc(o.foto_url)}" target="_blank" rel="noopener"
+                <img src="${this._esc(this._url(o.foto_url))}" alt="Evidência Fotográfica" class="w-full h-40 object-cover group-hover/img:scale-105 transition-transform duration-300">
+                <a href="${this._esc(this._url(o.foto_url))}" target="_blank" rel="noopener"
                   class="absolute inset-0 bg-slate-950/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
                   <i data-lucide="zoom-in" class="w-4 h-4 mr-1"></i> Abrir Foto
                 </a>
@@ -507,7 +507,7 @@ const OcorrenciasModule = {
 
             <!-- ANEXO/DOCUMENTO -->
             ${o.anexo_url ? `
-              <a href="${this._esc(o.anexo_url)}" target="_blank" rel="noopener"
+              <a href="${this._esc(this._url(o.anexo_url))}" target="_blank" rel="noopener"
                 class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2.5 rounded-xl transition-colors text-xs font-bold text-slate-700">
                 <i data-lucide="file-text" class="w-4 h-4 text-emerald-600 shrink-0"></i>
                 <span class="truncate flex-1">${this._esc(o.anexo_nome || 'Visualizar Arquivo Anexo')}</span>
@@ -596,9 +596,9 @@ const OcorrenciasModule = {
             <div>
               <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Evidência Fotográfica</h4>
               <div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                <img src="${this._esc(o.foto_url)}" alt="Foto da ocorrência" class="w-full max-h-80 object-contain bg-slate-900/5">
+                <img src="${this._esc(this._url(o.foto_url))}" alt="Foto da ocorrência" class="w-full max-h-80 object-contain bg-slate-900/5">
                 <div class="p-2.5 bg-white border-t border-slate-100 flex justify-end">
-                  <a href="${this._esc(o.foto_url)}" target="_blank" rel="noopener"
+                  <a href="${this._esc(this._url(o.foto_url))}" target="_blank" rel="noopener"
                     class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Abrir Foto em Tamanho Real
                   </a>
@@ -610,7 +610,7 @@ const OcorrenciasModule = {
           ${o.anexo_url ? `
             <div>
               <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Documento / Anexo</h4>
-              <a href="${this._esc(o.anexo_url)}" target="_blank" rel="noopener"
+              <a href="${this._esc(this._url(o.anexo_url))}" target="_blank" rel="noopener"
                 class="flex items-center justify-between p-3.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 rounded-2xl transition-colors">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
@@ -680,6 +680,14 @@ const OcorrenciasModule = {
     } catch (err) {
       alert(err.message || 'Erro ao alterar status.');
     }
+  },
+
+  _url(path) {
+    if (!path) return '';
+    if (window.API && typeof window.API.resolveAssetUrl === 'function') {
+      return window.API.resolveAssetUrl(path);
+    }
+    return path;
   },
 
   _esc(s) {
