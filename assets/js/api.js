@@ -139,6 +139,13 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.USUARIOS, { method: 'GET' }, () => window.MockDB.getAll('usuarios'));
   }
 
+  async createUsuario(data) {
+    return this.request(CONFIG.ENDPOINTS.USUARIOS, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }, () => window.MockDB.create('usuarios', data));
+  }
+
   async getSetores() {
     return this.request(CONFIG.ENDPOINTS.SETORES, { method: 'GET' }, () => window.MockDB.getAll('setores'));
   }

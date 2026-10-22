@@ -182,6 +182,84 @@ const AuditoriaModule = {
           </form>
         </div>
       </div>
+
+      <!-- MODAL DE CADASTRO MANUAL DE NOVO USUÁRIO (ADMIN) -->
+      <div id="modal-cadastrar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="user-plus" class="w-4 h-4 text-blue-600"></i> Cadastrar Novo Usuário
+            </h3>
+            <button type="button" id="btn-fechar-modal-cadastro" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <form id="form-cadastrar-usuario" class="space-y-4" novalidate>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+              <input type="text" id="cad-user-nome" required minlength="3"
+                placeholder="Ex: Carlos Eduardo de Oliveira"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+              <input type="email" id="cad-user-email" required
+                placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissão *</label>
+                <select id="cad-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                  <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
+                  <option value="GESTOR">GESTOR (Gestão Operacional)</option>
+                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
+                  <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+                  <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
+                <select id="cad-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                  <option value="">Carregando setores...</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-700">Senha Provisória *</label>
+                <button type="button" id="btn-gerar-senha-cad" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="key" class="w-3 h-3"></i> Gerar Senha Segura
+                </button>
+              </div>
+              <input type="password" id="cad-user-senha" required minlength="8"
+                placeholder="Mínimo de 8 caracteres"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white font-mono">
+            </div>
+
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-[11px] text-blue-700 flex items-start gap-2">
+              <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+              <span>O usuário cadastrado diretamente pelo administrador receberá status <strong>ATIVO</strong> e poderá realizar login imediatamente.</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button type="button" id="btn-cancelar-modal-cadastro"
+                class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button type="submit" id="btn-salvar-novo-usuario"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer">
+                <i data-lucide="user-check" class="w-4 h-4"></i> Salvar Usuário
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     `;
 
     this._bind(container);
@@ -243,6 +321,81 @@ const AuditoriaModule = {
         } finally {
           btn.disabled = false;
           btn.textContent = 'Confirmar Liberação';
+        }
+      });
+    }
+
+    // Modal de Cadastro Manual de Usuário
+    const modalCad = container.querySelector('#modal-cadastrar-usuario');
+    const fecharModalCad = () => modalCad?.classList.add('hidden');
+
+    container.querySelector('#btn-fechar-modal-cadastro')?.addEventListener('click', fecharModalCad);
+    container.querySelector('#btn-cancelar-modal-cadastro')?.addEventListener('click', fecharModalCad);
+
+    // Gerador de senha aleatória
+    container.querySelector('#btn-gerar-senha-cad')?.addEventListener('click', () => {
+      const inputSenha = container.querySelector('#cad-user-senha');
+      if (inputSenha) {
+        inputSenha.type = 'text';
+        inputSenha.value = this._gerarSenhaAleatoria();
+        inputSenha.select();
+      }
+    });
+
+    // Submit do Cadastro de Usuário
+    const formCad = container.querySelector('#form-cadastrar-usuario');
+    if (formCad) {
+      formCad.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nome = container.querySelector('#cad-user-nome')?.value.trim();
+        const email = container.querySelector('#cad-user-email')?.value.trim();
+        const perfil = container.querySelector('#cad-user-perfil')?.value;
+        const setor_id = container.querySelector('#cad-user-setor')?.value;
+        const senha = container.querySelector('#cad-user-senha')?.value;
+        const btnSalvar = container.querySelector('#btn-salvar-novo-usuario');
+
+        if (!nome || nome.length < 3) {
+          return alert('O nome deve ter no mínimo 3 caracteres.');
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return alert('Informe um e-mail corporativo válido.');
+        }
+        if (!senha || senha.length < 8) {
+          return alert('A senha provisória precisa ter pelo menos 8 caracteres.');
+        }
+
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Cadastrando...`;
+
+        try {
+          await window.API.createUsuario({
+            nome,
+            email,
+            senha,
+            perfil,
+            setor_id: setor_id ? Number(setor_id) : null,
+            status: 'ATIVO'
+          });
+
+          if (window.UI?.toast) {
+            window.UI.toast({
+              title: 'Usuário Criado',
+              message: `O colaborador "${nome}" foi cadastrado com sucesso e já está com acesso ativo!`,
+              type: 'success'
+            });
+          } else {
+            alert(`Usuário "${nome}" cadastrado com sucesso!`);
+          }
+
+          formCad.reset();
+          fecharModalCad();
+          await this._carregarTudo(container);
+        } catch (err) {
+          alert(err.message || 'Erro ao cadastrar novo usuário.');
+        } finally {
+          btnSalvar.disabled = false;
+          btnSalvar.innerHTML = `<i data-lucide="user-check" class="w-4 h-4"></i> Salvar Usuário`;
+          if (window.lucide) lucide.createIcons({ root: btnSalvar });
         }
       });
     }
