@@ -69,7 +69,14 @@ class ApiService {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        const err = new Error(errorBody.message || `Erro HTTP ${response.status}`);
+        let msg = errorBody.message || `Erro HTTP ${response.status}`;
+        if (errorBody.errors && typeof errorBody.errors === 'object') {
+          const details = Object.values(errorBody.errors).join(' ');
+          if (details && !msg.includes(details)) {
+            msg = `${msg}: ${details}`;
+          }
+        }
+        const err = new Error(msg);
         err.status = response.status;
         err.errors = errorBody.errors || null;
         throw err;

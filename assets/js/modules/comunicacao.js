@@ -237,9 +237,11 @@ window.ComunicacaoModule = {
             type="text" 
             name="titulo" 
             required 
+            minlength="3"
             placeholder="Ex: Atualização nos horários de funcionamento no feriado" 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
           />
+          <span class="text-[10px] text-slate-400">Mínimo de 3 caracteres</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -270,10 +272,12 @@ window.ComunicacaoModule = {
           <textarea 
             name="mensagem" 
             required 
+            minlength="3"
             rows="5" 
             placeholder="Escreva aqui os detalhes do informativo para a comunidade do HUB ES+..." 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
           ></textarea>
+          <span class="text-[10px] text-slate-400">Mínimo de 3 caracteres</span>
         </div>
       </form>
     `;
@@ -288,11 +292,26 @@ window.ComunicacaoModule = {
         if (!window.UI.validateForm(form)) return false;
 
         const formData = new FormData(form);
+        const titulo = (formData.get('titulo') || '').trim();
+        const mensagem = (formData.get('mensagem') || '').trim();
+        const prioridade = (formData.get('prioridade') || 'normal').toLowerCase();
+        const autorId = Number(formData.get('autor_id')) || usuarioLogado?.id;
+
+        if (titulo.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'O título deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return false;
+        }
+
+        if (mensagem.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'A mensagem deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return false;
+        }
+
         const payload = {
-          titulo: formData.get('titulo').trim(),
-          autor_id: Number(formData.get('autor_id')) || usuarioLogado?.id,
-          prioridade: formData.get('prioridade'),
-          mensagem: formData.get('mensagem').trim(),
+          titulo,
+          autor_id: autorId,
+          prioridade,
+          mensagem,
           data: new Date().toISOString().slice(0, 10)
         };
 

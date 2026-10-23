@@ -56,12 +56,14 @@ router.get('/:id', requirePermission('comunicados.visualizar'), async (req, res)
 router.post('/', requirePermission('comunicados.criar'), async (req, res) => {
   const { titulo, mensagem, prioridade } = req.body;
   const erros = {};
-  if (!titulo || titulo.trim().length < 5) erros.titulo = 'Título inválido (mínimo 5 caracteres).';
-  if (!mensagem || mensagem.trim().length < 10) erros.mensagem = 'Mensagem inválida (mínimo 10 caracteres).';
+  if (!titulo || titulo.trim().length < 3) erros.titulo = 'Título deve ter ao menos 3 caracteres.';
+  if (!mensagem || mensagem.trim().length < 3) erros.mensagem = 'Mensagem deve ter ao menos 3 caracteres.';
+  const prioridadeNorm = String(prioridade || 'normal').toLowerCase();
   const prioridades = ['alta', 'media', 'normal'];
-  if (prioridade && !prioridades.includes(prioridade)) erros.prioridade = `Use: ${prioridades.join(', ')}`;
+  if (prioridadeNorm && !prioridades.includes(prioridadeNorm)) erros.prioridade = `Prioridade deve ser: ${prioridades.join(', ')}`;
   if (Object.keys(erros).length > 0) {
-    return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
+    const detalhe = Object.values(erros).join(' ');
+    return res.status(422).json({ success: false, message: detalhe || 'Dados inválidos.', errors: erros });
   }
   try {
     const pool = getPool();
