@@ -314,9 +314,38 @@ class AppRouter {
   async atualizarBadgeComunicados() {
     try {
       const badge = document.getElementById('badge-topbar-notifications');
-      if (!badge || !window.API || typeof window.API.getComunicados !== 'function') return;
+      const btnSino = document.getElementById('btn-topbar-notifications');
+      if (!badge) return;
 
-      const comunicados = await window.API.getComunicados();
+      const u = window.Auth ? window.Auth.getUsuario() : null;
+      if (!u) {
+        badge.classList.add('hidden');
+        badge.classList.remove('animate-pulse');
+        return;
+      }
+
+      // Notificações só aparecem para perfis autorizados
+      const podeVer = window.Auth.isAdmin() || window.Auth.hasPermission('comunicados.visualizar');
+      if (!podeVer) {
+        badge.classList.add('hidden');
+        badge.classList.remove('animate-pulse');
+        if (btnSino) btnSino.classList.add('hidden');
+        return;
+      } else {
+        if (btnSino) btnSino.classList.remove('hidden');
+      }
+
+      if (!window.API || typeof window.API.getComunicados !== 'function') return;
+
+      let comunicados = [];
+      try {
+        comunicados = await window.API.getComunicados();
+      } catch (errApi) {
+        badge.classList.add('hidden');
+        badge.classList.remove('animate-pulse');
+        return;
+      }
+
       const lista = Array.isArray(comunicados) ? comunicados : [];
       if (lista.length === 0) {
         badge.classList.add('hidden');
@@ -324,8 +353,9 @@ class AppRouter {
         return;
       }
 
-      // Verifica se houve novos comunicados após a última abertura do sino
-      const ultimaLeitura = parseInt(localStorage.getItem('hub_notificacoes_lidas_timestamp') || '0', 10);
+      // Verifica se houve novos comunicados após a última abertura do sino PARA ESTE PERFIL/USUÁRIO
+      const storageKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_timestamp') : 'hub_notificacoes_lidas_timestamp';
+      const ultimaLeitura = parseInt(localStorage.getItem(storageKey) || '0', 10);
       const naoLidos = lista.filter(c => {
         const time = new Date(c.created_at || c.data || 0).getTime();
         return time > ultimaLeitura;
@@ -345,8 +375,9 @@ class AppRouter {
   }
 
   async abrirCentralComunicadosModal() {
-    // Esconde imediatamente o ícone vermelho e registra a leitura
-    localStorage.setItem('hub_notificacoes_lidas_timestamp', Date.now().toString());
+    // Esconde imediatamente o ícone vermelho e registra a leitura para este usuário/perfil
+    const storageKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_timestamp') : 'hub_notificacoes_lidas_timestamp';
+    localStorage.setItem(storageKey, Date.now().toString());
     const badge = document.getElementById('badge-topbar-notifications');
     if (badge) {
       badge.classList.add('hidden');

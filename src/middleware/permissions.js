@@ -42,6 +42,8 @@ const FIXED_PROFILE_PERMISSIONS = {
   ],
   LIMPEZA: [
     'comunicados.visualizar',
+    'limpeza.visualizar',
+    'limpeza.editar',
     'compras.visualizar_proprias',
     'compras.criar'
   ]

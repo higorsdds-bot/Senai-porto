@@ -56,6 +56,14 @@ class AuthManager {
         return this.hasAnyPermission(permissionKeys);
     }
 
+    getUserStorageKey(prefix) {
+        const u = this.getUsuario();
+        if (!u) return `${prefix}_guest`;
+        const perfil = String(u.perfil || 'perfil').toLowerCase().trim();
+        const id = u.id || 'anon';
+        return `${prefix}_${perfil}_${id}`;
+    }
+
     async login(email, senha) {
         const res = await window.API.login(email, senha);
         if (res?.success && res.data?.token) {
@@ -71,6 +79,12 @@ class AuthManager {
             this.modulos = usuario.modulos;
             this.permissionsReady = true;
             this.iniciarHeartbeat();
+
+            // Atualiza imediatamente o badge de notificações para o perfil logado
+            if (window.App && typeof window.App.atualizarBadgeComunicados === 'function') {
+                window.App.atualizarBadgeComunicados();
+            }
+
             return res.data;
         }
         throw new Error(res?.message || 'Falha no login.');
@@ -90,6 +104,14 @@ class AuthManager {
         this.permissoes = [];
         this.modulos = [];
         this.permissionsReady = false;
+
+        // Limpa badge do sino na tela de login
+        const badge = document.getElementById('badge-topbar-notifications');
+        if (badge) {
+            badge.classList.add('hidden');
+            badge.classList.remove('animate-pulse');
+        }
+
         this.renderizarTelaLogin();
     }
 

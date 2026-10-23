@@ -534,13 +534,20 @@ class UIManager {
     // Ordena do mais recente para o mais antigo
     lista.sort((a, b) => new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0));
 
-    // 1. Marca imediatamente como visto no localStorage
+    // 1. Marca imediatamente como visto no localStorage PARA ESTE PERFIL/USUÁRIO
     try {
-      localStorage.setItem('hub_comunicados_alta_vistos_timestamp', Date.now().toString());
-      const vistosAtuais = JSON.parse(localStorage.getItem('hub_comunicados_alta_vistos_ids') || '[]');
+      const timeKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp') 
+        : 'hub_comunicados_alta_vistos_timestamp';
+      const idsKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids') 
+        : 'hub_comunicados_alta_vistos_ids';
+
+      localStorage.setItem(timeKey, Date.now().toString());
+      const vistosAtuais = JSON.parse(localStorage.getItem(idsKey) || '[]');
       const novosIds = lista.map(c => c.id);
       const unificados = Array.from(new Set([...vistosAtuais, ...novosIds]));
-      localStorage.setItem('hub_comunicados_alta_vistos_ids', JSON.stringify(unificados));
+      localStorage.setItem(idsKey, JSON.stringify(unificados));
     } catch (e) {
       console.warn('Falha ao persistir visualização no localStorage:', e);
     }

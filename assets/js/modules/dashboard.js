@@ -48,12 +48,22 @@ window.DashboardModule = {
         return new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0);
       });
 
-      // Todos os comunicados de alta prioridade
-      const todosAlta = listaComunicados.filter(c => c.prioridade === 'alta');
+      // Verifica se o usuário tem permissão para ver comunicados
+      const podeVerComunicados = window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('comunicados.visualizar')) : true;
 
-      // Verifica quais comunicados de alta prioridade ainda não foram vistos/abertos
-      const vistosTimestamp = parseInt(localStorage.getItem('hub_comunicados_alta_vistos_timestamp') || '0', 10);
-      const vistosIds = JSON.parse(localStorage.getItem('hub_comunicados_alta_vistos_ids') || '[]');
+      // Todos os comunicados de alta prioridade
+      const todosAlta = podeVerComunicados ? listaComunicados.filter(c => c.prioridade === 'alta') : [];
+
+      // Verifica quais comunicados de alta prioridade ainda não foram vistos/abertos PARA ESTE PERFIL/USUÁRIO
+      const timeKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp') 
+        : 'hub_comunicados_alta_vistos_timestamp';
+      const idsKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids') 
+        : 'hub_comunicados_alta_vistos_ids';
+
+      const vistosTimestamp = parseInt(localStorage.getItem(timeKey) || '0', 10);
+      const vistosIds = JSON.parse(localStorage.getItem(idsKey) || '[]');
 
       const comunicadosAltaNaoVistos = todosAlta.filter(c => {
         const time = new Date(c.created_at || c.data || 0).getTime();
