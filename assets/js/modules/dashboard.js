@@ -39,7 +39,7 @@ window.DashboardModule = {
         window.API.getComunicados().catch(() => [])
       ]);
 
-      // Comunicado urgente (prioridade alta) em destaque
+      // Comunicados de alta prioridade em destaque
       const listaComunicados = Array.isArray(comunicados) ? [...comunicados] : [];
       const prioridadePeso = { alta: 3, media: 2, normal: 1 };
       listaComunicados.sort((a, b) => {
@@ -47,7 +47,21 @@ window.DashboardModule = {
         if (pDiff !== 0) return pDiff;
         return new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0);
       });
-      const comunicadoUrgente = listaComunicados.find(c => c.prioridade === 'alta');
+
+      // Todos os comunicados de alta prioridade
+      const todosAlta = listaComunicados.filter(c => c.prioridade === 'alta');
+
+      // Verifica quais comunicados de alta prioridade ainda não foram vistos/abertos
+      const vistosTimestamp = parseInt(localStorage.getItem('hub_comunicados_alta_vistos_timestamp') || '0', 10);
+      const vistosIds = JSON.parse(localStorage.getItem('hub_comunicados_alta_vistos_ids') || '[]');
+
+      const comunicadosAltaNaoVistos = todosAlta.filter(c => {
+        const time = new Date(c.created_at || c.data || 0).getTime();
+        const jaVistoPorTime = vistosTimestamp > 0 && time <= vistosTimestamp;
+        const jaVistoPorId = vistosIds.includes(c.id);
+        return !(jaVistoPorTime || jaVistoPorId);
+      });
+      const temAltaNaoVisto = comunicadosAltaNaoVistos.length > 0;
 
       // Métricas calculadas
       const ocorrenciasAbertas = ocorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
@@ -84,24 +98,34 @@ window.DashboardModule = {
             </div>
           </div>
 
-          <!-- Banner de Comunicado Urgente (se houver prioridade alta ativa) -->
-          ${comunicadoUrgente ? `
-            <div class="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <!-- Banner de Comunicado Urgente (se houver comunicados de alta prioridade não vistos) -->
+          ${temAltaNaoVisto ? `
+            <div id="banner-comunicado-urgente" class="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div class="flex items-center gap-3.5">
                 <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
                   <i data-lucide="megaphone" class="w-5 h-5"></i>
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white tracking-wider animate-pulse">Aviso Urgente</span>
-                    <span class="text-xs text-rose-700 dark:text-rose-300 font-bold">${comunicadoUrgente.titulo}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white tracking-wider animate-pulse">
+                      Aviso Urgente ${comunicadosAltaNaoVistos.length > 1 ? `(${comunicadosAltaNaoVistos.length})` : ''}
+                    </span>
+                    <span class="text-xs text-rose-700 dark:text-rose-300 font-bold">
+                      ${comunicadosAltaNaoVistos.length === 1 
+                        ? comunicadosAltaNaoVistos[0].titulo 
+                        : `Atenção: ${comunicadosAltaNaoVistos.length} comunicados de alta prioridade`}
+                    </span>
                   </div>
-                  <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">${comunicadoUrgente.mensagem}</p>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">
+                    ${comunicadosAltaNaoVistos.length === 1 
+                      ? comunicadosAltaNaoVistos[0].mensagem 
+                      : `"${comunicadosAltaNaoVistos[0].titulo}" e mais ${comunicadosAltaNaoVistos.length - 1} comunicado(s) urgente(s). Clique para ver todos.`}
+                  </p>
                 </div>
               </div>
-              <button onclick="window.UI.visualizarComunicado(${comunicadoUrgente.id})" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition-all shrink-0">
+              <button onclick="window.UI.visualizarComunicadosAlta()" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl shadow-sm transition-all shrink-0">
                 <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                Ler Comunicado
+                ${comunicadosAltaNaoVistos.length > 1 ? `Ver Todos os Comunicados (${comunicadosAltaNaoVistos.length})` : 'Ler Comunicado'}
               </button>
             </div>
           ` : ''}

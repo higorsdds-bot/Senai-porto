@@ -507,6 +507,146 @@ class UIManager {
 
     return modal;
   }
+
+  // =========================================================================
+  // MODAL DE TODOS OS COMUNICADOS DE ALTA PRIORIDADE
+  // =========================================================================
+  async visualizarComunicadosAlta(listaCustom = null) {
+    let lista = listaCustom;
+    if (!lista || !Array.isArray(lista) || lista.length === 0) {
+      if (window.API && typeof window.API.getComunicados === 'function') {
+        try {
+          const todos = await window.API.getComunicados();
+          lista = (Array.isArray(todos) ? todos : []).filter(c => c.prioridade === 'alta');
+        } catch (e) {
+          console.error('Erro ao buscar comunicados de alta prioridade:', e);
+        }
+      }
+    } else {
+      lista = lista.filter(c => c.prioridade === 'alta');
+    }
+
+    if (!lista || lista.length === 0) {
+      this.toast({ title: 'Aviso', message: 'Nenhum comunicado de alta prioridade ativo no momento.', type: 'info' });
+      return;
+    }
+
+    // Ordena do mais recente para o mais antigo
+    lista.sort((a, b) => new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0));
+
+    // 1. Marca imediatamente como visto no localStorage
+    try {
+      localStorage.setItem('hub_comunicados_alta_vistos_timestamp', Date.now().toString());
+      const vistosAtuais = JSON.parse(localStorage.getItem('hub_comunicados_alta_vistos_ids') || '[]');
+      const novosIds = lista.map(c => c.id);
+      const unificados = Array.from(new Set([...vistosAtuais, ...novosIds]));
+      localStorage.setItem('hub_comunicados_alta_vistos_ids', JSON.stringify(unificados));
+    } catch (e) {
+      console.warn('Falha ao persistir visualização no localStorage:', e);
+    }
+
+    // 2. Faz o banner sumir imediatamente do DOM com transição suave
+    const banner = document.getElementById('banner-comunicado-urgente');
+    if (banner) {
+      banner.style.transition = 'all 0.3s ease-out';
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        if (banner && banner.parentNode) banner.remove();
+      }, 300);
+    }
+
+    // 3. Monta o conteúdo exibindo TODOS os comunicados de alta prioridade
+    const total = lista.length;
+    const contentHtml = `
+      <div class="space-y-4">
+        <!-- Alerta Informativo Superior -->
+        <div class="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
+            <p class="text-xs font-semibold text-rose-800 dark:text-rose-300">
+              ${total === 1 ? 'Existe 1 comunicado de alta prioridade' : `Existem ${total} comunicados de alta prioridade que requerem atenção imediata.`}
+            </p>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white shrink-0 tracking-wider">
+            Urgente
+          </span>
+        </div>
+
+        <!-- Lista com TODOS os comunicados de alta prioridade -->
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          ${lista.map((item, idx) => {
+            const dataObj = item.created_at ? new Date(item.created_at) : (item.data ? new Date(item.data) : new Date());
+            const dataFmt = !isNaN(dataObj)
+              ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : (item.data || 'Data recente');
+            const autor = item.autor_nome || item.autor || 'Administração HUB ES+';
+
+            return `
+              <div class="p-5 rounded-2xl border-2 border-rose-200 dark:border-rose-900/80 bg-white dark:bg-slate-900/90 shadow-sm space-y-3 relative overflow-hidden transition-all hover:border-rose-400 dark:hover:border-rose-700">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-rose-100 dark:border-rose-900/40">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                      <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400"></i>
+                      Alta Prioridade ${total > 1 ? `(#${idx + 1} de ${total})` : ''}
+                    </span>
+                    <span class="text-[11px] text-slate-400 font-medium">• ${dataFmt}</span>
+                  </div>
+                  <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                    ${autor}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 class="text-base font-black text-slate-900 dark:text-white leading-snug">
+                    ${item.titulo}
+                  </h3>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+                  <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line select-text">
+                    ${item.mensagem}
+                  </p>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Rodapé informativo -->
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span class="text-slate-400">Estes avisos foram marcados como lidos.</span>
+          <button id="btn-modal-alta-ir-central" class="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1 transition-colors">
+            <span>Acessar Central de Comunicação</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const modal = this.openModal({
+      title: 'Comunicados de Alta Prioridade',
+      subtitle: `${total} aviso(s) urgente(s) ativo(s) no HUB ES+`,
+      maxWidth: 'max-w-2xl',
+      contentHtml,
+      cancelLabel: 'Compreendi e Fechar'
+    });
+
+    setTimeout(() => {
+      document.getElementById('btn-modal-alta-ir-central')?.addEventListener('click', () => {
+        const mc = document.getElementById('hub-modal-container');
+        if (mc) {
+          mc.classList.add('hidden');
+          mc.classList.remove('flex');
+          mc.innerHTML = '';
+        }
+        window.location.hash = '#comunicacao';
+      });
+    }, 50);
+
+    return modal;
+  }
 }
 
 window.UI = new UIManager();
