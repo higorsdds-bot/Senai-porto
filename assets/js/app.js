@@ -317,13 +317,27 @@ class AppRouter {
       if (!badge || !window.API || typeof window.API.getComunicados !== 'function') return;
 
       const comunicados = await window.API.getComunicados();
-      const count = Array.isArray(comunicados) ? comunicados.length : 0;
-      if (count > 0) {
+      const lista = Array.isArray(comunicados) ? comunicados : [];
+      if (lista.length === 0) {
+        badge.classList.add('hidden');
+        badge.classList.remove('animate-pulse');
+        return;
+      }
+
+      // Verifica se houve novos comunicados após a última abertura do sino
+      const ultimaLeitura = parseInt(localStorage.getItem('hub_notificacoes_lidas_timestamp') || '0', 10);
+      const naoLidos = lista.filter(c => {
+        const time = new Date(c.created_at || c.data || 0).getTime();
+        return time > ultimaLeitura;
+      });
+
+      if (naoLidos.length > 0) {
         badge.classList.remove('hidden');
-        const temAlta = comunicados.some(c => c.prioridade === 'alta');
+        const temAlta = naoLidos.some(c => c.prioridade === 'alta');
         badge.classList.toggle('animate-pulse', temAlta);
       } else {
         badge.classList.add('hidden');
+        badge.classList.remove('animate-pulse');
       }
     } catch (err) {
       // Silencioso em caso de inicialização ou rede
@@ -331,6 +345,14 @@ class AppRouter {
   }
 
   async abrirCentralComunicadosModal() {
+    // Esconde imediatamente o ícone vermelho e registra a leitura
+    localStorage.setItem('hub_notificacoes_lidas_timestamp', Date.now().toString());
+    const badge = document.getElementById('badge-topbar-notifications');
+    if (badge) {
+      badge.classList.add('hidden');
+      badge.classList.remove('animate-pulse');
+    }
+
     try {
       let comunicados = [];
       try {

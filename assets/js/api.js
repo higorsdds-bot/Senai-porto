@@ -388,6 +388,13 @@ class ApiService {
       () => window.MockDB.update('limpeza', id, data));
   }
 
+  async updateLimpezaStatus(id, status) {
+    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }, () => window.MockDB.update('limpeza', id, { status }));
+  }
+
   async deleteLimpeza(id) {
     return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('limpeza', id));

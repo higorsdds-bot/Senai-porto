@@ -244,6 +244,18 @@ class UIManager {
         dotClass = 'bg-rose-500';
         break;
 
+      // Limpeza / Status de Ambientes
+      case 'limpo':
+        label = 'Limpo';
+        colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+        dotClass = 'bg-emerald-500';
+        break;
+      case 'nao_limpo':
+        label = 'Não Limpo';
+        colorClasses = 'bg-rose-50 text-rose-700 border-rose-200/80';
+        dotClass = 'bg-rose-500';
+        break;
+
       // Ocorrências / Limpeza
       case 'aberto':
         label = 'Aberto';

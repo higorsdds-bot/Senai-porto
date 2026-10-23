@@ -78,19 +78,107 @@ router.post('/', requirePermission('limpeza.criar'), async (req, res) => {
 // PUT /api/v1/limpeza/:id
 router.put('/:id', requirePermission('limpeza.editar'), async (req, res) => {
   const { local, descricao, responsavel_id, data_prevista, status } = req.body;
-  if (!local || local.trim().length < 3) {
-    return res.status(422).json({ success: false, message: 'Local inválido.', errors: { local: 'Mínimo 3 caracteres.' } });
-  }
   try {
     const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT * FROM limpeza WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [req.params.id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Registro de limpeza não encontrado.' });
+    }
+    const atual = rows[0];
+
+    const novoLocal = local !== undefined && local !== null ? String(local).trim() : atual.local;
+    if (!novoLocal || novoLocal.length < 3) {
+      return res.status(422).json({ success: false, message: 'Local inválido (mínimo 3 caracteres).' });
+    }
+
+    const novaDescricao = descricao !== undefined ? (descricao?.trim() || null) : atual.descricao;
+    const novoResponsavelId = responsavel_id !== undefined ? (responsavel_id || null) : atual.responsavel_id;
+    const novaDataPrevista = data_prevista !== undefined ? (data_prevista || null) : atual.data_prevista;
+
+    let novoStatus = status !== undefined ? String(status).trim().toLowerCase() : atual.status;
+    if (novoStatus === 'limpo') novoStatus = 'concluido';
+    if (novoStatus === 'nao_limpo') novoStatus = 'pendente';
+
     await pool.query(
       `UPDATE limpeza SET local = ?, descricao = ?, responsavel_id = ?, data_prevista = ?, status = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
-      [local.trim(), descricao?.trim() || null, responsavel_id || null, data_prevista || null, status || 'pendente', req.params.id]
+      [novoLocal, novaDescricao, novoResponsavelId, novaDataPrevista, novoStatus, req.params.id]
     );
-    await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'EDITAR_LIMPEZA', entidade: 'limpeza', entidade_id: parseInt(req.params.id), descricao: `Tarefa de limpeza #${req.params.id} editada.`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });
-    return res.json({ success: true, message: 'Tarefa atualizada.' });
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_LIMPEZA',
+      entidade: 'limpeza',
+      entidade_id: parseInt(req.params.id),
+      descricao: `Tarefa de limpeza #${req.params.id} (${novoLocal}) editada. Status: ${novoStatus}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({ success: true, message: 'Tarefa de limpeza atualizada com sucesso.' });
   } catch (err) {
+    console.error('[LIMPEZA] PUT:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao atualizar tarefa.' });
+  }
+});
+
+// PATCH /api/v1/limpeza/:id/status (Alternar se está limpo ou não)
+router.patch('/:id/status', requirePermission('limpeza.editar'), async (req, res) => {
+  const { status } = req.body;
+  if (!status) {
+    return res.status(422).json({ success: false, message: 'O status é obrigatório.' });
+  }
+
+  let statusNormalizado = String(status).trim().toLowerCase();
+  if (statusNormalizado === 'limpo') statusNormalizado = 'concluido';
+  if (statusNormalizado === 'nao_limpo') statusNormalizado = 'pendente';
+
+  const statusPermitidos = ['pendente', 'em_execucao', 'concluido', 'limpo', 'nao_limpo'];
+  if (!statusPermitidos.includes(statusNormalizado)) {
+    return res.status(422).json({
+      success: false,
+      message: 'Status inválido. Use limpo, nao_limpo, pendente, em_execucao ou concluido.'
+    });
+  }
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT id, local, status FROM limpeza WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [req.params.id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Registro de limpeza não encontrado.' });
+    }
+
+    const anterior = rows[0].status;
+    await pool.query(
+      `UPDATE limpeza SET status = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
+      [statusNormalizado, req.params.id]
+    );
+
+    const descStatus = statusNormalizado === 'concluido' ? 'Limpo' : (statusNormalizado === 'pendente' ? 'Não Limpo' : statusNormalizado);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'ATUALIZAR_STATUS_LIMPEZA',
+      entidade: 'limpeza',
+      entidade_id: parseInt(req.params.id),
+      descricao: `Status de limpeza no local "${rows[0].local}" alterado de "${anterior}" para "${statusNormalizado}".`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: `Status atualizado: ambiente marcado como ${descStatus}.`,
+      data: { id: parseInt(req.params.id), status: statusNormalizado }
+    });
+  } catch (err) {
+    console.error('[LIMPEZA] PATCH /status:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao atualizar status de limpeza.' });
   }
 });
 
