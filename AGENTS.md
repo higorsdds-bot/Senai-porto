@@ -24,6 +24,7 @@ O usuário e a equipe definiram regras inegociáveis de preservação arquitetur
 - ❌ **NÃO deixe ações de escrita sem auditoria**. Sempre invoque `registrarAuditoria(...)` em operações de criação, edição, deleção e autenticação.
 - ❌ **NÃO use `fetch()` solto nos módulos do frontend**. Toda requisição deve ser intermediada por `window.API` em `assets/js/api.js`.
 - ❌ **NÃO use `alert()` ou `confirm()` nativos**. Utilize a camada de interface `window.UI.toast(...)` e `window.UI.confirmModal(...)`.
+- ❌ **NÃO use chaves globais cegas no `localStorage` para leitura/notificações**. Utilize sempre `window.Auth.getUserStorageKey(prefix)` para que estados de leitura e avisos sejam estritamente isolados por usuário e perfil (`${prefix}_${perfil}_${id}`).
 
 ---
 
@@ -36,4 +37,5 @@ Sempre que implementar uma nova funcionalidade ou corrigir um bug, certifique-se
 - [ ] As respostas da API seguem o envelope `{ success: true, data }` ou `{ success: false, message }`.
 - [ ] As novas colunas ou tabelas foram criadas com script incremental em `src/database/` e documentadas em `src/database/schema.sql`.
 - [ ] Novas permissões foram adicionadas no `src/database/seed.js` e vinculadas aos perfis correspondentes.
+- [ ] As notificações e avisos verificam as permissões do perfil ativo e mantêm isolamento de leitura por perfil.
 - [ ] O layout suporta tema Claro e tema Escuro (`dark:`).

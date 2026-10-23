@@ -275,6 +275,12 @@ Garantir o ciclo de vida completo de acesso e segurança dos usuários.
    - O frontend dispara a cada 60s `POST /api/v1/auth/heartbeat`.
    - O banco atualiza `ultimo_heartbeat = NOW()`.
    - O Admin monitora em tempo real na aba **Usuários Online** (considerados ativos nos últimos 5 minutos).
+6. **Notificações, Comunicados e Isolamento de Estado por Perfil:**
+   - NUNCA utilize chaves globais estáticas no `localStorage` para leitura de notificações ou avisos (ex.: `hub_notificacoes_lidas_timestamp`).
+   - Utilize sempre `window.Auth.getUserStorageKey(prefix)` para gerar chaves isoladas no padrão `${prefix}_${perfil}_${id}`.
+   - Quando um perfil abre as notificações, a marcação de leitura é salva estritamente para aquele usuário/perfil. Ao alternar para outro usuário, o novo colaborador visualiza todas as notificações pendentes dele.
+   - Notificações e avisos urgentes só são processados para perfis autorizados (`comunicados.visualizar` ou `isAdmin()`).
+   - Múltiplos comunicados de alta prioridade são exibidos conjuntamente via `window.UI.visualizarComunicadosAlta()`, removendo o banner apenas para o perfil que interagiu.
 
 ---
 
@@ -379,6 +385,10 @@ Construir interfaces elegantes, coesas e consistentes com os tokens oficiais do 
        }
      });
      ```
+   - Badges com Suporte a Higiene (`window.UI.renderBadge`):
+     Suporta nativamente `'limpo'` (verde esmeralda) e `'nao_limpo'` (vermelho rose), além dos status convencionais (`'pendente'`, `'em_execucao'`, `'concluido'`).
+   - Modal Coletivo de Alta Prioridade:
+     `window.UI.visualizarComunicadosAlta(lista)` exibe todos os comunicados urgentes ativos em cartões individuais completos, persistindo o estado de leitura isolado por usuário/perfil e fechando o banner com transição suave.
 
 ---
 

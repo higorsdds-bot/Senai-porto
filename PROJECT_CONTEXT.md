@@ -177,6 +177,10 @@ Senai-porto/
    - Use `window.UI.openModal({ title, content, confirmText, onConfirm })`.
 5. **Ícones Lucide:**
    - Sempre que renderizar HTML dinamicamente com `<i data-lucide="..."></i>`, invoque `if (window.lucide) window.lucide.createIcons();` após injetar o conteúdo no DOM.
+6. **Isolamento de Estado no LocalStorage por Perfil:**
+   - NUNCA salve status de leitura de avisos, badges ou notificações em chaves globais estáticas no `localStorage`.
+   - Utilize sempre `window.Auth.getUserStorageKey(prefix)` para gerar chaves com escopo do perfil e do usuário logado: `${prefix}_${perfil}_${id}`.
+   - Isso garante que a alternância entre contas e perfis diferentes em uma mesma máquina preserve o status de "não lido" e as notificações para cada perfil autorizado.
 
 ---
 
