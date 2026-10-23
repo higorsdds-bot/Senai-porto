@@ -110,6 +110,7 @@ Senai-porto/
         ├── insumos.js                # Almoxarifado e movimentações de estoque
         ├── comunicados.js            # Mural de avisos e comunicados internos
         ├── dashboard.js              # Agrupamento de métricas e KPIs
+        ├── publico.js                # Rotas públicas sem autenticação (comunicados e eventos para visitantes)
         └── auditoria.js              # Consulta de logs, usuários online e aprovação de cadastros
 ```
 
@@ -139,8 +140,9 @@ Senai-porto/
      { "success": false, "message": "Dados inválidos.", "errors": { "campo": "Descrição do erro" } }
      ```
 5. **Autenticação e Autorização em Rotas:**
-   - Todas as rotas de negócio devem usar `authMiddleware`.
+   - Todas as rotas de negócio operacionais devem usar `authMiddleware`.
    - Rotas específicas devem usar `requirePermission('modulo.acao')` ou `requireAnyPermission(...)`.
+   - **Exceção de Rotas Públicas:** Endpoints abertos para consulta pública/visitantes residem exclusivamente em `/api/v1/publico/*` (`src/routes/publico.js`), sem `authMiddleware`, estritamente com método `GET` (somente leitura de comunicados e eventos), sem expor dados confidenciais.
    - O usuário autenticado fica disponível em `req.usuario` com `{ id, nome, email, perfil, setor_id, status }`.
 6. **Auditoria Obrigatória em Ações de Escrita:**
    - Em operações de criação, alteração sensível, deleção, login/logout e aprovações, invoque `registrarAuditoria`:

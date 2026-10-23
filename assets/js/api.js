@@ -61,8 +61,10 @@ class ApiService {
       const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
       if (response.status === 401) {
-        // Sessão expirada/inválida: limpa e volta pro login
-        window.Auth?.forcarLogout();
+        // Sessão expirada/inválida: limpa e volta pro login (se não for visitante)
+        if (!window.Auth?.isVisitante()) {
+          window.Auth?.forcarLogout();
+        }
         const errBody = await response.json().catch(() => ({}));
         throw new Error(errBody.message || 'Sessão expirada. Faça login novamente.');
       }
@@ -450,6 +452,21 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(dados)
     });
+  }
+
+  // =========================================================================
+  // ROTAS PÚBLICAS (Visitante — sem autenticação)
+  // =========================================================================
+  async getPublicComunicados() {
+    return this.request('/publico/comunicados', { method: 'GET' });
+  }
+
+  async getPublicComunicado(id) {
+    return this.request(`/publico/comunicados/${id}`, { method: 'GET' });
+  }
+
+  async getPublicEventos() {
+    return this.request('/publico/eventos', { method: 'GET' });
   }
 }
 

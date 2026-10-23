@@ -16,11 +16,21 @@ window.AgendaModule = {
     container.innerHTML = window.UI.renderCardsSkeleton(4);
 
     try {
-      const eventos = await window.API.getEventos();
-      const usuarios = window.Auth.hasPermission('eventos.criar') &&
-        window.Auth.hasPermission('usuarios.visualizar')
-        ? await window.API.getUsuarios()
-        : [];
+      const isVisitante = window.Auth?.isVisitante();
+      let eventos, usuarios;
+
+      if (isVisitante) {
+        // Modo visitante: usa rota pública, sem buscar usuários
+        eventos = await window.API.getPublicEventos();
+        usuarios = [];
+      } else {
+        eventos = await window.API.getEventos();
+        usuarios = window.Auth.hasPermission('eventos.criar') &&
+          window.Auth.hasPermission('usuarios.visualizar')
+          ? await window.API.getUsuarios()
+          : [];
+      }
+
       this.items = eventos;
       this.usuarios = usuarios;
       this._renderView(container);

@@ -1,6 +1,7 @@
 /**
  * HUB ES+ - Módulo de Autenticação (Frontend)
  * Tela de login, solicitação de cadastro (status PENDENTE), sessão JWT, heartbeat e verificação de Admin.
+ * Suporta modo VISITANTE: acesso público sem login a comunicados e agenda.
  */
 
 class AuthManager {
@@ -10,6 +11,7 @@ class AuthManager {
         this.modulos = [];
         this.permissionsReady = false;
         this._heartbeatInterval = null;
+        this._modoVisitante = false;
     }
 
     getToken() {
@@ -35,6 +37,11 @@ class AuthManager {
         return !!this.getToken();
     }
 
+    /** Verifica se está no modo visitante público (sem login) */
+    isVisitante() {
+        return this._modoVisitante && !this.estaLogado();
+    }
+
     isAdmin() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
@@ -43,14 +50,24 @@ class AuthManager {
     }
 
     hasPermission(chave) {
+        // Visitante público: só pode ver comunicados e eventos
+        if (this.isVisitante()) {
+            return chave === 'comunicados.visualizar' || chave === 'eventos.visualizar';
+        }
         return this.isAdmin() || this.permissoes.includes(chave);
     }
 
     hasAnyPermission(chaves = []) {
+        if (this.isVisitante()) {
+            return chaves.some(c => c === 'comunicados.visualizar' || c === 'eventos.visualizar');
+        }
         return this.isAdmin() || chaves.some(chave => this.permissoes.includes(chave));
     }
 
     canAccessModule(moduleName, permissionKeys = []) {
+        if (this.isVisitante()) {
+            return moduleName === 'comunicacao' || moduleName === 'agenda';
+        }
         if (this.isAdmin()) return true;
         if (this.modulos.length > 0) return this.modulos.includes(moduleName);
         return this.hasAnyPermission(permissionKeys);
@@ -62,6 +79,64 @@ class AuthManager {
         const perfil = String(u.perfil || 'perfil').toLowerCase().trim();
         const id = u.id || 'anon';
         return `${prefix}_${perfil}_${id}`;
+    }
+
+    /** Ativa o modo visitante público: exibe o app sem login */
+    entrarComoVisitante() {
+        this._modoVisitante = true;
+        this.permissionsReady = true;
+        this.ocultarTelaLogin();
+        this._atualizarUIVisitante();
+        window.App?.atualizarVisibilidadeRotas();
+        // Redireciona para comunicados (página inicial do visitante)
+        window.location.hash = '#comunicacao';
+        window.App?.handleRoute();
+    }
+
+    /** Atualiza a topbar e sidebar para modo visitante */
+    _atualizarUIVisitante() {
+        // Esconde elementos que não fazem sentido para visitante
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+
+        // Atualiza info do usuário na topbar para mostrar "Visitante"
+        document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = 'Visitante');
+        document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
+        document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
+
+        // Mostra o botão de login na topbar
+        this._criarBotaoLoginTopbar();
+    }
+
+    /** Cria botão "Fazer Login" na topbar para visitantes */
+    _criarBotaoLoginTopbar() {
+        // Remove botão anterior se existir
+        document.getElementById('btn-visitante-login')?.remove();
+
+        // Esconde o botão de logout se existir
+        const btnLogout = document.getElementById('btn-logout');
+        if (btnLogout) btnLogout.classList.add('hidden');
+
+        // Insere botão de login ao lado das notificações
+        const topbarRight = document.querySelector('.topbar-right') || document.querySelector('header .flex.items-center.gap-2');
+        if (!topbarRight) return;
+
+        const btn = document.createElement('button');
+        btn.id = 'btn-visitante-login';
+        btn.className = 'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all';
+        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Fazer Login</span>';
+        btn.addEventListener('click', () => {
+            this._modoVisitante = false;
+            this.renderizarTelaLogin();
+        });
+        topbarRight.prepend(btn);
+        if (window.lucide) lucide.createIcons();
+    }
+
+    /** Remove o botão de login da topbar (quando o usuário faz login) */
+    _removerBotaoLoginTopbar() {
+        document.getElementById('btn-visitante-login')?.remove();
+        const btnLogout = document.getElementById('btn-logout');
+        if (btnLogout) btnLogout.classList.remove('hidden');
     }
 
     async login(email, senha) {
@@ -78,7 +153,9 @@ class AuthManager {
             this.permissoes = usuario.permissoes;
             this.modulos = usuario.modulos;
             this.permissionsReady = true;
+            this._modoVisitante = false;
             this.iniciarHeartbeat();
+            this._removerBotaoLoginTopbar();
 
             // Atualiza imediatamente o badge de notificações para o perfil logado
             if (window.App && typeof window.App.atualizarBadgeComunicados === 'function') {
@@ -112,7 +189,8 @@ class AuthManager {
             badge.classList.remove('animate-pulse');
         }
 
-        this.renderizarTelaLogin();
+        // Volta para modo visitante ao invés de forçar tela de login
+        this.entrarComoVisitante();
     }
 
     iniciarHeartbeat() {
@@ -136,18 +214,19 @@ class AuthManager {
         }
     }
 
-    /** Guard: bloqueia o app se não estiver autenticado */
+    /** Guard: verifica autenticação ou ativa modo visitante */
     exigirAutenticacao() {
-        if (!this.estaLogado()) {
-            this.renderizarTelaLogin();
-            return false;
+        if (this.estaLogado()) {
+            this.ocultarTelaLogin();
+            this.preencherInfoUsuario();
+            this.iniciarHeartbeat();
+            this._atualizarPermissoes();
+            this.atualizarVisibilidadeAdmin();
+            return true;
         }
-        this.ocultarTelaLogin();
-        this.preencherInfoUsuario();
-        this.iniciarHeartbeat();
-        this._atualizarPermissoes();
-        this.atualizarVisibilidadeAdmin();
-        return true;
+        // Sem login: entra diretamente como visitante
+        this.entrarComoVisitante();
+        return false;
     }
 
     async _atualizarPermissoes() {
@@ -186,6 +265,7 @@ class AuthManager {
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
             el.textContent = nomesPerfil[String(u.perfil || '').toUpperCase()] || u.perfil || '';
         });
+        this._removerBotaoLoginTopbar();
         this.atualizarVisibilidadeAdmin();
     }
 
@@ -289,6 +369,13 @@ class AuthManager {
               Enviar Solicitação de Cadastro
             </button>
           </form>
+
+          <!-- BOTÃO VOLTAR AO MODO VISITANTE -->
+          <button type="button" id="btn-voltar-visitante"
+            class="w-full mt-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            Continuar como Visitante
+          </button>
 
           <div class="mt-6 pt-4 border-t border-slate-100 text-center">
             <span class="text-[11px] text-slate-400">HUB ES+ • Segurança e Governança Integrada</span>
@@ -412,9 +499,15 @@ class AuthManager {
                     btn.textContent = 'Enviar Solicitação de Cadastro';
                 }
             });
+
+            // Botão "Continuar como Visitante"
+            tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
+                this.entrarComoVisitante();
+            });
         }
         tela.classList.remove('hidden');
         document.getElementById('app-conteudo')?.classList.add('hidden');
+        if (window.lucide) lucide.createIcons();
     }
 }
 

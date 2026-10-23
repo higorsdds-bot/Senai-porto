@@ -216,6 +216,9 @@ Criar ou expandir endpoints no Express com suporte a pool de conexões MySQL, au
    const exemploRouter = require('./src/routes/exemplo');
    app.use(`${BASE}/exemplo`, exemploRouter);
    ```
+3. **Padrão para Rotas Públicas (Sem Autenticação):**
+   - Endpoints acessíveis a visitantes anônimos residem estritamente em `src/routes/publico.js` sob o caminho `/api/v1/publico/*`.
+   - Estas rotas **NÃO** usam `authMiddleware` e são exclusivamente `GET` (somente leitura de comunicados e eventos), retornando apenas dados não confidenciais.
 
 ---
 
@@ -281,6 +284,12 @@ Garantir o ciclo de vida completo de acesso e segurança dos usuários.
    - Quando um perfil abre as notificações, a marcação de leitura é salva estritamente para aquele usuário/perfil. Ao alternar para outro usuário, o novo colaborador visualiza todas as notificações pendentes dele.
    - Notificações e avisos urgentes só são processados para perfis autorizados (`comunicados.visualizar` ou `isAdmin()`).
    - Múltiplos comunicados de alta prioridade são exibidos conjuntamente via `window.UI.visualizarComunicadosAlta()`, removendo o banner apenas para o perfil que interagiu.
+7. **Modo Visitante e Navegação Pública (Sem Forçar Login):**
+   - Usuários sem login entram automaticamente no **Modo Visitante** (`window.Auth.entrarComoVisitante()`) e são direcionados para a rota inicial `#comunicacao`.
+   - O visitante pode navegar livremente pela **Central de Comunicação** e pela **Agenda Inteligente**, consumindo as rotas `/api/v1/publico/comunicados` e `/api/v1/publico/eventos`.
+   - Os demais módulos operacionais permanecem ocultos na sidebar e protegidos contra acesso indevido.
+   - Na topbar, é exibido o botão **"Fazer Login"** para colaboradores que desejam se autenticar, e no modal de login existe a opção **"Continuar como Visitante"**.
+   - Ao receber erro HTTP 401 em qualquer tentativa não autorizada, a aplicação **NÃO** entra em loop de logout nem força tela de login se `window.Auth.isVisitante()` for verdadeiro.
 
 ---
 

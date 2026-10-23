@@ -56,8 +56,11 @@ const insumosRouter = require('./src/routes/insumos');
 const comunicadosRouter = require('./src/routes/comunicados');
 const dashboardRouter = require('./src/routes/dashboard');
 const auditoriaRouter = require('./src/routes/auditoria');
+const publicoRouter = require('./src/routes/publico');
 
 const BASE = '/api/v1';
+// Rotas públicas (sem autenticação) — DEVE estar ANTES das rotas autenticadas
+app.use(`${BASE}/publico`, publicoRouter);
 app.use(`${BASE}/auth`, authRouter);
 app.use(`${BASE}/usuarios`, usuariosRouter);
 app.use(`${BASE}/setores`, setoresRouter);

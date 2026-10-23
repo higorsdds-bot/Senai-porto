@@ -38,4 +38,5 @@ Sempre que implementar uma nova funcionalidade ou corrigir um bug, certifique-se
 - [ ] As novas colunas ou tabelas foram criadas com script incremental em `src/database/` e documentadas em `src/database/schema.sql`.
 - [ ] Novas permissões foram adicionadas no `src/database/seed.js` e vinculadas aos perfis correspondentes.
 - [ ] As notificações e avisos verificam as permissões do perfil ativo e mantêm isolamento de leitura por perfil.
+- [ ] Rotas públicas abertas a visitantes ficam em `/api/v1/publico/` e o modo visitante preserva navegação em comunicados e agenda sem forçar a tela de login.
 - [ ] O layout suporta tema Claro e tema Escuro (`dark:`).

@@ -13,10 +13,20 @@ window.ComunicacaoModule = {
     container.innerHTML = window.UI.renderCardsSkeleton(3);
 
     try {
-      const [comunicados, usuarios] = await Promise.all([
-        window.API.getComunicados(),
-        window.API.getUsuarios()
-      ]);
+      const isVisitante = window.Auth?.isVisitante();
+      let comunicados, usuarios;
+
+      if (isVisitante) {
+        // Modo visitante: usa rota pública, sem buscar usuários
+        comunicados = await window.API.getPublicComunicados();
+        usuarios = [];
+      } else {
+        [comunicados, usuarios] = await Promise.all([
+          window.API.getComunicados(),
+          window.API.getUsuarios()
+        ]);
+      }
+
       this.items = Array.isArray(comunicados) ? comunicados : [];
       this.usuarios = Array.isArray(usuarios) ? usuarios : [];
       this._renderView(container);

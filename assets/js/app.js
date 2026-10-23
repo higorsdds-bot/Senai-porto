@@ -118,9 +118,12 @@ class AppRouter {
 
   handleRoute() {
     let hash = window.location.hash.replace('#', '').trim().toLowerCase();
+    // Visitante público: redireciona para comunicacao como página padrão
+    const isVisitante = window.Auth?.isVisitante();
+    const defaultRoute = isVisitante ? 'comunicacao' : 'dashboard';
     if (!hash || !this.routes[hash]) {
-      hash = 'dashboard';
-      window.location.hash = '#dashboard';
+      hash = defaultRoute;
+      window.location.hash = `#${defaultRoute}`;
       return;
     }
 
@@ -174,14 +177,24 @@ class AppRouter {
 
   _canAccess(route) {
     if (!route) return false;
+    if (window.Auth?.isVisitante()) {
+      return route.moduleKey === 'comunicacao' || route.moduleKey === 'agenda';
+    }
     if (route.adminOnly && !window.Auth?.isAdmin()) return false;
     return !route.permissions || window.Auth?.canAccessModule(route.moduleKey, route.permissions);
   }
 
   atualizarVisibilidadeRotas() {
+    const isVisitante = window.Auth?.isVisitante();
     for (const [hash, route] of Object.entries(this.routes)) {
-      const visible = !window.Auth?.estaLogado() ||
-        (window.Auth.permissionsReady && this._canAccess(route));
+      let visible = false;
+      if (isVisitante) {
+        visible = this._canAccess(route);
+      } else if (!window.Auth?.estaLogado()) {
+        visible = false;
+      } else {
+        visible = window.Auth.permissionsReady && this._canAccess(route);
+      }
       document.querySelectorAll(`nav a[href="#${hash}"]`).forEach(link => {
         link.classList.toggle('hidden', !visible);
       });
@@ -318,14 +331,17 @@ class AppRouter {
       if (!badge) return;
 
       const u = window.Auth ? window.Auth.getUsuario() : null;
-      if (!u) {
+      const isVisitante = window.Auth?.isVisitante();
+
+      // Se não está logado e não é visitante, esconde
+      if (!u && !isVisitante) {
         badge.classList.add('hidden');
         badge.classList.remove('animate-pulse');
         return;
       }
 
-      // Notificações só aparecem para perfis autorizados
-      const podeVer = window.Auth.isAdmin() || window.Auth.hasPermission('comunicados.visualizar');
+      // Notificações só aparecem para perfis autorizados (visitante pode ver comunicados)
+      const podeVer = isVisitante || window.Auth.isAdmin() || window.Auth.hasPermission('comunicados.visualizar');
       if (!podeVer) {
         badge.classList.add('hidden');
         badge.classList.remove('animate-pulse');
@@ -335,11 +351,15 @@ class AppRouter {
         if (btnSino) btnSino.classList.remove('hidden');
       }
 
-      if (!window.API || typeof window.API.getComunicados !== 'function') return;
+      if (!window.API) return;
 
       let comunicados = [];
       try {
-        comunicados = await window.API.getComunicados();
+        // Usa rota pública para visitante não autenticado
+        const isVisitante = window.Auth?.isVisitante();
+        comunicados = isVisitante
+          ? await window.API.getPublicComunicados()
+          : await window.API.getComunicados();
       } catch (errApi) {
         badge.classList.add('hidden');
         badge.classList.remove('animate-pulse');
@@ -387,7 +407,11 @@ class AppRouter {
     try {
       let comunicados = [];
       try {
-        comunicados = await window.API.getComunicados();
+        // Usa rota pública para visitante não autenticado
+        const isVisitante = window.Auth?.isVisitante();
+        comunicados = isVisitante
+          ? await window.API.getPublicComunicados()
+          : await window.API.getComunicados();
       } catch (e) {
         console.error('Erro ao buscar comunicados:', e);
       }
