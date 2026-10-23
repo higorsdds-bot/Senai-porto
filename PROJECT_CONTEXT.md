@@ -195,6 +195,7 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 | **OPERADOR** | Visualização e movimentações rotineiras, abertura de ocorrências e solicitações. | Acesso padrão a módulos básicos de execução. |
 | **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra e baixa de insumos. | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS`. |
 | **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
+| **VISITANTE** | Perfil de prioridade **baixíssima**, destinado a visitantes ou convidados temporários do espaço. | Acesso estritamente restrito a `comunicados.visualizar` e `eventos.visualizar`. Sem permissão de escrita em nenhum módulo. |
 
 ### Fluxo de Cadastro e Aprovação de Usuários
 1. Qualquer colaborador pode solicitar cadastro pela tela de login via `POST /api/v1/auth/solicitar-cadastro`.

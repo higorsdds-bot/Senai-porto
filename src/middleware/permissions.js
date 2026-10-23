@@ -46,6 +46,10 @@ const FIXED_PROFILE_PERMISSIONS = {
     'limpeza.editar',
     'compras.visualizar_proprias',
     'compras.criar'
+  ],
+  VISITANTE: [
+    'comunicados.visualizar',
+    'eventos.visualizar'
   ]
 };
 

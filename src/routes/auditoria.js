@@ -203,7 +203,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
-    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
+    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA', 'VISITANTE'];
     const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : 'OPERADOR';
 
     await pool.query(

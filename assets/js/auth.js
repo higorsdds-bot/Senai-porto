@@ -180,7 +180,8 @@ class AuthManager {
             ADMINISTRACAO: 'Administração',
             LIMPEZA: 'Limpeza',
             GESTOR: 'Gestor',
-            OPERADOR: 'Operador'
+            OPERADOR: 'Operador',
+            VISITANTE: 'Visitante'
         };
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
             el.textContent = nomesPerfil[String(u.perfil || '').toUpperCase()] || u.perfil || '';
