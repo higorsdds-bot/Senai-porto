@@ -25,6 +25,7 @@ O usuário e a equipe definiram regras inegociáveis de preservação arquitetur
 - ❌ **NÃO use `fetch()` solto nos módulos do frontend**. Toda requisição deve ser intermediada por `window.API` em `assets/js/api.js`.
 - ❌ **NÃO use `alert()` ou `confirm()` nativos**. Utilize a camada de interface `window.UI.toast(...)` e `window.UI.confirmModal(...)`.
 - ❌ **NÃO use chaves globais cegas no `localStorage` para leitura/notificações**. Utilize sempre `window.Auth.getUserStorageKey(prefix)` para que estados de leitura e avisos sejam estritamente isolados por usuário e perfil (`${prefix}_${perfil}_${id}`).
+- ❌ **NÃO permita acesso de visitantes a módulos restritos**. Visitantes (sejam anônimos ou usuários autenticados com o perfil `VISITANTE`) têm acesso estritamente restrito a `#comunicacao` e `#agenda`. O roteador SPA em `handleRoute()` deve aplicar bloqueio rígido e redirecionamento, e todos os demais links de navegação devem permanecer ocultos.
 
 ---
 
@@ -38,5 +39,6 @@ Sempre que implementar uma nova funcionalidade ou corrigir um bug, certifique-se
 - [ ] As novas colunas ou tabelas foram criadas com script incremental em `src/database/` e documentadas em `src/database/schema.sql`.
 - [ ] Novas permissões foram adicionadas no `src/database/seed.js` e vinculadas aos perfis correspondentes.
 - [ ] As notificações e avisos verificam as permissões do perfil ativo e mantêm isolamento de leitura por perfil.
+- [ ] O perfil VISITANTE e usuários não autenticados têm acesso estritamente restrito a comunicados e agenda, com bloqueio rígido no roteador e ocultação na sidebar.
 - [ ] Rotas públicas abertas a visitantes ficam em `/api/v1/publico/` e o modo visitante preserva navegação em comunicados e agenda sem forçar a tela de login.
 - [ ] O layout suporta tema Claro e tema Escuro (`dark:`).

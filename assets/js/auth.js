@@ -37,9 +37,13 @@ class AuthManager {
         return !!this.getToken();
     }
 
-    /** Verifica se está no modo visitante público (sem login) */
+    /** Verifica se é visitante (modo anônimo público ou perfil VISITANTE no banco) */
     isVisitante() {
-        return this._modoVisitante && !this.estaLogado();
+        const u = this.getUsuario();
+        const p = u && u.perfil ? String(u.perfil).toUpperCase().trim() : '';
+        if (p === 'VISITANTE') return true;
+        if (this._modoVisitante) return true;
+        return !this.estaLogado();
     }
 
     isAdmin() {

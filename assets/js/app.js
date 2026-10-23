@@ -108,6 +108,9 @@ class AppRouter {
       this.handleRoute();
     });
 
+    // Atualiza imediatamente a visibilidade dos links no menu
+    this.atualizarVisibilidadeRotas();
+
     // Atualiza badge de comunicados na inicialização e a cada 60s
     this.atualizarBadgeComunicados();
     setInterval(() => this.atualizarBadgeComunicados(), 60000);
@@ -118,9 +121,28 @@ class AppRouter {
 
   handleRoute() {
     let hash = window.location.hash.replace('#', '').trim().toLowerCase();
-    // Visitante público: redireciona para comunicacao como página padrão
     const isVisitante = window.Auth?.isVisitante();
     const defaultRoute = isVisitante ? 'comunicacao' : 'dashboard';
+
+    // REGRA ESTRITA DE VISITANTE:
+    // Visitante (anônimo ou com perfil VISITANTE) SÓ PODE ACESSAR comunicacao e agenda.
+    if (isVisitante) {
+      if (!hash || (hash !== 'comunicacao' && hash !== 'agenda')) {
+        if (hash && hash !== 'comunicacao' && hash !== 'agenda') {
+          if (window.UI?.toast) {
+            window.UI.toast({
+              title: 'Acesso Restrito a Visitantes',
+              message: 'Como visitante, seu acesso é restrito à Central de Comunicação e à Agenda.',
+              type: 'warning'
+            });
+          }
+        }
+        window.location.hash = '#comunicacao';
+        this.atualizarVisibilidadeRotas();
+        return;
+      }
+    }
+
     if (!hash || !this.routes[hash]) {
       hash = defaultRoute;
       window.location.hash = `#${defaultRoute}`;
@@ -130,13 +152,15 @@ class AppRouter {
     this.currentRoute = hash;
     const target = this.routes[hash];
 
-    if (window.Auth?.estaLogado() && !window.Auth.permissionsReady) {
+    // Atualiza visibilidade dos menus para a rota atual
+    this.atualizarVisibilidadeRotas();
+
+    if (window.Auth?.estaLogado() && !window.Auth.permissionsReady && !isVisitante) {
       this.contentContainer.innerHTML = '<p class="p-6 text-sm text-slate-600">Carregando permissões do usuário...</p>';
-      this.atualizarVisibilidadeRotas();
       return;
     }
 
-    if (window.Auth?.permissionsReady && !this._canAccess(target)) {
+    if (!this._canAccess(target)) {
       if (window.UI?.toast) {
         window.UI.toast({
           title: 'Acesso Restrito',
@@ -189,11 +213,11 @@ class AppRouter {
     for (const [hash, route] of Object.entries(this.routes)) {
       let visible = false;
       if (isVisitante) {
-        visible = this._canAccess(route);
+        visible = (hash === 'comunicacao' || hash === 'agenda');
       } else if (!window.Auth?.estaLogado()) {
-        visible = false;
+        visible = (hash === 'comunicacao' || hash === 'agenda');
       } else {
-        visible = window.Auth.permissionsReady && this._canAccess(route);
+        visible = window.Auth.permissionsReady ? this._canAccess(route) : true;
       }
       document.querySelectorAll(`nav a[href="#${hash}"]`).forEach(link => {
         link.classList.toggle('hidden', !visible);

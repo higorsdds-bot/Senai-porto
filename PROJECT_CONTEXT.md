@@ -199,6 +199,12 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 | **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
 | **VISITANTE** | Perfil de prioridade **baixíssima**, destinado a visitantes ou convidados temporários do espaço. | Acesso estritamente restrito a `comunicados.visualizar` e `eventos.visualizar`. Sem permissão de escrita em nenhum módulo. |
 
+### Regras do Perfil VISITANTE e Modo Público
+- **Quem é considerado Visitante:** Usuários acessando o SPA sem efetuar login (modo público) OU usuários autenticados cujo perfil no banco de dados seja `VISITANTE`.
+- **Módulos Permitidos:** Estritamente **Central de Comunicação** (`#comunicacao`) e **Agenda Inteligente** (`#agenda`).
+- **Bloqueio Rígido no Roteador:** O `handleRoute()` em `assets/js/app.js` intercepta imediatamente qualquer tentativa de navegação para as outras 9 rotas (`#dashboard`, `#compras`, `#documentos`, etc.), emitindo um toast explicativo e redirecionando para `#comunicacao`.
+- **Visibilidade de Menus:** A sidebar e o menu mobile ocultam automaticamente todos os links para os quais o visitante não possui permissão, exibindo apenas Comunicação e Agenda.
+
 ### Fluxo de Cadastro e Aprovação de Usuários
 1. Qualquer colaborador pode solicitar cadastro pela tela de login via `POST /api/v1/auth/solicitar-cadastro`.
 2. O usuário é inserido com o status `PENDENTE`.
