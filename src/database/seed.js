@@ -102,11 +102,13 @@ const PERFIL_PERMISSOES = {
     'comunicados.visualizar'
   ],
   ADMINISTRACAO: [
+    'comunicados.visualizar',
     'compras.visualizar_pedidos', 'compras.receber',
     'eventos.visualizar',
     'insumos.visualizar', 'insumos.baixar'
   ],
   LIMPEZA: [
+    'comunicados.visualizar',
     'compras.visualizar_proprias', 'compras.criar'
   ]
 };

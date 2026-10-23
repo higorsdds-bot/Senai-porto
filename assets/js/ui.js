@@ -103,26 +103,26 @@ class UIManager {
     const mc = this.modalContainer;
 
     mc.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full ${maxWidth} max-h-[90vh] flex flex-col overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 w-full ${maxWidth} max-h-[90vh] flex flex-col overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80">
           <div>
-            <h3 class="text-base font-bold text-slate-900">${title}</h3>
-            ${subtitle ? `<p class="text-xs text-slate-500 mt-0.5">${subtitle}</p>` : ''}
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">${title}</h3>
+            ${subtitle ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${subtitle}</p>` : ''}
           </div>
-          <button id="modal-close-icon-btn" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Fechar modal">
+          <button id="modal-close-icon-btn" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label="Fechar modal">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
 
         <!-- Body -->
-        <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="p-6 overflow-y-auto space-y-4 flex-1 text-slate-800 dark:text-slate-200">
           ${contentHtml}
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button id="modal-cancel-btn" type="button" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors">
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80">
+          <button id="modal-cancel-btn" type="button" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700 rounded-xl transition-colors">
             ${cancelLabel}
           </button>
           ${onSave ? `
@@ -386,6 +386,114 @@ class UIManager {
     }
 
     return isValid;
+  }
+
+  // =========================================================================
+  // VISUALIZAÇÃO DE COMUNICADOS (GLOBAL EM TODOS OS LOCAIS)
+  // =========================================================================
+  async visualizarComunicado(comunicadoOrId) {
+    let item = comunicadoOrId;
+    if (typeof comunicadoOrId === 'number' || typeof comunicadoOrId === 'string') {
+      try {
+        if (window.API && typeof window.API.getComunicado === 'function') {
+          item = await window.API.getComunicado(comunicadoOrId);
+        }
+      } catch (e) {
+        console.warn('Erro ao carregar comunicado por ID, buscando da lista:', e);
+      }
+
+      if (!item && window.API && typeof window.API.getComunicados === 'function') {
+        try {
+          const lista = await window.API.getComunicados();
+          item = lista.find(c => Number(c.id) === Number(comunicadoOrId));
+        } catch (e2) {
+          console.warn('Falha ao listar comunicados:', e2);
+        }
+      }
+    }
+
+    if (!item) {
+      this.toast({ title: 'Aviso', message: 'Comunicado não encontrado.', type: 'warning' });
+      return;
+    }
+
+    const isAlta = item.prioridade === 'alta';
+    const isMedia = item.prioridade === 'media';
+    const prioridadeLabel = isAlta ? 'Alta Prioridade' : isMedia ? 'Prioridade Média' : 'Prioridade Normal';
+    const prioridadeBadge = `
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+        isAlta ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800' :
+        isMedia ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800' :
+        'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+      }">
+        <span class="w-2 h-2 rounded-full ${isAlta ? 'bg-rose-500 animate-pulse' : isMedia ? 'bg-amber-500' : 'bg-blue-500'}"></span>
+        ${prioridadeLabel}
+      </span>
+    `;
+
+    const dataObj = item.created_at ? new Date(item.created_at) : (item.data ? new Date(item.data) : new Date());
+    const dataFmt = !isNaN(dataObj) 
+      ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : (item.data || 'Recente');
+
+    const autor = item.autor_nome || item.autor || 'Administração HUB ES+';
+
+    const contentHtml = `
+      <div class="space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+          ${prioridadeBadge}
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>${dataFmt}</span>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight">
+            ${item.titulo}
+          </h2>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80">
+          <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line select-text">
+            ${item.mensagem}
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0">
+              ${autor.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">${autor}</span>
+              <span class="block text-[10px] text-slate-400">Publicado no Mural Oficial</span>
+            </div>
+          </div>
+          <button id="btn-modal-ir-central" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 transition-colors">
+            <span>Ir para Central de Comunicação</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const modal = this.openModal({
+      title: 'Comunicado Oficial',
+      subtitle: 'Informativo interno do HUB ES+',
+      maxWidth: 'max-w-2xl',
+      contentHtml,
+      cancelLabel: 'Fechar'
+    });
+
+    setTimeout(() => {
+      document.getElementById('btn-modal-ir-central')?.addEventListener('click', () => {
+        if (modal && typeof modal.close === 'function') modal.close();
+        window.location.hash = '#comunicacao';
+      });
+    }, 50);
+
+    return modal;
   }
 }
 

@@ -348,6 +348,11 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'GET' }, () => window.MockDB.getAll('comunicados'));
   }
 
+  async getComunicado(id) {
+    return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'GET' },
+      () => window.MockDB.getById('comunicados', id));
+  }
+
   async createComunicado(data) {
     return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'POST', body: JSON.stringify(data) },
       () => window.MockDB.create('comunicados', data));

@@ -27,7 +27,7 @@ window.DashboardModule = {
 
     try {
       // Carrega dados de todos os módulos de forma concorrente via API
-      const [ocorrencias, compras, eventos, documentos, equipamentos, insumos, setores, usuarios] = await Promise.all([
+      const [ocorrencias, compras, eventos, documentos, equipamentos, insumos, setores, usuarios, comunicados] = await Promise.all([
         window.API.getOcorrencias(),
         window.API.getCompras(),
         window.API.getEventos(),
@@ -35,8 +35,19 @@ window.DashboardModule = {
         window.API.getEquipamentos(),
         window.API.getInsumos(),
         window.API.getSetores(),
-        window.API.getUsuarios()
+        window.API.getUsuarios(),
+        window.API.getComunicados().catch(() => [])
       ]);
+
+      // Comunicado urgente (prioridade alta) em destaque
+      const listaComunicados = Array.isArray(comunicados) ? [...comunicados] : [];
+      const prioridadePeso = { alta: 3, media: 2, normal: 1 };
+      listaComunicados.sort((a, b) => {
+        const pDiff = (prioridadePeso[b.prioridade] || 1) - (prioridadePeso[a.prioridade] || 1);
+        if (pDiff !== 0) return pDiff;
+        return new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0);
+      });
+      const comunicadoUrgente = listaComunicados.find(c => c.prioridade === 'alta');
 
       // Métricas calculadas
       const ocorrenciasAbertas = ocorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
@@ -72,6 +83,28 @@ window.DashboardModule = {
               </button>
             </div>
           </div>
+
+          <!-- Banner de Comunicado Urgente (se houver prioridade alta ativa) -->
+          ${comunicadoUrgente ? `
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
+                  <i data-lucide="megaphone" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white tracking-wider animate-pulse">Aviso Urgente</span>
+                    <span class="text-xs text-rose-700 dark:text-rose-300 font-bold">${comunicadoUrgente.titulo}</span>
+                  </div>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">${comunicadoUrgente.mensagem}</p>
+                </div>
+              </div>
+              <button onclick="window.UI.visualizarComunicado(${comunicadoUrgente.id})" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition-all shrink-0">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                Ler Comunicado
+              </button>
+            </div>
+          ` : ''}
 
           <!-- Cards de KPIs Clicáveis -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -207,81 +240,141 @@ window.DashboardModule = {
             </div>
           </div>
 
-          <!-- Listagens Rápidas: Últimos Eventos & Ocorrências Críticas -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Próximos Eventos da Agenda -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
-                    <i data-lucide="calendar" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-bold text-slate-900">Próximos Eventos e Agendamentos</h3>
-                    <p class="text-xs text-slate-500">Pauta dos espaços e salas do HUB ES+</p>
-                  </div>
-                </div>
-                <button onclick="window.location.hash = '#agenda'" class="text-xs font-semibold text-blue-600 hover:text-blue-700">Ver todos</button>
-              </div>
-
-              <div class="divide-y divide-slate-100">
-                ${eventos.slice(0, 4).map(ev => {
-                  const resp = usuarios.find(u => Number(u.id) === Number(ev.responsavel_id))?.nome || 'Não definido';
-                  const dataFmt = new Date(ev.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-                  return `
-                    <div class="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between gap-4">
-                      <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-slate-100 flex flex-col items-center justify-center text-slate-700 shrink-0 font-mono text-xs">
-                          <span class="text-[10px] text-slate-400 font-sans">DATA</span>
-                          <span class="font-bold">${new Date(ev.data).getDate()}</span>
-                        </div>
-                        <div>
-                          <h4 class="text-xs font-bold text-slate-800">${ev.local}</h4>
-                          <p class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                            <i data-lucide="user" class="w-3 h-3"></i> ${resp} • ${dataFmt}
-                          </p>
-                        </div>
-                      </div>
-                      ${window.UI.renderBadge(ev.status)}
+          <!-- Listagens Rápidas: Comunicados Oficiais, Próximos Eventos & Ocorrências -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Mural de Comunicados Oficiais -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
+              <div>
+                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 flex items-center justify-center">
+                      <i data-lucide="megaphone" class="w-4 h-4"></i>
                     </div>
-                  `;
-                }).join('')}
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Mural de Comunicados</h3>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Avisos e informes oficiais</p>
+                    </div>
+                  </div>
+                  <button onclick="window.location.hash = '#comunicacao'" class="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">Ver todos</button>
+                </div>
+
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  ${listaComunicados.length === 0 ? `
+                    <div class="p-8 text-center text-xs text-slate-400">
+                      Nenhum comunicado recente ativo no mural.
+                    </div>
+                  ` : listaComunicados.slice(0, 4).map(c => {
+                    const isAlta = c.prioridade === 'alta';
+                    const isMedia = c.prioridade === 'media';
+                    const pBadge = isAlta 
+                      ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Alta</span>'
+                      : isMedia
+                      ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Média</span>'
+                      : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Normal</span>';
+
+                    const dataObj = c.created_at ? new Date(c.created_at) : (c.data ? new Date(c.data) : new Date());
+                    const dataFmt = !isNaN(dataObj) 
+                      ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                      : (c.data || 'Hoje');
+
+                    const autor = c.autor_nome || c.autor || 'HUB ES+';
+
+                    return `
+                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2 mb-1">
+                            ${pBadge}
+                            <span class="text-[10px] text-slate-400">${dataFmt}</span>
+                          </div>
+                          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${c.titulo}</h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${autor}</p>
+                        </div>
+                        <button onclick="window.UI.visualizarComunicado(${c.id})" class="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors shrink-0" title="Ler Comunicado">
+                          <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Próximos Eventos da Agenda -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
+              <div>
+                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 flex items-center justify-center">
+                      <i data-lucide="calendar" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Próximos Eventos</h3>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Pauta de espaços e salas</p>
+                    </div>
+                  </div>
+                  <button onclick="window.location.hash = '#agenda'" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">Ver todos</button>
+                </div>
+
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  ${eventos.slice(0, 4).map(ev => {
+                    const resp = usuarios.find(u => Number(u.id) === Number(ev.responsavel_id))?.nome || 'Não definido';
+                    const dataFmt = new Date(ev.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    return `
+                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
+                        <div class="flex items-start gap-2.5 min-w-0">
+                          <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex flex-col items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 font-mono text-xs">
+                            <span class="font-bold">${new Date(ev.data).getDate()}</span>
+                          </div>
+                          <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${ev.local}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              ${resp}
+                            </p>
+                          </div>
+                        </div>
+                        ${window.UI.renderBadge(ev.status)}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </div>
 
             <!-- Ocorrências Recentes -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
-                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-bold text-slate-900">Ocorrências Recentes</h3>
-                    <p class="text-xs text-slate-500">Chamados técnicos e prediais</p>
-                  </div>
-                </div>
-                <button onclick="window.location.hash = '#ocorrencias'" class="text-xs font-semibold text-blue-600 hover:text-blue-700">Ver todas</button>
-              </div>
-
-              <div class="divide-y divide-slate-100">
-                ${ocorrencias.slice(0, 4).map(oc => {
-                  const solicitante = usuarios.find(u => Number(u.id) === Number(oc.usuario_id))?.nome || 'Usuário';
-                  return `
-                    <div class="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between gap-4">
-                      <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                          <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                          <h4 class="text-xs font-bold text-slate-800">${oc.local}</h4>
-                          <p class="text-[11px] text-slate-500">Aberto por: <span class="font-medium text-slate-700">${solicitante}</span></p>
-                        </div>
-                      </div>
-                      ${window.UI.renderBadge(oc.status)}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
+              <div>
+                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 flex items-center justify-center">
+                      <i data-lucide="alert-circle" class="w-4 h-4"></i>
                     </div>
-                  `;
-                }).join('')}
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ocorrências Recentes</h3>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Chamados técnicos e prediais</p>
+                    </div>
+                  </div>
+                  <button onclick="window.location.hash = '#ocorrencias'" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">Ver todas</button>
+                </div>
+
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  ${ocorrencias.slice(0, 4).map(oc => {
+                    const solicitante = usuarios.find(u => Number(u.id) === Number(oc.usuario_id))?.nome || 'Usuário';
+                    return `
+                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                          <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                          </div>
+                          <div class="min-w-0">
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${oc.local}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${solicitante}</p>
+                          </div>
+                        </div>
+                        ${window.UI.renderBadge(oc.status)}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </div>
           </div>

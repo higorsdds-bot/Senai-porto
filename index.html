@@ -243,12 +243,12 @@
         </div>
 
         <div class="flex items-center gap-3 sm:gap-4">
-          <!-- Botão de Notificações -->
+          <!-- Botão de Notificações / Comunicados -->
           <button id="btn-topbar-notifications"
-            class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
-            aria-label="Notificações">
+            class="relative p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            aria-label="Comunicados & Avisos" title="Comunicados & Avisos">
             <i data-lucide="bell" class="w-4 h-4"></i>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+            <span id="badge-topbar-notifications" class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
           </button>
 
           <!-- Botão de tema -->

@@ -104,8 +104,13 @@ class AppRouter {
     this._setupGlobalEvents();
     window.addEventListener('hub:login', () => {
       this.atualizarVisibilidadeRotas();
+      this.atualizarBadgeComunicados();
       this.handleRoute();
     });
+
+    // Atualiza badge de comunicados na inicialização e a cada 60s
+    this.atualizarBadgeComunicados();
+    setInterval(() => this.atualizarBadgeComunicados(), 60000);
 
     // Rota inicial
     this.handleRoute();
@@ -257,15 +262,11 @@ class AppRouter {
       });
     }
 
-    // Botão de Notificações na Topbar
+    // Botão de Notificações / Comunicados na Topbar
     const btnNotif = document.getElementById('btn-topbar-notifications');
     if (btnNotif) {
       btnNotif.addEventListener('click', () => {
-        window.UI.toast({
-          title: 'Central de Notificações',
-          message: 'Você possui 2 novas atualizações de compras e 1 chamado pendente.',
-          type: 'info'
-        });
+        this.abrirCentralComunicadosModal();
       });
     }
 
@@ -278,7 +279,9 @@ class AppRouter {
           if (!query) return;
 
           // Redireciona de acordo com o termo buscado
-          if (query.includes('compra') || query.includes('pedido')) {
+          if (query.includes('comunicad') || query.includes('aviso') || query.includes('mural') || query.includes('noticia') || query.includes('informe')) {
+            window.location.hash = '#comunicacao';
+          } else if (query.includes('compra') || query.includes('pedido')) {
             window.location.hash = '#compras';
           } else if (query.includes('doc') || query.includes('termo') || query.includes('pdf')) {
             window.location.hash = '#documentos';
@@ -305,6 +308,127 @@ class AppRouter {
           });
         }
       });
+    }
+  }
+
+  async atualizarBadgeComunicados() {
+    try {
+      const badge = document.getElementById('badge-topbar-notifications');
+      if (!badge || !window.API || typeof window.API.getComunicados !== 'function') return;
+
+      const comunicados = await window.API.getComunicados();
+      const count = Array.isArray(comunicados) ? comunicados.length : 0;
+      if (count > 0) {
+        badge.classList.remove('hidden');
+        const temAlta = comunicados.some(c => c.prioridade === 'alta');
+        badge.classList.toggle('animate-pulse', temAlta);
+      } else {
+        badge.classList.add('hidden');
+      }
+    } catch (err) {
+      // Silencioso em caso de inicialização ou rede
+    }
+  }
+
+  async abrirCentralComunicadosModal() {
+    try {
+      let comunicados = [];
+      try {
+        comunicados = await window.API.getComunicados();
+      } catch (e) {
+        console.error('Erro ao buscar comunicados:', e);
+      }
+
+      const lista = Array.isArray(comunicados) ? [...comunicados] : [];
+      const prioridadePeso = { alta: 3, media: 2, normal: 1 };
+      lista.sort((a, b) => {
+        const pesoDiff = (prioridadePeso[b.prioridade] || 1) - (prioridadePeso[a.prioridade] || 1);
+        if (pesoDiff !== 0) return pesoDiff;
+        return new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0);
+      });
+
+      let contentHtml = '';
+      if (lista.length === 0) {
+        contentHtml = `
+          <div class="py-12 text-center text-slate-500 dark:text-slate-400">
+            <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="bell-off" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Nenhum comunicado ativo</h4>
+            <p class="text-xs mt-1">Todos os informativos e avisos oficiais estão em dia.</p>
+          </div>
+        `;
+      } else {
+        contentHtml = `
+          <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            ${lista.map(c => {
+              const isAlta = c.prioridade === 'alta';
+              const isMedia = c.prioridade === 'media';
+              const pBadge = isAlta 
+                ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Alta</span>'
+                : isMedia
+                ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Média</span>'
+                : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Normal</span>';
+
+              const dataObj = c.created_at ? new Date(c.created_at) : (c.data ? new Date(c.data) : new Date());
+              const dataFmt = !isNaN(dataObj) 
+                ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : (c.data || 'Hoje');
+
+              const autor = c.autor_nome || c.autor || 'Administração HUB ES+';
+
+              return `
+                <div class="p-4 rounded-xl border ${isAlta ? 'border-rose-200 dark:border-rose-800/80 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80'} hover:border-purple-300 dark:hover:border-purple-600 transition-all flex flex-col justify-between gap-3">
+                  <div>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                      <div class="flex items-center gap-2">
+                        ${pBadge}
+                        <span class="text-[11px] font-medium text-slate-400">${dataFmt}</span>
+                      </div>
+                      <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[140px]">
+                        ${autor}
+                      </span>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white leading-snug">${c.titulo}</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">${c.mensagem}</p>
+                  </div>
+                  <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end">
+                    <button onclick="window.UI.visualizarComunicado(${c.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
+                      <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                      <span>Ler na Íntegra</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <span class="text-xs text-slate-400">${lista.length} comunicado(s)</span>
+            <button id="btn-ver-todos-central" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+              Ir para Central de Comunicação &rarr;
+            </button>
+          </div>
+        `;
+      }
+
+      const modal = window.UI.openModal({
+        title: 'Mural de Comunicados & Avisos',
+        subtitle: 'Informativos oficiais acessíveis em tempo real',
+        maxWidth: 'max-w-xl',
+        contentHtml,
+        cancelLabel: 'Fechar'
+      });
+
+      setTimeout(() => {
+        document.getElementById('btn-ver-todos-central')?.addEventListener('click', () => {
+          if (modal && typeof modal.close === 'function') modal.close();
+          window.location.hash = '#comunicacao';
+        });
+      }, 50);
+
+    } catch (err) {
+      console.error('Erro ao abrir comunicados:', err);
+      window.UI.toast({ title: 'Avisos', message: 'Falha ao carregar comunicados.', type: 'error' });
     }
   }
 }

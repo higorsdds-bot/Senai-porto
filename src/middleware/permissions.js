@@ -33,6 +33,7 @@ const MODULE_PERMISSIONS = {
 
 const FIXED_PROFILE_PERMISSIONS = {
   ADMINISTRACAO: [
+    'comunicados.visualizar',
     'compras.visualizar_pedidos',
     'compras.receber',
     'eventos.visualizar',
@@ -40,6 +41,7 @@ const FIXED_PROFILE_PERMISSIONS = {
     'insumos.baixar'
   ],
   LIMPEZA: [
+    'comunicados.visualizar',
     'compras.visualizar_proprias',
     'compras.criar'
   ]
