@@ -238,7 +238,7 @@ class AppRouter {
       } else if (!window.Auth?.estaLogado()) {
         visible = (hash === 'comunicacao' || hash === 'agenda');
       } else {
-        visible = window.Auth.permissionsReady ? this._canAccess(route) : true;
+        visible = window.Auth.permissionsReady ? this._canAccess(route) : false;
       }
       document.querySelectorAll(`nav a[href="#${hash}"]`).forEach(link => {
         link.classList.toggle('hidden', !visible);

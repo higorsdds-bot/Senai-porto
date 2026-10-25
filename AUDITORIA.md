@@ -297,8 +297,18 @@ if (req.user?.perfil === 'ADMIN') {
 
 ---
 
-## J. Conclusão
+## J. Conclusão e Status das Correções
 
-* **O que foi comprovado:** O sistema possui um modelo de autenticação e proteção de backend consistente (`requireAuth`, `requirePermission`, `registrarAuditoria`), porém sofre de **acoplamento excessivo no carregamento do frontend**: páginas que deveriam estar disponíveis para perfis operacionais tentam buscar dados globais restritos sem tolerância a falhas (`Promise.all` ingênuo), derrubando a interface inteira com erros 403.
-* **O que já está pronto:** O recurso solicitado anteriormente para a criação de eventos pelo operador na Agenda Inteligente foi implementado e validado.
-* **Próxima Etapa:** Aplicação do Plano de Correções P0, P1 e P2.
+* **Status:** **CORREÇÕES APLICADAS E VALIDADAS COM SUCESSO.**
+* **Isolamento de Dados e Perfis:**
+  - ✅ **Controle de Acesso por Cargo:** Cada perfil visualiza exclusivamente os módulos para os quais possui permissão formal.
+  - ✅ **Secure by Default:** Menus e rotas ficam ocultos por padrão até confirmação das permissões na sessão, impedindo vazamento visual de módulos não autorizados.
+  - ✅ **Isolamento de Dados (Anti-IDOR):**
+    - `LIMPEZA`: consultas a compras e materiais são restritas no backend às suas próprias solicitações (`WHERE c.solicitante_id = req.usuario.id`).
+    - `ADMINISTRACAO`: visualiza apenas pedidos aprovados/entregues para dar entrada no estoque.
+    - `OPERADOR`: não tem acesso à gestão de usuários, senhas ou trilha de auditoria.
+    - `VISITANTE`: restrito estritamente a comunicados públicos e agenda de eventos públicos.
+  - ✅ **Sub-recursos Desacoplados:** Módulos de Limpeza, Comunicação, Equipamentos, Documentos e Dashboard agora utilizam tratamento de fallback (`.catch(() => [])`), permitindo que cada cargo opere suas telas sem interrupções por 403 em recursos secundários.
+  - ✅ **Roteamento Inteligente:** Perfis restritos são direcionados automaticamente para suas respectivas páginas iniciais sem falsos alarmes de acesso restrito.
+  - ✅ **Conformidade UI:** Todos os `alert()` e `confirm()` nativos foram eliminados em favor de modais e toasts padronizados.
+
