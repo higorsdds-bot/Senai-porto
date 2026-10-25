@@ -360,9 +360,9 @@ window.DashboardModule = {
                             <span class="font-bold">${new Date(ev.data).getDate()}</span>
                           </div>
                           <div class="min-w-0">
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${ev.local}</h4>
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${ev.titulo || ev.local}</h4>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                              ${resp}
+                              ${ev.titulo ? `${ev.local} • ` : ''}${resp}
                             </p>
                           </div>
                         </div>

@@ -316,6 +316,11 @@ class ApiService {
       () => window.MockDB.create('eventos', data));
   }
 
+  async updateEvento(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
+      () => window.MockDB.update('eventos', id, data));
+  }
+
   async deleteEvento(id) {
     return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('eventos', id));

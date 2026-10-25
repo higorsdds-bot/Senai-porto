@@ -97,7 +97,7 @@ const PERFIL_PERMISSOES = {
     'equipamentos.visualizar',
     'documentos.visualizar', 'documentos.baixar',
     'ocorrencias.visualizar', 'ocorrencias.criar',
-    'eventos.visualizar',
+    'eventos.visualizar', 'eventos.criar',
     'insumos.visualizar', 'insumos.movimentar',
     'comunicados.visualizar'
   ],
