@@ -105,6 +105,84 @@ router.get('/pre-cadastros', requireAnyPermission('usuarios.pre_cadastrar', 'usu
   }
 });
 
+// ─── PUT /api/v1/usuarios/pre-cadastro/:id ───────────────────────────────────
+// Permite editar a solicitação de pré-cadastro enquanto o status for PENDENTE
+router.put('/pre-cadastro/:id', requireAnyPermission('usuarios.pre_cadastrar', 'usuarios.editar'), async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, senha } = req.body;
+  const pool = getPool();
+
+  try {
+    const [existing] = await pool.query(
+      `SELECT id, nome, email, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+
+    if (!existing.length) {
+      return res.status(404).json({ success: false, message: 'Solicitação de colaborador não encontrada.' });
+    }
+
+    const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(String(req.usuario.perfil).toUpperCase());
+    if (!isAdmin && existing[0].status !== 'PENDENTE') {
+      return res.status(403).json({
+        success: false,
+        message: 'Apenas solicitações com status PENDENTE podem ser alteradas.'
+      });
+    }
+
+    const erros = {};
+    if (!nome || String(nome).trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) erros.email = 'E-mail informado é inválido.';
+    if (senha && String(senha).length < 8) erros.senha = 'A senha provisória precisa ter no mínimo 8 caracteres.';
+
+    if (Object.keys(erros).length > 0) {
+      return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const [duplicados] = await pool.query(
+      `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`,
+      [cleanEmail, id]
+    );
+
+    if (duplicados.length > 0) {
+      return res.status(409).json({ success: false, message: 'Já existe outro usuário registrado com este e-mail.' });
+    }
+
+    let sql = 'UPDATE usuarios SET nome = ?, email = ?, updated_at = NOW()';
+    const params = [String(nome).trim(), cleanEmail];
+
+    if (senha && String(senha).trim().length >= 8) {
+      const senhaHash = await bcrypt.hash(String(senha), 12);
+      sql += ', senha = ?';
+      params.push(senhaHash);
+    }
+
+    sql += ' WHERE id = ?';
+    params.push(id);
+
+    await pool.query(sql, params);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_PRE_CADASTRO',
+      entidade: 'usuarios',
+      entidade_id: parseInt(id, 10),
+      descricao: `Solicitação de cadastro #${id} ("${String(nome).trim()}") alterada por ${req.usuario.nome}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: 'Solicitação de colaborador atualizada com sucesso!'
+    });
+  } catch (err) {
+    console.error('[USUARIOS] PUT pre-cadastro/:id:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao atualizar solicitação de cadastro.' });
+  }
+});
+
 // ─── GET /api/v1/usuarios ────────────────────────────────────────────────────
 router.get('/', requirePermission('usuarios.visualizar'), async (req, res) => {
   try {

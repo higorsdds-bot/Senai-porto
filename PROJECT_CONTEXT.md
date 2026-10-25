@@ -208,9 +208,14 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 ### Fluxo de Cadastro e Aprovação de Usuários
 1. Qualquer colaborador pode solicitar cadastro pela tela de login via `POST /api/v1/auth/solicitar-cadastro` OU o perfil **ADMINISTRACAO** pode pré-cadastrar colaboradores diretamente pelo módulo **Cadastrar Colaborador** (`POST /api/v1/usuarios/pre-cadastro`).
 2. No pré-cadastro feito pela Administração, o operador **não tem permissão nem opção de selecionar setor ou cargo**. O usuário é registrado com `setor_id = NULL`, status `PENDENTE` e auditoria de autoria do pré-cadastro.
-3. Usuários com status `PENDENTE` **não conseguem fazer login** (a API retorna HTTP 403).
-4. O **Administrador Geral** (`ADMIN`) visualiza as solicitações no módulo **Auditoria & Governança** (aba Solicitações Pendentes) e realiza a liberação formal, definindo obrigatoriamente tanto a **Função (Perfil)** quanto o **Setor de Lotação**.
-5. Quando o usuário está logado, um **heartbeat** roda a cada 60 segundos (`POST /api/v1/auth/heartbeat`), permitindo que a tela de auditoria veja quem está online em tempo real.
+3. **Edição de Solicitação já Enviada:** Caso a Administração necessite corrigir o nome, e-mail ou senha do colaborador já pré-cadastrado enquanto o status estiver `PENDENTE`, pode clicar em "Editar" diretamente na coluna de Solicitações Registradas (`PUT /api/v1/usuarios/pre-cadastro/:id`).
+4. Usuários com status `PENDENTE` **não conseguem fazer login** (a API retorna HTTP 403).
+5. O **Administrador Geral** (`ADMIN`) visualiza as solicitações no módulo **Auditoria & Governança** (aba Solicitações Pendentes) e possui a **opção de digitar e editar todos os campos** (Nome, E-mail, Perfil, Setor de Lotação e Redefinição de Senha) antes de salvar as alterações ou liberar formalmente o acesso (`POST /api/v1/auditoria/solicitacoes/:id/aprovar` e `PUT /api/v1/auditoria/solicitacoes/:id`).
+6. Quando o usuário está logado, um **heartbeat** roda a cada 60 segundos (`POST /api/v1/auth/heartbeat`), permitindo que a tela de auditoria veja quem está online em tempo real.
+
+### Regras de Edição de Solicitações e Pedidos de Compra
+- **Edição pelo Solicitante:** Qualquer colaborador que enviou uma solicitação de materiais ou compra (`compras`) tem a opção de editar os dados da sua solicitação já pedida enquanto o status estiver como `pendente` (`PUT /api/v1/compras/:id`).
+- **Edição Irrestrita com Digitação pelo Administrador:** O perfil Administrador tem acesso a todos os campos editáveis por digitação direta (produto, descrição, quantidade, valor estimado, setor, status e parecer/justificativa administrativa).
 
 ---
 

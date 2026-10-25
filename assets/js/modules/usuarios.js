@@ -208,12 +208,18 @@ window.UsuariosModule = {
                         </div>
                       </div>
 
-                      <div class="text-right shrink-0">
+                      <div class="text-right shrink-0 flex flex-col items-end gap-1">
                         ${isPendente ? `
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                             Aguardando Admin
                           </span>
+                          <button type="button" onclick="window.UsuariosModule._openEditPreCadastroModal(${u.id})"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors cursor-pointer"
+                            title="Editar solicitação de colaborador que já foi pedida">
+                            <i data-lucide="edit-3" class="w-3 h-3"></i>
+                            <span>Editar</span>
+                          </button>
                         ` : isAtivo ? `
                           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -224,7 +230,7 @@ window.UsuariosModule = {
                             ${u.status}
                           </span>
                         `}
-                        <div class="text-[10px] text-slate-400 mt-1">
+                        <div class="text-[10px] text-slate-400">
                           ${u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : ''}
                         </div>
                       </div>
@@ -477,6 +483,124 @@ window.UsuariosModule = {
       this.currentPage = 1;
       this._renderGestaoCompleta(container);
     });
+  },
+
+  _openEditPreCadastroModal(userId) {
+    const item = this.items.find(u => Number(u.id) === Number(userId));
+    if (!item) return;
+
+    const modalContent = `
+      <form id="form-edit-pre-cad" class="space-y-4">
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-amber-600 shrink-0"></i>
+          <span><strong>Edição da Solicitação:</strong> Corrija o nome, e-mail ou redefina a senha provisória do colaborador antes da aprovação do Administrador Geral.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+          <input 
+            type="text" 
+            id="edit-pre-nome" 
+            required 
+            minlength="3" 
+            value="${this._esc(item.nome)}" 
+            placeholder="Ex: Mariana Vasconcelos Costa"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+          <input 
+            type="email" 
+            id="edit-pre-email" 
+            required 
+            value="${this._esc(item.email)}" 
+            placeholder="Ex: mariana.costa@secult.es.gov.br"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+          />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-700">Nova Senha Provisória (Opcional)</label>
+            <button type="button" id="btn-gerar-senha-edit-pre" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>
+              <span>Gerar Senha</span>
+            </button>
+          </div>
+          <input 
+            type="password" 
+            id="edit-pre-senha" 
+            minlength="8" 
+            placeholder="Deixe em branco para manter a senha atual"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
+          />
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Editar Solicitação de Colaborador',
+      subtitle: 'Altere os dados informados para este cadastro pendente.',
+      contentHtml: modalContent,
+      saveLabel: 'Salvar Alterações',
+      onSave: async () => {
+        const nome = document.getElementById('edit-pre-nome')?.value.trim();
+        const email = document.getElementById('edit-pre-email')?.value.trim();
+        const senha = document.getElementById('edit-pre-senha')?.value;
+
+        if (!nome || nome.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe o nome completo (mínimo 3 caracteres).', type: 'warning' });
+          return false;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          return false;
+        }
+        if (senha && senha.length < 8) {
+          window.UI.toast({ title: 'Atenção', message: 'A senha precisa ter pelo menos 8 caracteres.', type: 'warning' });
+          return false;
+        }
+
+        try {
+          await window.API.updatePreCadastro(userId, { nome, email, senha: senha || undefined });
+          window.UI.toast({
+            title: 'Solicitação Atualizada',
+            message: 'Os dados do colaborador foram alterados com sucesso!',
+            type: 'success'
+          });
+          const container = document.getElementById('main-content');
+          if (container) await this.render(container);
+          return true;
+        } catch (err) {
+          window.UI.toast({
+            title: 'Erro ao Salvar',
+            message: err.message || 'Não foi possível atualizar a solicitação.',
+            type: 'error'
+          });
+          return false;
+        }
+      }
+    });
+
+    setTimeout(() => {
+      document.getElementById('btn-gerar-senha-edit-pre')?.addEventListener('click', () => {
+        const input = document.getElementById('edit-pre-senha');
+        if (input) {
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+          let pass = '';
+          for (let i = 0; i < 10; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+          input.value = pass;
+          input.type = 'text';
+          window.UI.toast({ title: 'Senha Gerada', message: `Nova senha gerada: ${pass}`, type: 'info' });
+        }
+      });
+      if (window.lucide) {
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) window.lucide.createIcons({ root: modalContainer });
+      }
+    }, 50);
   },
 
   _iniciais(nome) {

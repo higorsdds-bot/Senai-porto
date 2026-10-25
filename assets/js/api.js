@@ -191,6 +191,13 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastros`, { method: 'GET' });
   }
 
+  async updatePreCadastro(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastro/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
   // =========================================================================
   // SETORES
   // =========================================================================
@@ -459,6 +466,13 @@ class ApiService {
   async aprovarSolicitacaoCadastro(id, dados = {}) {
     return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes/${id}/aprovar`, {
       method: 'POST',
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async updateAuditoriaSolicitacao(id, dados = {}) {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(dados)
     });
   }

@@ -4,6 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
@@ -187,9 +188,9 @@ router.get('/solicitacoes-pendentes', async (req, res) => {
 });
 
 // ─── POST /api/v1/auditoria/solicitacoes/:id/aprovar ─────────────────────────
-// Aprova solicitação de cadastro liberando o acesso
+// Aprova solicitação de cadastro liberando o acesso e permitindo digitar/editar todos os dados
 router.post('/solicitacoes/:id/aprovar', async (req, res) => {
-  const { perfil, setor_id } = req.body;
+  const { perfil, setor_id, nome, email, senha } = req.body;
   const id = req.params.id;
 
   try {
@@ -210,33 +211,129 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       ? Number(setor_id)
       : (setor_id === null ? null : user[0].setor_id);
 
-    await pool.query(
-      `UPDATE usuarios
-       SET status = 'ATIVO',
-           perfil = ?,
-           setor_id = ?,
-           updated_at = NOW()
-       WHERE id = ?`,
-      [perfilFinal, setorFinal, id]
-    );
+    const nomeFinal = (nome && String(nome).trim().length >= 3)
+      ? String(nome).trim()
+      : user[0].nome;
+
+    let emailFinal = user[0].email;
+    if (email && String(email).trim().toLowerCase() !== user[0].email.toLowerCase()) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      const [duplicados] = await pool.query(
+        `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`,
+        [cleanEmail, id]
+      );
+      if (duplicados.length > 0) {
+        return res.status(409).json({ success: false, message: 'Já existe outro usuário registrado com este e-mail.' });
+      }
+      emailFinal = cleanEmail;
+    }
+
+    let sql = `UPDATE usuarios SET status = 'ATIVO', perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
+    const params = [perfilFinal, setorFinal, nomeFinal, emailFinal];
+
+    if (senha && String(senha).trim().length >= 8) {
+      const senhaHash = await bcrypt.hash(String(senha).trim(), 12);
+      sql += `, senha = ?`;
+      params.push(senhaHash);
+    }
+
+    sql += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.query(sql, params);
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,
       acao: 'APROVAR_CADASTRO',
       entidade: 'usuarios',
-      entidade_id: parseInt(id),
-      descricao: `Cadastro do usuário "${user[0].nome}" (${user[0].email}) foi APROVADO com perfil ${perfilFinal}${setorFinal ? ` e setor ID ${setorFinal}` : ''}.`,
+      entidade_id: parseInt(id, 10),
+      descricao: `Cadastro do usuário "${nomeFinal}" (${emailFinal}) foi APROVADO com perfil ${perfilFinal}${setorFinal ? ` e setor ID ${setorFinal}` : ''} com edição administrativa.`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
     return res.json({
       success: true,
-      message: `Acesso do usuário "${user[0].nome}" aprovado com sucesso!`
+      message: `Acesso do usuário "${nomeFinal}" aprovado com sucesso!`
     });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao aprovar cadastro:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao aprovar solicitação.' });
+  }
+});
+
+// ─── PUT /api/v1/auditoria/solicitacoes/:id ──────────────────────────────────
+// Permite ao Administrador digitar e alterar todos os dados da solicitação pendente sem liberar imediatamente
+router.put('/solicitacoes/:id', async (req, res) => {
+  const { perfil, setor_id, nome, email, senha } = req.body;
+  const id = req.params.id;
+
+  try {
+    const pool = getPool();
+    const [user] = await pool.query(
+      `SELECT id, nome, email, perfil, setor_id, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+
+    if (!user.length) {
+      return res.status(404).json({ success: false, message: 'Solicitação não encontrada.' });
+    }
+
+    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA', 'VISITANTE'];
+    const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : user[0].perfil;
+
+    const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
+      ? Number(setor_id)
+      : (setor_id === null ? null : user[0].setor_id);
+
+    const nomeFinal = (nome && String(nome).trim().length >= 3)
+      ? String(nome).trim()
+      : user[0].nome;
+
+    let emailFinal = user[0].email;
+    if (email && String(email).trim().toLowerCase() !== user[0].email.toLowerCase()) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      const [duplicados] = await pool.query(
+        `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`,
+        [cleanEmail, id]
+      );
+      if (duplicados.length > 0) {
+        return res.status(409).json({ success: false, message: 'Já existe outro usuário registrado com este e-mail.' });
+      }
+      emailFinal = cleanEmail;
+    }
+
+    let sql = `UPDATE usuarios SET perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
+    const params = [perfilFinal, setorFinal, nomeFinal, emailFinal];
+
+    if (senha && String(senha).trim().length >= 8) {
+      const senhaHash = await bcrypt.hash(String(senha).trim(), 12);
+      sql += `, senha = ?`;
+      params.push(senhaHash);
+    }
+
+    sql += ` WHERE id = ?`;
+    params.push(id);
+
+    await pool.query(sql, params);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_SOLICITACAO_CADASTRO',
+      entidade: 'usuarios',
+      entidade_id: parseInt(id, 10),
+      descricao: `Solicitação pendente #${id} ("${nomeFinal}") editada pelo Administrador (${req.usuario.nome}).`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: `Dados da solicitação de "${nomeFinal}" atualizados com sucesso!`
+    });
+  } catch (err) {
+    console.error('[AUDITORIA] Erro ao editar solicitação pendente:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao editar dados da solicitação.' });
   }
 });
 

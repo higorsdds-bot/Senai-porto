@@ -145,48 +145,86 @@ const AuditoriaModule = {
         <div id="conteudo-historico-usuario" class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto"></div>
       </div>
 
-      <!-- MODAL DE APROVAÇÃO COM ESCOLHA DE PERFIL -->
-      <div id="modal-aprovar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
+      <!-- MODAL DE APROVAÇÃO COM DIGITAÇÃO E EDIÇÃO COMPLETA (ADMIN) -->
+      <div id="modal-aprovar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-100">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Liberar Acesso ao Usuário
-            </h3>
-            <button type="button" onclick="document.getElementById('modal-aprovar-usuario').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600">
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Gestão e Liberação de Cadastro
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Como administrador, você pode digitar e editar todos os campos do usuário.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('modal-aprovar-usuario').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
               <i data-lucide="x" class="w-4 h-4"></i>
             </button>
           </div>
-          <form id="form-aprovar-usuario" class="space-y-4">
+          <form id="form-aprovar-usuario" class="space-y-4" novalidate>
             <input type="hidden" id="aprovar-user-id">
-            <p class="text-xs text-slate-600 leading-relaxed">
-              Você está aprovando o acesso de <strong id="aprovar-user-nome" class="text-slate-900"></strong> (<span id="aprovar-user-email"></span>).
-            </p>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Perfil de Permissões (Função)</label>
-              <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold">
-                <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
-                <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
-                <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
-                <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
-                <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
-                <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
-              </select>
+
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
+              <span>Você pode corrigir o nome, e-mail, atribuir setor, perfil ou redefinir a senha antes de salvar ou liberar.</span>
             </div>
+
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Setor de Lotação</label>
-              <select id="aprovar-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold">
-                <option value="">Selecione o setor de lotação...</option>
-              </select>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+              <input type="text" id="aprovar-user-nome-input" required minlength="3" placeholder="Ex: Carlos Eduardo de Oliveira"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
             </div>
-            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+              <input type="email" id="aprovar-user-email-input" required placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissões (Função) *</label>
+                <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
+                  <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
+                  <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
+                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
+                  <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
+                  <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
+                <select id="aprovar-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <option value="">Selecione o setor de lotação...</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-700">Redefinir Senha (Opcional)</label>
+                <button type="button" id="btn-gerar-senha-aprovar" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i> Gerar Senha
+                </button>
+              </div>
+              <input type="password" id="aprovar-user-senha" minlength="8" placeholder="Deixe em branco para manter a senha atual"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
               <button type="button" onclick="document.getElementById('modal-aprovar-usuario').classList.add('hidden')"
-                class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                class="px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
                 Cancelar
               </button>
-              <button type="submit" id="btn-confirmar-aprovacao"
-                class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
-                Confirmar Liberação
-              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" id="btn-salvar-apenas-solicitacao"
+                  class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">
+                  Salvar Alterações
+                </button>
+                <button type="submit" id="btn-confirmar-aprovacao"
+                  class="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
+                  Confirmar e Liberar
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -390,28 +428,43 @@ const AuditoriaModule = {
       });
     });
 
-    // Form de aprovação
+    // Form de aprovação / Edição de solicitação pelo Administrador
     const formAprovar = container.querySelector('#form-aprovar-usuario');
     if (formAprovar) {
       formAprovar.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = container.querySelector('#aprovar-user-id').value;
+        const nome = container.querySelector('#aprovar-user-nome-input')?.value.trim();
+        const email = container.querySelector('#aprovar-user-email-input')?.value.trim();
         const perfil = container.querySelector('#aprovar-user-perfil').value;
         const setorId = container.querySelector('#aprovar-user-setor')?.value;
+        const senha = container.querySelector('#aprovar-user-senha')?.value;
         const btn = container.querySelector('#btn-confirmar-aprovacao');
+
+        if (!nome || nome.length < 3) {
+          if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'Informe o nome completo do usuário.', type: 'warning' });
+          return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          return;
+        }
 
         btn.disabled = true;
         btn.textContent = 'Liberando acesso...';
 
         try {
           await window.API.aprovarSolicitacaoCadastro(id, {
+            nome,
+            email,
             perfil,
-            setor_id: setorId ? Number(setorId) : null
+            setor_id: setorId ? Number(setorId) : null,
+            senha: senha || undefined
           });
           if (window.UI?.toast) {
             window.UI.toast({
               title: 'Cadastro Aprovado',
-              message: 'O acesso do usuário foi liberado com sucesso!',
+              message: `O acesso de "${nome}" foi liberado com sucesso!`,
               type: 'success'
             });
           }
@@ -423,10 +476,76 @@ const AuditoriaModule = {
           }
         } finally {
           btn.disabled = false;
-          btn.textContent = 'Confirmar Liberação';
+          btn.textContent = 'Confirmar e Liberar';
         }
       });
     }
+
+    // Botão de Salvar Alterações na Solicitação (mantendo PENDENTE)
+    const btnSalvarApenas = container.querySelector('#btn-salvar-apenas-solicitacao');
+    btnSalvarApenas?.addEventListener('click', async () => {
+      const id = container.querySelector('#aprovar-user-id').value;
+      const nome = container.querySelector('#aprovar-user-nome-input')?.value.trim();
+      const email = container.querySelector('#aprovar-user-email-input')?.value.trim();
+      const perfil = container.querySelector('#aprovar-user-perfil')?.value;
+      const setorId = container.querySelector('#aprovar-user-setor')?.value;
+      const senha = container.querySelector('#aprovar-user-senha')?.value;
+
+      if (!nome || nome.length < 3) {
+        if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'Informe o nome completo (mínimo 3 caracteres).', type: 'warning' });
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail válido.', type: 'warning' });
+        return;
+      }
+      if (senha && senha.length < 8) {
+        if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'A senha precisa ter pelo menos 8 caracteres.', type: 'warning' });
+        return;
+      }
+
+      btnSalvarApenas.disabled = true;
+      btnSalvarApenas.textContent = 'Salvando...';
+
+      try {
+        await window.API.updateAuditoriaSolicitacao(id, {
+          nome,
+          email,
+          perfil,
+          setor_id: setorId ? Number(setorId) : null,
+          senha: senha || undefined
+        });
+        if (window.UI?.toast) {
+          window.UI.toast({
+            title: 'Solicitação Atualizada',
+            message: `Dados da solicitação de "${nome}" salvos com sucesso!`,
+            type: 'success'
+          });
+        }
+        document.getElementById('modal-aprovar-usuario')?.classList.add('hidden');
+        await this._carregarTudo(container);
+      } catch (err) {
+        if (window.UI?.toast) {
+          window.UI.toast({ title: 'Erro ao Salvar', message: err.message || 'Não foi possível salvar os dados.', type: 'error' });
+        }
+      } finally {
+        btnSalvarApenas.disabled = false;
+        btnSalvarApenas.textContent = 'Salvar Alterações';
+      }
+    });
+
+    // Gerador de senha no modal de aprovação/edição
+    container.querySelector('#btn-gerar-senha-aprovar')?.addEventListener('click', () => {
+      const inputSenha = container.querySelector('#aprovar-user-senha');
+      if (inputSenha) {
+        inputSenha.type = 'text';
+        inputSenha.value = this._gerarSenhaAleatoria();
+        inputSenha.select();
+        if (window.UI?.toast) {
+          window.UI.toast({ title: 'Senha Gerada', message: `Senha provisória gerada: ${inputSenha.value}`, type: 'info' });
+        }
+      }
+    });
 
     // Modal de Cadastro Manual de Usuário
     const modalCad = container.querySelector('#modal-cadastrar-usuario');
@@ -676,13 +795,17 @@ const AuditoriaModule = {
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> PENDENTE
                       </span>
                     </td>
-                    <td class="py-3.5 px-4 text-right space-x-2">
-                      <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'})"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer">
+                    <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                      <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'}, '${u.perfil || 'OPERADOR'}')"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold text-xs border border-blue-200 transition-colors cursor-pointer" title="Digitar e editar dados da solicitação">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+                      </button>
+                      <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'}, '${u.perfil || 'OPERADOR'}')"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer" title="Liberar acesso ao usuário">
                         <i data-lucide="check" class="w-3.5 h-3.5"></i> Liberar Acesso
                       </button>
                       <button type="button" onclick="AuditoriaModule.rejeitarCadastro(${u.id}, '${this._esc(u.nome)}')"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-xl font-bold text-xs transition-colors cursor-pointer">
+                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-xl font-bold text-xs transition-colors cursor-pointer" title="Rejeitar cadastro">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i> Rejeitar
                       </button>
                     </td>
@@ -696,12 +819,21 @@ const AuditoriaModule = {
     }
   },
 
-  async abrirModalAprovacao(id, nome, email, setor_id = null) {
+  async abrirModalAprovacao(id, nome, email, setor_id = null, perfil = 'OPERADOR') {
     const modal = document.getElementById('modal-aprovar-usuario');
     if (!modal) return;
     document.getElementById('aprovar-user-id').value = id;
-    document.getElementById('aprovar-user-nome').textContent = nome;
-    document.getElementById('aprovar-user-email').textContent = email;
+    const inputNome = document.getElementById('aprovar-user-nome-input');
+    if (inputNome) inputNome.value = nome || '';
+    const inputEmail = document.getElementById('aprovar-user-email-input');
+    if (inputEmail) inputEmail.value = email || '';
+    const selectPerfil = document.getElementById('aprovar-user-perfil');
+    if (selectPerfil) selectPerfil.value = perfil || 'OPERADOR';
+    const inputSenha = document.getElementById('aprovar-user-senha');
+    if (inputSenha) {
+      inputSenha.value = '';
+      inputSenha.type = 'password';
+    }
 
     const selectSetor = document.getElementById('aprovar-user-setor');
     if (selectSetor) {

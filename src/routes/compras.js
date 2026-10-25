@@ -151,21 +151,118 @@ router.post('/', requirePermission('compras.criar'), async (req, res) => {
 });
 
 // PUT /api/v1/compras/:id
-router.put('/:id', requirePermission('compras.editar'), async (req, res) => {
-  const { produto, descricao, quantidade, valor_estimado, setor_id, justificativa } = req.body;
+// Permite que administradores e gestores editem tudo, e que solicitantes editem a própria solicitação pendente
+router.put('/:id', async (req, res) => {
+  const { produto, descricao, quantidade, valor_estimado, setor_id, justificativa, status, solicitante_id } = req.body;
   if (!produto || produto.trim().length < 3) {
     return res.status(422).json({ success: false, message: 'Produto inválido.', errors: { produto: 'Mínimo 3 caracteres.' } });
   }
+  const qtd = quantidade == null ? 1 : Number(quantidade);
+  if (!Number.isInteger(qtd) || qtd < 1) {
+    return res.status(422).json({ success: false, message: 'Quantidade inválida.', errors: { quantidade: 'Informe um número inteiro maior que zero.' } });
+  }
+
   try {
     const pool = getPool();
-    await pool.query(
-      `UPDATE compras SET produto = ?, descricao = ?, quantidade = ?, valor_estimado = ?, setor_id = ?, justificativa = ?, updated_at = NOW()
-       WHERE id = ? AND deleted_at IS NULL`,
-      [produto.trim(), descricao?.trim() || null, quantidade || 1, valor_estimado || null, setor_id || null, justificativa?.trim() || null, req.params.id]
+    const [existing] = await pool.query(
+      `SELECT id, produto, descricao, quantidade, valor_estimado, status, justificativa, solicitante_id, setor_id
+       FROM compras
+       WHERE id = ? AND deleted_at IS NULL
+       LIMIT 1`,
+      [req.params.id]
     );
-    await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'EDITAR_COMPRA', entidade: 'compras', entidade_id: parseInt(req.params.id), descricao: `Compra #${req.params.id} editada.`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });
-    return res.json({ success: true, message: 'Compra atualizada.' });
+
+    if (!existing.length) {
+      return res.status(404).json({ success: false, message: 'Compra não encontrada.' });
+    }
+
+    const currentItem = existing[0];
+    const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(String(req.usuario.perfil).toUpperCase());
+    const canEditGeneral = isAdmin || (await hasPermission(req.usuario, 'compras.editar'));
+    const isOwner = Number(currentItem.solicitante_id) === Number(req.usuario.id);
+    const isPending = currentItem.status === 'pendente';
+
+    // Regra de autorização:
+    // 1. Quem tem compras.editar (Admin/Gestor) pode editar tudo
+    // 2. O próprio solicitante pode editar a sua solicitação enquanto ela estiver com status pendente
+    if (!canEditGeneral && !(isOwner && isPending)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Você só pode editar a sua própria solicitação enquanto ela estiver com status pendente.'
+      });
+    }
+
+    // Campos atualizáveis
+    let statusFinal = currentItem.status;
+    if (canEditGeneral && status) {
+      const validos = ['pendente', 'aprovado', 'entregue', 'cancelado'];
+      if (validos.includes(status)) {
+        statusFinal = status;
+      }
+    }
+
+    let solicitanteFinal = currentItem.solicitante_id;
+    if (isAdmin && solicitante_id !== undefined && solicitante_id !== null && solicitante_id !== '') {
+      solicitanteFinal = Number(solicitante_id) || null;
+    }
+
+    let setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
+      ? Number(setor_id)
+      : currentItem.setor_id;
+
+    let valorFinal = (valor_estimado !== undefined && valor_estimado !== null && valor_estimado !== '')
+      ? Number(valor_estimado)
+      : (canEditGeneral ? null : currentItem.valor_estimado);
+
+    let justificativaFinal = justificativa !== undefined
+      ? (justificativa?.trim() || null)
+      : currentItem.justificativa;
+
+    await pool.query(
+      `UPDATE compras
+       SET produto = ?,
+           descricao = ?,
+           quantidade = ?,
+           valor_estimado = ?,
+           setor_id = ?,
+           solicitante_id = ?,
+           status = ?,
+           justificativa = ?,
+           updated_at = NOW()
+       WHERE id = ? AND deleted_at IS NULL`,
+      [
+        produto.trim(),
+        descricao?.trim() || null,
+        qtd,
+        valorFinal,
+        setorFinal,
+        solicitanteFinal,
+        statusFinal,
+        justificativaFinal,
+        req.params.id
+      ]
+    );
+
+    const descAuditoria = isAdmin
+      ? `Compra #${req.params.id} ("${produto.trim()}") editada integralmente pelo Administrador (${req.usuario.nome}). Status: ${statusFinal}.`
+      : `Solicitação de compra #${req.params.id} editada pelo solicitante (${req.usuario.nome}).`;
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_COMPRA',
+      entidade: 'compras',
+      entidade_id: parseInt(req.params.id, 10),
+      descricao: descAuditoria,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: isAdmin ? 'Pedido de compra atualizado com sucesso.' : 'Sua solicitação de compra foi atualizada com sucesso.'
+    });
   } catch (err) {
+    console.error('[COMPRAS] PUT /:id:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao atualizar compra.' });
   }
 });
