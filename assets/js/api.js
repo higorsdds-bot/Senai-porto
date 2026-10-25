@@ -503,6 +503,13 @@ class ApiService {
     });
   }
 
+  async testarEmail(destinatario = '') {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/testar-email`, {
+      method: 'POST',
+      body: JSON.stringify({ destinatario })
+    });
+  }
+
   // =========================================================================
   // ROTAS PÚBLICAS (Visitante — sem autenticação)
   // =========================================================================

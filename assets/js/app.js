@@ -242,7 +242,7 @@ class AppRouter {
     if (window.Auth?.isVisitante()) {
       return route.moduleKey === 'comunicacao' || route.moduleKey === 'agenda';
     }
-    if (route.adminOnly && !window.Auth?.isAdmin()) return false;
+    if (route.adminOnly && !window.Auth?.isAdmin() && !window.Auth?.hasPermission('auditoria.visualizar')) return false;
     return !route.permissions || window.Auth?.canAccessModule(route.moduleKey, route.permissions);
   }
 

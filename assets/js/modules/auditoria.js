@@ -17,7 +17,7 @@ const AuditoriaModule = {
 
   async render(container) {
     // Verificação de permissão no frontend (o backend já valida estritamente no banco)
-    if (!window.Auth?.isAdmin()) {
+    if (!window.Auth?.isAdmin() && !window.Auth?.hasPermission('auditoria.visualizar')) {
       container.innerHTML = `
         <div class="max-w-md mx-auto my-16 bg-white rounded-3xl border border-rose-200 p-8 shadow-hub-md text-center">
           <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 font-bold">
@@ -25,7 +25,7 @@ const AuditoriaModule = {
           </div>
           <h3 class="text-base font-extrabold text-slate-900">Acesso Restrito</h3>
           <p class="text-xs text-slate-500 mt-2 leading-relaxed">
-            O módulo de Auditoria é restrito exclusivamente a usuários com perfil <strong>Administrador (ADMIN)</strong>.
+            O módulo de Auditoria é restrito exclusivamente a usuários com perfil <strong>Administrador (ADMIN)</strong> ou com permissão geral de governança.
           </p>
           <a href="#dashboard" class="inline-block mt-6 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all">
             Voltar ao Dashboard
@@ -52,10 +52,17 @@ const AuditoriaModule = {
               Monitoramento em tempo real de acessos, histórico de ações e gestão de novos cadastros.
             </p>
           </div>
-          <button id="btn-refresh-auditoria"
-            class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
-            <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i> Atualizar Dados
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="btn-testar-email-auditoria"
+              class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+              title="Testar envio de e-mail e verificar provedor ativo">
+              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600"></i> Testar E-mail
+            </button>
+            <button id="btn-refresh-auditoria"
+              class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
+              <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i> Atualizar Dados
+            </button>
+          </div>
         </div>
 
         <!-- CARDS DE MÉTRICAS RÁPIDAS -->
@@ -407,6 +414,68 @@ const AuditoriaModule = {
     // Botão de refresh manual
     container.querySelector('#btn-refresh-auditoria')?.addEventListener('click', () => {
       this._carregarTudo(container);
+    });
+
+    // Botão de Diagnóstico de Envio de E-mail
+    container.querySelector('#btn-testar-email-auditoria')?.addEventListener('click', () => {
+      const emailAdmin = window.Auth?.getUsuario?.()?.email || '';
+      const contentHtml = `
+        <div class="space-y-4 text-xs">
+          <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900">
+            <p class="font-bold">Diagnóstico Operacional de E-mail</p>
+            <p class="mt-1">Envie um e-mail de teste imediato para validar se seu provedor (Brevo API, Resend ou SMTP) está conectado e entregando mensagens sem bloqueios.</p>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">E-mail de Destino para Teste *</label>
+            <input type="email" id="input-teste-email-destino" value="${emailAdmin}" required
+              placeholder="Ex: seu-email@dominio.com"
+              class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white" />
+          </div>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-[11px] space-y-1">
+            <p><strong>Configuração recomendada para o Render:</strong></p>
+            <p>O plano Free do Render bloqueia conexões SMTP tradicionais (portas 25/465/587). Para envio 100% garantido, configure a variável de ambiente <code>BREVO_API_KEY</code> no Render.</p>
+          </div>
+        </div>
+      `;
+
+      if (window.UI?.openModal) {
+        window.UI.openModal({
+          title: 'Testar Conexão de E-mail',
+          contentHtml,
+          saveLabel: 'Enviar E-mail de Teste',
+          cancelLabel: 'Cancelar',
+          onSave: async () => {
+            const dest = document.getElementById('input-teste-email-destino')?.value?.trim();
+            if (!dest || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest)) {
+              if (window.UI?.toast) {
+                window.UI.toast({ title: 'Atenção', message: 'Informe um endereço de e-mail válido.', type: 'warning' });
+              }
+              return false;
+            }
+
+            try {
+              const res = await window.API.testarEmail(dest);
+              if (window.UI?.toast) {
+                window.UI.toast({
+                  title: 'E-mail Enviado!',
+                  message: res?.message || 'E-mail de teste disparado com sucesso.',
+                  type: 'success'
+                });
+              }
+              return true;
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast({
+                  title: 'Falha no Teste',
+                  message: err.message || 'Erro ao enviar e-mail de teste.',
+                  type: 'error'
+                });
+              }
+              return false;
+            }
+          }
+        });
+      }
     });
 
     // Alternador de abas

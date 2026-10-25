@@ -294,7 +294,7 @@ class AuthManager {
     }
 
     atualizarVisibilidadeAdmin() {
-        const admin = this.isAdmin();
+        const admin = this.isAdmin() || this.hasPermission('auditoria.visualizar');
         document.querySelectorAll('.admin-only').forEach(el => {
             if (admin) {
                 el.classList.remove('hidden');

@@ -5,7 +5,9 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
+const { hasPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   gerarTokenAtivacao,
@@ -19,7 +21,7 @@ router.use(authMiddleware);
 
 /**
  * Middleware estrito: consulta o perfil do usuário DIRETAMENTE no banco de dados.
- * Garante que apenas usuários com perfil ADMIN/ADMINISTRADOR ativo acessem.
+ * Garante que usuários com perfil ADMIN/ADMINISTRADOR ou com permissão geral de auditoria acessem.
  */
 async function requireAdminDirect(req, res, next) {
   try {
@@ -39,11 +41,19 @@ async function requireAdminDirect(req, res, next) {
       });
     }
 
-    const perfil = String(rows[0].perfil).toUpperCase();
-    if (perfil !== 'ADMIN' && perfil !== 'ADMINISTRADOR') {
+    const perfilNorm = String(rows[0].perfil || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+
+    const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(perfilNorm);
+    const podeAuditoria = isAdmin || await hasPermission(rows[0], 'auditoria.visualizar');
+
+    if (!podeAuditoria) {
       return res.status(403).json({
         success: false,
-        message: 'Acesso restrito. Este módulo requer perfil de Administrador consultado diretamente no banco.'
+        message: 'Acesso restrito. Este módulo requer perfil de Administrador ou permissão de auditoria.'
       });
     }
 
@@ -564,6 +574,66 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('[AUDITORIA] GET:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao carregar auditoria.' });
+  }
+});
+
+// ─── POST /api/v1/auditoria/testar-email ─────────────────────────────────────
+// Diagnóstico operacional de e-mail (permite ao Admin verificar o status e o provedor)
+router.post('/testar-email', async (req, res) => {
+  const { destinatario } = req.body;
+  const emailDestino = (destinatario || req.usuario.email || '').trim();
+
+  if (!emailDestino || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailDestino)) {
+    return res.status(422).json({
+      success: false,
+      message: 'Informe um endereço de e-mail de destino válido para o teste.'
+    });
+  }
+
+  const { getProvedorEmail, parseRemetente, enviarEmail } = require('../services/email');
+  const provedor = getProvedorEmail();
+  const remetente = parseRemetente();
+
+  const agora = new Date().toLocaleString('pt-BR');
+  const resultado = await enviarEmail({
+    para: emailDestino,
+    assunto: `[HUB ES+] Teste de Diagnóstico de E-mail (${agora})`,
+    texto: `Olá! Este é um e-mail de teste operacional do HUB ES+ disparado em ${agora}.\nProvedor ativo: ${provedor}\nRemetente: ${remetente.name} <${remetente.email}>\nDestinatário: ${emailDestino}\n\nSe você recebeu este e-mail, as configurações estão 100% corretas.`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 520px; margin: 0 auto;">
+        <div style="background: #2563eb; color: #fff; padding: 6px 14px; border-radius: 8px; display: inline-block; font-weight: 800; font-size: 11px; text-transform: uppercase;">HUB ES+ • Diagnóstico</div>
+        <h2 style="color: #0f172a; margin-top: 14px; font-size: 18px;">Teste de Conexão de E-mail Bem-Sucedido!</h2>
+        <p style="color: #334155; font-size: 13px;">O serviço de e-mails da plataforma integrada HUB ES+ está <strong>ativo e operando perfeitamente</strong>.</p>
+        <div style="background: #ffffff; padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 12px; color: #475569; line-height: 1.8;">
+          <div><strong>Provedor Ativo:</strong> ${provedor}</div>
+          <div><strong>Remetente:</strong> ${remetente.name} &lt;${remetente.email}&gt;</div>
+          <div><strong>Destinatário:</strong> ${emailDestino}</div>
+          <div><strong>Horário do Disparo:</strong> ${agora}</div>
+        </div>
+      </div>
+    `
+  });
+
+  if (resultado.success) {
+    return res.json({
+      success: true,
+      message: resultado.simulated
+        ? `Modo Simulação: o e-mail foi exibido no console do servidor. Configure BREVO_API_KEY ou credenciais SMTP no Render para disparo real.`
+        : `E-mail de teste enviado com sucesso via ${provedor}! Verifique sua caixa de entrada (${emailDestino}).`,
+      provedor,
+      remetente: `${remetente.name} <${remetente.email}>`,
+      messageId: resultado.messageId || null
+    });
+  } else {
+    return res.status(500).json({
+      success: false,
+      message: `Falha no envio via ${provedor}: ${resultado.error || resultado.message || 'Erro de conexão.'}`,
+      provedor,
+      remetente: `${remetente.name} <${remetente.email}>`,
+      dica: provedor === 'SMTP'
+        ? 'Dica: hospedagens como o plano Free do Render bloqueiam conexões nas portas SMTP (25/465/587). Recomendamos definir a variável BREVO_API_KEY no painel do Render para envio direto via HTTPS (porta 443).'
+        : undefined
+    });
   }
 });
 

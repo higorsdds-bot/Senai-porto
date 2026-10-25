@@ -23,6 +23,8 @@ const ACTIVATION_TOKEN_EXPIRES_HOURS = parseInt(process.env.ACTIVATION_TOKEN_EXP
 
 // Rate limiting em memória para envio de e-mails (evita inundação / email-bomb)
 const emailSendLimit = new Map();
+const MAX_EMAILS_PER_HOUR = parseInt(process.env.EMAIL_RATE_LIMIT || '30', 10);
+
 function checkEmailRateLimit(email) {
   const key = String(email).toLowerCase().trim();
   const now = Date.now();
@@ -33,8 +35,8 @@ function checkEmailRateLimit(email) {
     entry.resetAt = now + 60 * 60 * 1000;
   }
 
-  if (entry.count >= 5) {
-    return false; // Máximo 5 e-mails por hora para o mesmo destinatário
+  if (entry.count >= MAX_EMAILS_PER_HOUR) {
+    return false;
   }
 
   entry.count++;
@@ -55,7 +57,7 @@ function getTransporter() {
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
   if (!host || !user) {
-    return null; // SMTP não configurado, usará modo simulação/desenvolvimento
+    return null;
   }
 
   return nodemailer.createTransport({
@@ -66,64 +68,198 @@ function getTransporter() {
       user,
       pass
     },
+    // Timeouts de 12s para evitar travar requisições se porta SMTP estiver bloqueada
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 15000,
     tls: {
-      rejectUnauthorized: process.env.NODE_ENV === 'production'
+      rejectUnauthorized: false
     }
   });
+}
+
+/**
+ * Extrai nome e e-mail do remetente de forma inteligente.
+ * Garante que se o usuário estiver autenticando via Gmail ou Brevo com um email real,
+ * o endereço remetente corresponda a essa conta para evitar rejeições SPF/DMARC (ex: 550 5.7.1).
+ */
+function parseRemetente() {
+  const raw = (process.env.EMAIL_FROM || process.env.SMTP_FROM || '').trim();
+  const authUser = (process.env.SMTP_USER || process.env.BREVO_SENDER_EMAIL || process.env.RESEND_SENDER_EMAIL || '').trim();
+
+  // Se o usuário especificou um formato completo "Nome" <email@dominio>
+  const match = raw.match(/^\s*"?([^"<]*?)"?\s*<\s*([^>\s]+)\s*>\s*$/);
+  if (match) {
+    const specifiedEmail = match[2].trim();
+    // Se o e-mail informado não for o dummy padrão notificacoes@secult.es.gov.br
+    if (!specifiedEmail.includes('notificacoes@secult.es.gov.br')) {
+      return { name: match[1].trim() || 'HUB ES+ | SECULT', email: specifiedEmail };
+    }
+  } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) && !raw.includes('notificacoes@secult.es.gov.br')) {
+    return { name: 'HUB ES+ | SECULT', email: raw };
+  }
+
+  // Se tiver um usuário autenticado (ex: Gmail, Brevo, etc), usamos ele como remetente
+  if (authUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authUser)) {
+    return { name: 'HUB ES+ | SECULT', email: authUser };
+  }
+
+  return {
+    name: 'HUB ES+ | SECULT',
+    email: 'notificacoes@secult.es.gov.br'
+  };
+}
+
+/**
+ * Envio via API HTTP da Brevo (porta 443 HTTPS).
+ * Perfeito para hospedagens como o plano Free do Render que bloqueiam portas SMTP 25/465/587.
+ */
+async function enviarViaBrevo({ destinatarios, assunto, texto, html }) {
+  const remetente = parseRemetente();
+  const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'api-key': process.env.BREVO_API_KEY
+    },
+    body: JSON.stringify({
+      sender: remetente,
+      to: destinatarios.map(email => ({ email })),
+      subject: assunto,
+      htmlContent: html,
+      textContent: texto
+    }),
+    signal: AbortSignal.timeout(15000)
+  });
+
+  if (!resp.ok) {
+    const corpo = await resp.text().catch(() => '');
+    throw new Error(`Brevo API HTTP ${resp.status}: ${corpo.slice(0, 300)}`);
+  }
+  const data = await resp.json().catch(() => ({}));
+  return data.messageId || null;
+}
+
+/**
+ * Envio via API HTTP do Resend (porta 443 HTTPS).
+ */
+async function enviarViaResend({ destinatarios, assunto, texto, html }) {
+  const remetente = parseRemetente();
+  const fromStr = `${remetente.name} <${remetente.email}>`;
+
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'authorization': `Bearer ${process.env.RESEND_API_KEY}`
+    },
+    body: JSON.stringify({
+      from: fromStr,
+      to: destinatarios,
+      subject: assunto,
+      html: html,
+      text: texto
+    }),
+    signal: AbortSignal.timeout(15000)
+  });
+
+  if (!resp.ok) {
+    const corpo = await resp.text().catch(() => '');
+    throw new Error(`Resend API HTTP ${resp.status}: ${corpo.slice(0, 300)}`);
+  }
+  const data = await resp.json().catch(() => ({}));
+  return data.id || null;
+}
+
+/**
+ * Retorna qual provedor de envio está ativo, para diagnóstico e testes.
+ */
+function getProvedorEmail() {
+  if (process.env.BREVO_API_KEY) return 'BREVO_API';
+  if (process.env.RESEND_API_KEY) return 'RESEND_API';
+  if (getTransporter()) return 'SMTP';
+  return 'SIMULACAO';
 }
 
 /**
  * Dispara um e-mail com fallback para exibição no console em ambiente de testes/dev.
  */
 async function enviarEmail({ para, assunto, texto, html }) {
-  if (!para) {
+  if (!para || (Array.isArray(para) && para.length === 0)) {
     console.warn('[EMAIL] Destinatário não informado. Envio cancelado.');
     return { success: false, message: 'Destinatário não informado.' };
   }
 
-  const destinatario = Array.isArray(para) ? para.join(', ') : para;
+  const destinatarios = (Array.isArray(para) ? para : [para])
+    .map(e => String(e).trim())
+    .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+  if (!destinatarios.length) {
+    console.warn('[EMAIL] Nenhum endereço de e-mail com formato válido informado:', para);
+    return { success: false, message: 'E-mail de destino possui formato inválido.' };
+  }
+
+  const destinatario = destinatarios.join(', ');
 
   // Rate limiting de envio
-  const emailVerificacao = Array.isArray(para) ? para[0] : para;
-  if (!checkEmailRateLimit(emailVerificacao)) {
-    console.warn(`[EMAIL] Rate limit de envio atingido para ${emailVerificacao}.`);
+  if (!checkEmailRateLimit(destinatarios[0])) {
+    console.warn(`[EMAIL] Rate limit de envio atingido para ${destinatarios[0]}.`);
     return {
       success: false,
-      message: 'Muitos e-mails enviados para este endereço recentemente. Aguarde 1 hora.'
+      message: 'Limite de e-mails para este endereço atingido nesta hora. Aguarde alguns minutos.'
     };
   }
 
-  const remetente = process.env.SMTP_FROM || '"HUB ES+ | SECULT" <notificacoes@secult.es.gov.br>';
-  const transporter = getTransporter();
+  const provedor = getProvedorEmail();
 
-  if (transporter) {
-    try {
+  try {
+    if (provedor === 'BREVO_API') {
+      const messageId = await enviarViaBrevo({ destinatarios, assunto, texto, html });
+      console.log(`[EMAIL] ✅ (Brevo API) E-mail "${assunto}" enviado para ${destinatario}. ID: ${messageId}`);
+      return { success: true, messageId, provedor };
+    }
+
+    if (provedor === 'RESEND_API') {
+      const messageId = await enviarViaResend({ destinatarios, assunto, texto, html });
+      console.log(`[EMAIL] ✅ (Resend API) E-mail "${assunto}" enviado para ${destinatario}. ID: ${messageId}`);
+      return { success: true, messageId, provedor };
+    }
+
+    if (provedor === 'SMTP') {
+      const remetente = parseRemetente();
+      const transporter = getTransporter();
       const info = await transporter.sendMail({
-        from: remetente,
+        from: { name: remetente.name, address: remetente.email },
         to: destinatario,
         subject: assunto,
         text: texto,
         html: html
       });
-      console.log(`[EMAIL] ✅ E-mail enviado com sucesso para ${destinatario}. ID: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`[EMAIL] ❌ Erro ao enviar e-mail via SMTP para ${destinatario}:`, err.message);
-      // Se falhar o envio SMTP, exibe prévia no console para que o processo não fique travado
-      logPreviewEmail({ para: destinatario, assunto, texto });
-      return { success: false, error: err.message };
+      console.log(`[EMAIL] ✅ (SMTP) E-mail "${assunto}" enviado para ${destinatario}. ID: ${info.messageId}`);
+      return { success: true, messageId: info.messageId, provedor };
     }
-  } else {
+
     // Modo simulação / desenvolvimento
     logPreviewEmail({ para: destinatario, assunto, texto });
-    return { success: true, simulated: true };
+    return { success: true, simulated: true, provedor };
+  } catch (err) {
+    console.error(`[EMAIL] ❌ Falha (${provedor}) ao enviar "${assunto}" para ${destinatario}: ${err.message}`);
+    if (provedor === 'SMTP' && /timeout|ETIMEDOUT|ECONNREFUSED|ESOCKET/i.test(err.message)) {
+      console.error('[EMAIL] Dica: o plano Free do Render bloqueia conexões SMTP (25/465/587). Configure BREVO_API_KEY no Render para envio direto via HTTPS.');
+    }
+    return { success: false, error: err.message, provedor };
   }
 }
 
 /**
- * Exibe a prévia formatada no console do servidor.
+ * Exibe a prévia formatada no console do servidor (apenas fora de produção).
  */
 function logPreviewEmail({ para, assunto, texto }) {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(`[EMAIL] Modo Simulação em Produção: E-mail "${assunto}" para ${para} não possui provedor configurado.`);
+  }
   console.log('\n========================= [EMAIL SERVICE • PREVIEW] =========================');
   console.log(`Para:     ${para}`);
   console.log(`Assunto:  ${assunto}`);
@@ -131,7 +267,6 @@ function logPreviewEmail({ para, assunto, texto }) {
   console.log(texto);
   console.log('=============================================================================\n');
 }
-
 /**
  * Gera um token seguro de ativação com alta entropia (32 bytes / 256 bits)
  * e calcula seu hash SHA-256 para persistência segura no banco.
@@ -506,6 +641,7 @@ Administração HUB ES+ • SECULT
 
 /**
  * Consulta a lista de e-mails de todos os administradores gerais ativos no banco de dados.
+ * Valida o formato estritamente para não enviar a endereços inválidos (como fallbacks sem domínio).
  */
 async function buscarEmailsAdministradoresGerais(pool) {
   try {
@@ -516,20 +652,37 @@ async function buscarEmailsAdministradoresGerais(pool) {
          AND deleted_at IS NULL`
     );
 
-    const emails = rows.map(r => r.email).filter(Boolean);
+    const emails = rows
+      .map(r => (r.email || '').trim().toLowerCase())
+      .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
     if (emails.length > 0) {
-      return emails;
+      return [...new Set(emails)];
     }
   } catch (err) {
     console.error('[EMAIL] Erro ao buscar e-mails dos administradores:', err.message);
   }
 
-  // Fallback caso não encontre no banco
-  return [process.env.ADMIN_DEFAULT_EMAIL || 'higor@secult'];
+  // Fallback seguro: verifica se ADMIN_DEFAULT_EMAIL possui domínio válido
+  const fallback = [];
+  const defaultAdmin = (process.env.ADMIN_DEFAULT_EMAIL || '').trim().toLowerCase();
+  if (defaultAdmin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(defaultAdmin)) {
+    fallback.push(defaultAdmin);
+  }
+
+  // Se o usuário configurou SMTP_USER com email válido (ex: Gmail pessoal), usa ele
+  const smtpUser = (process.env.SMTP_USER || process.env.BREVO_SENDER_EMAIL || '').trim().toLowerCase();
+  if (smtpUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpUser) && !fallback.includes(smtpUser)) {
+    fallback.push(smtpUser);
+  }
+
+  return fallback;
 }
 
 module.exports = {
   enviarEmail,
+  getProvedorEmail,
+  parseRemetente,
   gerarTokenAtivacao,
   gerarHashToken,
   notificarNovoCadastroAdmin,

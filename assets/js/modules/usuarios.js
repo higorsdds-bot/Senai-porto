@@ -468,6 +468,9 @@ window.UsuariosModule = {
     if (window.lucide) lucide.createIcons();
 
     // Eventos de busca e filtro
+    container.querySelector('#btn-novo-usuario-admin')?.addEventListener('click', () => {
+      this._openNovoUsuarioModal(container);
+    });
     container.querySelector('#input-busca-usuario')?.addEventListener('input', (e) => {
       this.searchTerm = e.target.value;
       this.currentPage = 1;
@@ -483,6 +486,154 @@ window.UsuariosModule = {
       this.currentPage = 1;
       this._renderGestaoCompleta(container);
     });
+  },
+
+  _openNovoUsuarioModal(container) {
+    const setoresOptions = (this.setores || []).map(s => `<option value="${s.id}">${this._esc(s.nome)}</option>`).join('');
+
+    const modalContent = `
+      <form id="form-novo-usuario-modal" class="space-y-4">
+        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4 text-blue-600 shrink-0"></i>
+          <span>Cadastre um novo usuário com acesso direto ao sistema (status <strong>ATIVO</strong>).</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+          <input 
+            type="text" 
+            id="novo-user-nome" 
+            required 
+            minlength="3" 
+            placeholder="Ex: Carlos Eduardo de Oliveira"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+          <input 
+            type="email" 
+            id="novo-user-email" 
+            required 
+            placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Acesso *</label>
+            <select id="novo-user-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
+              <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
+              <option value="GESTOR">GESTOR (Gestão Operacional)</option>
+              <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
+              <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+              <option value="VISITANTE">VISITANTE (Consulta Pública)</option>
+              <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
+            <select id="novo-user-setor" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
+              <option value="">Sem setor definido</option>
+              ${setoresOptions}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-700">Senha de Acesso *</label>
+            <button type="button" id="btn-gerar-senha-novo-user" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>
+              <span>Gerar Senha</span>
+            </button>
+          </div>
+          <input 
+            type="password" 
+            id="novo-user-senha" 
+            required 
+            minlength="8" 
+            placeholder="Mínimo de 8 caracteres"
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
+          />
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Cadastrar Novo Usuário',
+      subtitle: 'Crie uma nova credencial com acesso liberado.',
+      contentHtml: modalContent,
+      saveLabel: 'Cadastrar Usuário',
+      onSave: async () => {
+        const nome = document.getElementById('novo-user-nome')?.value.trim();
+        const email = document.getElementById('novo-user-email')?.value.trim();
+        const perfil = document.getElementById('novo-user-perfil')?.value;
+        const setor_id = document.getElementById('novo-user-setor')?.value;
+        const senha = document.getElementById('novo-user-senha')?.value;
+
+        if (!nome || nome.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return false;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          return false;
+        }
+        if (!senha || senha.length < 8) {
+          window.UI.toast({ title: 'Atenção', message: 'A senha de acesso precisa ter pelo menos 8 caracteres.', type: 'warning' });
+          return false;
+        }
+
+        try {
+          await window.API.createUsuario({
+            nome,
+            email,
+            senha,
+            perfil,
+            setor_id: setor_id ? Number(setor_id) : null,
+            status: 'ATIVO'
+          });
+
+          window.UI.toast({
+            title: 'Usuário Criado',
+            message: `O colaborador "${nome}" foi cadastrado com sucesso!`,
+            type: 'success'
+          });
+
+          if (container) await this.render(container);
+          return true;
+        } catch (err) {
+          window.UI.toast({
+            title: 'Erro ao Cadastrar',
+            message: err.message || 'Não foi possível cadastrar o usuário.',
+            type: 'error'
+          });
+          return false;
+        }
+      }
+    });
+
+    setTimeout(() => {
+      document.getElementById('btn-gerar-senha-novo-user')?.addEventListener('click', () => {
+        const input = document.getElementById('novo-user-senha');
+        if (input) {
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+          let pass = '';
+          for (let i = 0; i < 10; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+          input.value = pass;
+          input.type = 'text';
+          window.UI.toast({ title: 'Senha Gerada', message: `Senha gerada: ${pass}`, type: 'info' });
+        }
+      });
+      if (window.lucide) {
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) window.lucide.createIcons({ root: modalContainer });
+      }
+    }, 50);
   },
 
   _openEditPreCadastroModal(userId) {
