@@ -18,10 +18,10 @@ window.DocumentosModule = {
     try {
       const [docs, setores] = await Promise.all([
         window.API.getDocumentos(),
-        window.API.getSetores()
+        window.API.getSetores().catch(() => [])
       ]);
-      this.items = docs;
-      this.setores = setores;
+      this.items = Array.isArray(docs) ? docs : [];
+      this.setores = Array.isArray(setores) ? setores : [];
       this._renderView(container);
     } catch (err) {
       console.error('Erro ao carregar documentos:', err);
@@ -93,8 +93,8 @@ window.DocumentosModule = {
         <!-- Tabela de Documentos -->
         ${filtered.length === 0 ?
         window.UI.renderEmptyState({
-          title: 'EM MANUTENÇÃO! AGUARDE O TI TERMINAR',
-          description: 'FORA DO AR',
+          title: 'Nenhum documento encontrado',
+          description: 'Não há documentos cadastrados ou correspondentes aos filtros selecionados.',
           actionLabel: 'Cadastrar Documento',
           onActionClick: () => this._openFormModal(container)
         })

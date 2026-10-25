@@ -23,7 +23,7 @@ window.ComunicacaoModule = {
       } else {
         [comunicados, usuarios] = await Promise.all([
           window.API.getComunicados(),
-          window.API.getUsuarios()
+          window.API.getUsuarios().catch(() => [])
         ]);
       }
 

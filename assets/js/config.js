@@ -27,7 +27,8 @@ const CONFIG = {
     EVENTOS: '/eventos',
     INSUMOS: '/insumos',
     COMUNICADOS: '/comunicados',
-    AUDITORIA: '/auditoria'
+    AUDITORIA: '/auditoria',
+    DASHBOARD: '/dashboard'
   },
 
   APP_NAME: 'HUB ES+',

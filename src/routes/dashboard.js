@@ -128,7 +128,7 @@ router.get('/indicadores', requirePermission('indicadores.visualizar'), async (r
     const { periodo_dias = 30 } = req.query;
     const diasNum = Math.min(Math.max(parseInt(periodo_dias) || 30, 1), 365);
 
-    const [comprasGrafico, limpezaGrafico, ocorrenciasGrafico] = await Promise.all([
+    const [[comprasGrafico], [limpezaGrafico], [ocorrenciasGrafico]] = await Promise.all([
       pool.query(`
         SELECT DATE(created_at) AS data, status, COUNT(*) AS total
         FROM compras

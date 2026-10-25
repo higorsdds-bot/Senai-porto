@@ -254,3 +254,4 @@ Sempre que receber uma tarefa neste repositório:
 3. Garanta que novas rotas possuam verificação de autenticação (`authMiddleware`), verificação de permissão (`requirePermission`), registro de auditoria (`registrarAuditoria`) e filtro de `deleted_at IS NULL`.
 4. Garanta que novos métodos do frontend fiquem dentro de `assets/js/api.js` e os componentes sigam o padrão de `assets/js/modules/`.
 5. Mantenha os comentários explicativos e a linguagem limpa em Português (Brasil).
+6. Consulte `AUDITORIA.md` para o histórico completo da auditoria do sistema, matriz de permissões RBAC e plano de correções.

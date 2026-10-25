@@ -28,14 +28,14 @@ window.DashboardModule = {
     try {
       // Carrega dados de todos os módulos de forma concorrente via API
       const [ocorrencias, compras, eventos, documentos, equipamentos, insumos, setores, usuarios, comunicados] = await Promise.all([
-        window.API.getOcorrencias(),
-        window.API.getCompras(),
-        window.API.getEventos(),
-        window.API.getDocumentos(),
-        window.API.getEquipamentos(),
-        window.API.getInsumos(),
-        window.API.getSetores(),
-        window.API.getUsuarios(),
+        window.API.getOcorrencias().catch(() => []),
+        window.API.getCompras().catch(() => []),
+        window.API.getEventos().catch(() => []),
+        window.API.getDocumentos().catch(() => []),
+        window.API.getEquipamentos().catch(() => []),
+        window.API.getInsumos().catch(() => []),
+        window.API.getSetores().catch(() => []),
+        window.API.getUsuarios().catch(() => []),
         window.API.getComunicados().catch(() => [])
       ]);
 

@@ -19,7 +19,7 @@ window.LimpezaModule = {
     try {
       const [tarefas, usuarios] = await Promise.all([
         window.API.getLimpeza(),
-        window.API.getUsuarios()
+        window.API.getUsuarios().catch(() => [])
       ]);
       this.items = tarefas || [];
       this.usuarios = usuarios || [];
@@ -369,8 +369,8 @@ window.LimpezaModule = {
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Responsável Designado *</label>
           <select name="responsavel_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
             <option value="">Selecione o responsável...</option>
-            ${this.usuarios.map(u => `
-              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : ''}>${u.nome}</option>
+            ${(this.usuarios.length > 0 ? this.usuarios : (window.Auth?.getUser() ? [window.Auth.getUser()] : [])).map(u => `
+              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && window.Auth?.getUser()?.id === u.id ? 'selected' : '')}>${u.nome}</option>
             `).join('')}
           </select>
         </div>

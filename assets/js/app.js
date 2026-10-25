@@ -122,7 +122,6 @@ class AppRouter {
   handleRoute() {
     let hash = window.location.hash.replace('#', '').trim().toLowerCase();
     const isVisitante = window.Auth?.isVisitante();
-    const defaultRoute = isVisitante ? 'comunicacao' : 'dashboard';
 
     // REGRA ESTRITA DE VISITANTE:
     // Visitante (anônimo ou com perfil VISITANTE) SÓ PODE ACESSAR comunicacao e agenda.
@@ -140,6 +139,21 @@ class AppRouter {
         window.location.hash = '#comunicacao';
         this.atualizarVisibilidadeRotas();
         return;
+      }
+    }
+
+    // Calcula rota padrão dinâmica com base nas permissões reais do perfil autenticado
+    let defaultRoute = 'dashboard';
+    if (isVisitante) {
+      defaultRoute = 'comunicacao';
+    } else if (window.Auth?.estaLogado()) {
+      if (this.routes['dashboard'] && this._canAccess(this.routes['dashboard'])) {
+        defaultRoute = 'dashboard';
+      } else {
+        const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
+        if (allowed) {
+          defaultRoute = allowed[0];
+        }
       }
     }
 
@@ -161,6 +175,15 @@ class AppRouter {
     }
 
     if (!this._canAccess(target)) {
+      const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
+      const nextRoute = allowed ? allowed[0] : null;
+
+      // Redirecionamento suave se o perfil caiu no dashboard por padrão pós-login mas não tem permissão
+      if (hash === 'dashboard' && nextRoute) {
+        window.location.hash = `#${nextRoute}`;
+        return;
+      }
+
       if (window.UI?.toast) {
         window.UI.toast({
           title: 'Acesso Restrito',
@@ -168,9 +191,7 @@ class AppRouter {
           type: 'error'
         });
       }
-      const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
-      if (allowed) {
-        const nextRoute = allowed[0];
+      if (nextRoute) {
         if (hash !== nextRoute) window.location.hash = `#${nextRoute}`;
         else this.contentContainer.innerHTML = '<p class="p-6 text-sm text-slate-600">Seu perfil não possui módulos disponíveis.</p>';
       } else {

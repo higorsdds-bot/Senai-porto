@@ -223,11 +223,15 @@ const OcorrenciasModule = {
         const file = input.files?.[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-          alert('Por favor, selecione um arquivo de imagem (JPG, PNG, WebP).');
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Formato Inválido', message: 'Por favor, selecione um arquivo de imagem (JPG, PNG, WebP).', type: 'warning' });
+          }
           return;
         }
         if (file.size > 10 * 1024 * 1024) {
-          alert('A imagem é muito grande. Tamanho máximo: 10MB.');
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Arquivo Muito Grande', message: 'A imagem é muito grande. Tamanho máximo: 10MB.', type: 'warning' });
+          }
           return;
         }
 
@@ -257,7 +261,9 @@ const OcorrenciasModule = {
         const file = inputAnexo.files?.[0];
         if (!file) return;
         if (file.size > 20 * 1024 * 1024) {
-          alert('Arquivo muito grande. Tamanho máximo: 20MB.');
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Arquivo Muito Grande', message: 'Arquivo muito grande. Tamanho máximo: 20MB.', type: 'warning' });
+          }
           return;
         }
 
@@ -322,8 +328,6 @@ const OcorrenciasModule = {
               message: 'A ocorrência foi cadastrada com sucesso!',
               type: 'success'
             });
-          } else {
-            alert('Ocorrência cadastrada com sucesso!');
           }
 
           form.reset();
@@ -331,7 +335,9 @@ const OcorrenciasModule = {
           formWrap.classList.add('hidden');
           await this._carregar(container);
         } catch (err) {
-          alert(err.message || 'Erro ao registrar ocorrência.');
+          if (window.UI?.toast) {
+            window.UI.toast({ title: 'Erro ao Registrar', message: err.message || 'Erro ao registrar ocorrência.', type: 'error' });
+          }
         } finally {
           btnSalvar.disabled = false;
           btnSalvar.textContent = 'Salvar Ocorrência';
@@ -384,7 +390,9 @@ const OcorrenciasModule = {
         loading?.classList.add('hidden');
       } catch (err) {
         console.warn('[CAMERA] Falha ao iniciar stream:', err);
-        alert('Não foi possível acessar a câmera: ' + (err.message || 'Permissão negada.'));
+        if (window.UI?.toast) {
+          window.UI.toast({ title: 'Câmera Indisponível', message: 'Não foi possível acessar a câmera: ' + (err.message || 'Permissão negada.'), type: 'warning' });
+        }
         fecharCamera();
       }
     };
@@ -670,15 +678,15 @@ const OcorrenciasModule = {
           message: `Status da ocorrência alterado para ${novoStatus}.`,
           type: 'success'
         });
-      } else {
-        alert('Status alterado com sucesso!');
       }
 
       document.getElementById('modal-detalhes-ocorrencia')?.classList.add('hidden');
       const container = document.getElementById('main-content');
       if (container) await this._carregar(container);
     } catch (err) {
-      alert(err.message || 'Erro ao alterar status.');
+      if (window.UI?.toast) {
+        window.UI.toast({ title: 'Erro ao Atualizar', message: err.message || 'Erro ao alterar status.', type: 'error' });
+      }
     }
   },
 

@@ -473,6 +473,17 @@ class ApiService {
   async getPublicEventos() {
     return this.request('/publico/eventos', { method: 'GET' });
   }
+
+  // =========================================================================
+  // DASHBOARD & INDICADORES
+  // =========================================================================
+  async getDashboardStats() {
+    return this.request(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/stats`, { method: 'GET' });
+  }
+
+  async getIndicadores(periodoDias = 30) {
+    return this.request(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/indicadores?periodo_dias=${periodoDias}`, { method: 'GET' });
+  }
 }
 
 

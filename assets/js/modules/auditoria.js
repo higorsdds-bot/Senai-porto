@@ -708,7 +708,7 @@ const AuditoriaModule = {
           onCancel: () => resolve(false)
         });
       } else {
-        resolve(window.confirm(`Deseja realmente rejeitar a solicitação de cadastro do usuário "${nome}"?`));
+        resolve(false);
       }
     });
     if (!confirmado) return;
