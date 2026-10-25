@@ -852,12 +852,59 @@ const AuditoriaModule = {
   },
 
   async rejeitarCadastro(id, nome) {
+    const contentHtml = `
+      <div class="space-y-4 text-xs">
+        <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800">
+          <p class="font-bold">Atenção ao rejeitar a solicitação:</p>
+          <p class="mt-1">O acesso do usuário <strong>"${this._esc(nome)}"</strong> não será liberado e uma notificação formal será enviada ao e-mail cadastrado.</p>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Motivo da Decisão (opcional, será incluído no e-mail)</label>
+          <textarea id="modal-motivo-rejeicao" rows="3"
+            class="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 focus:outline-none"
+            placeholder="Ex.: Dados cadastrais insuficientes, solicitação duplicada ou vínculo institucional não verificado."></textarea>
+        </div>
+      </div>
+    `;
+
+    if (window.UI?.openModal) {
+      window.UI.openModal({
+        title: 'Rejeitar Solicitação de Cadastro',
+        contentHtml,
+        saveLabel: 'Confirmar Rejeição',
+        cancelLabel: 'Cancelar',
+        onSave: async () => {
+          const motivo = document.getElementById('modal-motivo-rejeicao')?.value?.trim() || '';
+          try {
+            await window.API.rejeitarSolicitacaoCadastro(id, { motivo });
+            if (window.UI?.toast) {
+              window.UI.toast({
+                title: 'Solicitação Rejeitada',
+                message: `O cadastro do usuário "${nome}" foi rejeitado e o solicitante foi notificado por e-mail.`,
+                type: 'info'
+              });
+            }
+            const container = document.getElementById('main-content');
+            if (container) await this._carregarTudo(container);
+            return true;
+          } catch (err) {
+            if (window.UI?.toast) {
+              window.UI.toast({ title: 'Erro', message: err.message || 'Erro ao rejeitar cadastro.', type: 'error' });
+            }
+            return false;
+          }
+        }
+      });
+    }
+  },
+
+  async reenviarAtivacao(id, nome) {
     const confirmado = await new Promise(resolve => {
       if (window.UI?.confirmModal) {
         window.UI.confirmModal({
-          title: 'Rejeitar Solicitação',
-          message: `Deseja realmente rejeitar a solicitação de cadastro do usuário "${nome}"?`,
-          confirmText: 'Rejeitar',
+          title: 'Reenviar Link de Ativação',
+          message: `Deseja gerar um novo link seguro de ativação e reenviar por e-mail para "${nome}"? O link anterior deixará de funcionar imediatamente.`,
+          confirmText: 'Reenviar E-mail',
           cancelText: 'Cancelar',
           onConfirm: () => resolve(true),
           onCancel: () => resolve(false)
@@ -869,18 +916,20 @@ const AuditoriaModule = {
     if (!confirmado) return;
 
     try {
-      await window.API.rejeitarSolicitacaoCadastro(id);
+      const res = await window.API.reenviarLinkAtivacao(id);
       if (window.UI?.toast) {
         window.UI.toast({
-          title: 'Solicitação Rejeitada',
-          message: `O cadastro do usuário "${nome}" foi rejeitado.`,
-          type: 'info'
+          title: 'Link Reenviado',
+          message: res?.message || `Novo link de ativação enviado com sucesso para "${nome}".`,
+          type: 'success'
         });
       }
       const container = document.getElementById('main-content');
       if (container) await this._carregarTudo(container);
     } catch (err) {
-      if (window.UI?.toast) window.UI.toast({ title: 'Erro', message: err.message || 'Erro ao rejeitar cadastro.', type: 'error' });
+      if (window.UI?.toast) {
+        window.UI.toast({ title: 'Erro ao reenviar', message: err.message || 'Falha ao reenviar ativação.', type: 'error' });
+      }
     }
   },
 
@@ -1027,6 +1076,15 @@ const AuditoriaModule = {
                             <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
                           </button>
                         `}
+
+                        <!-- Botão de Reenviar Link de Ativação caso esteja aguardando -->
+                        ${u.status === 'AGUARDANDO_ATIVACAO' ? `
+                          <button type="button" onclick="AuditoriaModule.reenviarAtivacao(${u.id}, '${this._esc(u.nome)}')"
+                            title="Reenviar link seguro de ativação por e-mail"
+                            class="p-1.5 rounded-lg border border-purple-200 hover:bg-purple-50 hover:border-purple-300 text-purple-600 transition-colors cursor-pointer">
+                            <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                          </button>
+                        ` : ''}
 
                         <!-- Editar Usuário & Trocar Cargo -->
                         <button type="button" onclick="AuditoriaModule.abrirModalEdicao(${u.id})"
@@ -1392,6 +1450,8 @@ const AuditoriaModule = {
     const s = String(status).toUpperCase();
     if (s === 'ATIVO') return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
     if (s === 'PENDENTE') return 'bg-amber-50 text-amber-700 border border-amber-200';
+    if (s === 'AGUARDANDO_ATIVACAO') return 'bg-purple-50 text-purple-700 border border-purple-200';
+    if (s === 'REJEITADO') return 'bg-rose-50 text-rose-700 border border-rose-200';
     if (s === 'INATIVO') return 'bg-slate-100 text-slate-700 border border-slate-300';
     if (s === 'BLOQUEADO') return 'bg-rose-50 text-rose-700 border border-rose-200';
     return 'bg-slate-50 text-slate-600 border border-slate-200';

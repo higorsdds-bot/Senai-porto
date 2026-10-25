@@ -13,6 +13,11 @@ const { getPool } = require('../config/database');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 const { getPermissoesDoUsuario, getModulosDoUsuario } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
+const {
+  notificarNovoCadastroAdmin,
+  buscarEmailsAdministradoresGerais,
+  gerarHashToken
+} = require('../services/email');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
@@ -28,6 +33,34 @@ function checkRateLimit(ip) {
   attempts.count++;
   loginAttempts.set(ip, attempts);
   return attempts.count <= 10; // Máximo 10 tentativas em 15min
+}
+
+// Rate limiting para solicitação de cadastro (anti-flood/spam)
+const cadastroAttempts = new Map();
+function checkCadastroRateLimit(ip) {
+  const now = Date.now();
+  const attempts = cadastroAttempts.get(ip) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+  if (now > attempts.resetAt) {
+    attempts.count = 0;
+    attempts.resetAt = now + 15 * 60 * 1000;
+  }
+  attempts.count++;
+  cadastroAttempts.set(ip, attempts);
+  return attempts.count <= 5; // Máximo 5 solicitações por IP em 15 min
+}
+
+// Rate limiting para tentativas de verificação e ativação de token
+const ativacaoAttempts = new Map();
+function checkAtivacaoRateLimit(ip) {
+  const now = Date.now();
+  const attempts = ativacaoAttempts.get(ip) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+  if (now > attempts.resetAt) {
+    attempts.count = 0;
+    attempts.resetAt = now + 15 * 60 * 1000;
+  }
+  attempts.count++;
+  ativacaoAttempts.set(ip, attempts);
+  return attempts.count <= 10; // Máximo 10 tentativas por IP em 15 min
 }
 
 // ─── POST /api/v1/auth/login ─────────────────────────────────────────────────
@@ -108,6 +141,32 @@ router.post('/login', async (req, res) => {
         ip, user_agent: userAgent
       });
       return res.status(401).json({ success: false, message: 'Conta bloqueada. Contate o administrador.' });
+    }
+
+    if (usuario.status === 'AGUARDANDO_ATIVACAO') {
+      await registrarAuditoria({
+        usuario_id: usuario.id,
+        acao: 'LOGIN_FALHOU',
+        descricao: 'Tentativa de login com conta aguardando ativação via link de e-mail.',
+        ip, user_agent: userAgent
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'Sua solicitação foi aprovada, mas sua conta ainda não foi ativada. Acesse o link exclusivo enviado ao seu e-mail para definir sua senha e concluir a ativação.'
+      });
+    }
+
+    if (usuario.status === 'REJEITADO') {
+      await registrarAuditoria({
+        usuario_id: usuario.id,
+        acao: 'LOGIN_FALHOU',
+        descricao: 'Tentativa de login com conta rejeitada.',
+        ip, user_agent: userAgent
+      });
+      return res.status(403).json({
+        success: false,
+        message: 'Esta solicitação de cadastro foi rejeitada pelo Administrador Geral. O acesso não é permitido.'
+      });
     }
 
     // Verificar senha com bcrypt
@@ -224,6 +283,15 @@ router.post('/heartbeat', authMiddleware, async (req, res) => {
 router.post('/solicitar-cadastro', async (req, res) => {
   const ip = getClientIp(req);
   const userAgent = req.headers['user-agent'] || null;
+
+  // Rate limiting anti-flood
+  if (!checkCadastroRateLimit(ip)) {
+    return res.status(429).json({
+      success: false,
+      message: 'Muitas solicitações enviadas deste dispositivo. Por favor, aguarde 15 minutos.'
+    });
+  }
+
   const { nome, email, senha, setor_id } = req.body;
 
   const erros = {};
@@ -234,7 +302,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
     erros.email = 'E-mail informado é inválido.';
   }
   if (!senha || String(senha).length < 8) {
-    erros.senha = 'A senha precisa ter pelo menos 8 caracteres.';
+    erros.senha = 'A senha inicial precisa ter pelo menos 8 caracteres.';
   }
 
   if (Object.keys(erros).length > 0) {
@@ -249,17 +317,30 @@ router.post('/solicitar-cadastro', async (req, res) => {
     const pool = getPool();
     const cleanEmail = String(email).toLowerCase().trim();
 
-    // Verifica se já existe cadastro com esse email
+    // Evitar cadastros duplicados e tratar solicitações repetidas de acordo com o status
     const [existing] = await pool.query(
       `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
       [cleanEmail]
     );
 
     if (existing.length > 0) {
-      if (existing[0].status === 'PENDENTE') {
+      const st = existing[0].status;
+      if (st === 'PENDENTE') {
         return res.status(409).json({
           success: false,
-          message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a aprovação do administrador.'
+          message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a aprovação do Administrador Geral.'
+        });
+      }
+      if (st === 'AGUARDANDO_ATIVACAO') {
+        return res.status(409).json({
+          success: false,
+          message: 'Seu cadastro já foi aprovado! Verifique a mensagem com o link de ativação enviada para sua caixa de entrada.'
+        });
+      }
+      if (st === 'REJEITADO') {
+        return res.status(409).json({
+          success: false,
+          message: 'Uma solicitação anterior para este e-mail foi rejeitada. Entre em contato com a equipe de gestão do HUB ES+.'
         });
       }
       return res.status(409).json({
@@ -276,6 +357,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
       [String(nome).trim(), cleanEmail, senhaHash, setor_id || null]
     );
 
+    // Registra na auditoria sem armazenar senhas ou dados sensíveis
     await registrarAuditoria({
       usuario_id: null,
       acao: 'SOLICITACAO_CADASTRO',
@@ -286,14 +368,250 @@ router.post('/solicitar-cadastro', async (req, res) => {
       user_agent: userAgent
     });
 
+    // 1. Notifica por e-mail o Administrador Geral sobre novo cadastro aguardando análise
+    buscarEmailsAdministradoresGerais(pool)
+      .then(adminEmails => {
+        return notificarNovoCadastroAdmin({
+          adminEmails,
+          usuarioNome: String(nome).trim(),
+          usuarioEmail: cleanEmail,
+          solicitacaoId: result.insertId,
+          origem: 'Tela de Login (Auto-solicitação)'
+        });
+      })
+      .catch(err => {
+        console.error('[AUTH] Erro ao notificar administrador sobre cadastro:', err.message);
+      });
+
     return res.status(201).json({
       success: true,
-      message: 'Solicitação de cadastro enviada com sucesso! Aguarde a aprovação do administrador para acessar o sistema.',
+      message: 'Solicitação de cadastro enviada com sucesso! O Administrador Geral foi notificado e você receberá um e-mail com o link de ativação assim que for aprovado.',
       data: { id: result.insertId }
     });
   } catch (err) {
     console.error('[AUTH] Erro ao solicitar cadastro:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao processar solicitação de cadastro.' });
+  }
+});
+
+// Alias /registro para conveniência
+router.post('/registro', (req, res) => res.redirect(307, '/api/v1/auth/solicitar-cadastro'));
+
+// ─── GET /api/v1/auth/verificar-token-ativacao ─────────────────────────────────
+// Valida se o link de ativação é legítimo, está dentro da validade e ainda não foi usado
+router.get('/verificar-token-ativacao', async (req, res) => {
+  const ip = getClientIp(req);
+
+  if (!checkAtivacaoRateLimit(ip)) {
+    return res.status(429).json({
+      success: false,
+      message: 'Muitas consultas de ativação. Aguarde 15 minutos.'
+    });
+  }
+
+  const { token } = req.query;
+  if (!token || typeof token !== 'string' || token.trim().length < 16) {
+    return res.status(400).json({
+      success: false,
+      message: 'Link de ativação inválido ou incompleto.'
+    });
+  }
+
+  try {
+    const pool = getPool();
+    const tokenHash = gerarHashToken(token);
+
+    const [rows] = await pool.query(
+      `SELECT t.id AS token_id, t.usuario_id, t.expira_em, t.usado_em,
+              u.nome, u.email, u.perfil, u.status,
+              s.nome AS setor_nome
+       FROM tokens_ativacao t
+       JOIN usuarios u ON u.id = t.usuario_id
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE t.token_hash = ? AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [tokenHash]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Link de ativação não encontrado ou inexistente.'
+      });
+    }
+
+    const item = rows[0];
+
+    // Verifica se já foi utilizado (regra de uso único)
+    if (item.usado_em) {
+      return res.status(400).json({
+        success: false,
+        message: 'Este link de ativação já foi utilizado anteriormente. Se já definiu sua senha, faça login com seu e-mail.'
+      });
+    }
+
+    // Verifica se já expirou (regra de validade limitada)
+    if (new Date(item.expira_em) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Este link de ativação expirou. Contate o Administrador Geral para solicitar o reenvio.'
+      });
+    }
+
+    // Verifica status da conta
+    if (item.status === 'ATIVO') {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta conta já se encontra ativa. Você pode acessar o sistema diretamente pelo login.'
+      });
+    }
+
+    if (item.status === 'REJEITADO' || item.status === 'BLOQUEADO' || item.status === 'INATIVO') {
+      return res.status(403).json({
+        success: false,
+        message: 'Esta conta não está autorizada para ativação.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        nome: item.nome,
+        email: item.email,
+        perfil: item.perfil,
+        setor_nome: item.setor_nome || 'Geral'
+      }
+    });
+  } catch (err) {
+    console.error('[AUTH] Erro ao verificar token de ativação:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao validar link de ativação.' });
+  }
+});
+
+// ─── POST /api/v1/auth/ativar-conta ──────────────────────────────────────────
+// Conclui a ativação da conta, definindo a própria senha do usuário com link de uso único
+router.post('/ativar-conta', async (req, res) => {
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || null;
+
+  if (!checkAtivacaoRateLimit(ip)) {
+    return res.status(429).json({
+      success: false,
+      message: 'Muitas tentativas de ativação. Aguarde 15 minutos.'
+    });
+  }
+
+  const { token, senha, confirmacao_senha } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ success: false, message: 'Token de ativação é obrigatório.' });
+  }
+
+  if (!senha || String(senha).length < 8) {
+    return res.status(422).json({
+      success: false,
+      message: 'A senha de acesso deve possuir no mínimo 8 caracteres.'
+    });
+  }
+
+  if (senha !== confirmacao_senha) {
+    return res.status(422).json({
+      success: false,
+      message: 'A confirmação de senha não coincide com a senha digitada.'
+    });
+  }
+
+  try {
+    const pool = getPool();
+    const tokenHash = gerarHashToken(token);
+
+    const [rows] = await pool.query(
+      `SELECT t.id AS token_id, t.usuario_id, t.expira_em, t.usado_em,
+              u.nome, u.email, u.perfil, u.status
+       FROM tokens_ativacao t
+       JOIN usuarios u ON u.id = t.usuario_id
+       WHERE t.token_hash = ? AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [tokenHash]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({ success: false, message: 'Link de ativação inválido.' });
+    }
+
+    const item = rows[0];
+
+    // Regra estrita: link de uso único
+    if (item.usado_em) {
+      return res.status(400).json({
+        success: false,
+        message: 'Este link de ativação já foi utilizado e não pode ser reutilizado.'
+      });
+    }
+
+    // Regra estrita: validade limitada
+    if (new Date(item.expira_em) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Este link de ativação expirou. Solicite uma nova análise à administração.'
+      });
+    }
+
+    if (item.status === 'REJEITADO' || item.status === 'BLOQUEADO' || item.status === 'INATIVO') {
+      return res.status(403).json({
+        success: false,
+        message: 'Esta conta está inativa ou rejeitada e não pode ser ativada.'
+      });
+    }
+
+    // Hashear a senha definitiva definida pelo próprio usuário
+    const senhaHash = await bcrypt.hash(String(senha), 12);
+
+    // Atualiza status para ATIVO e salva a senha escolhida
+    await pool.query(
+      `UPDATE usuarios
+       SET senha = ?,
+           status = 'ATIVO',
+           updated_at = NOW()
+       WHERE id = ?`,
+      [senhaHash, item.usuario_id]
+    );
+
+    // Marca o token como utilizado e registra IP da ativação (invalida reuso)
+    await pool.query(
+      `UPDATE tokens_ativacao
+       SET usado_em = NOW(),
+           ip_ativacao = ?
+       WHERE id = ?`,
+      [ip, item.token_id]
+    );
+
+    // Invalida quaisquer outros tokens pendentes que possam existir para o mesmo usuário
+    await pool.query(
+      `UPDATE tokens_ativacao
+       SET expira_em = NOW()
+       WHERE usuario_id = ? AND id != ? AND usado_em IS NULL`,
+      [item.usuario_id, item.token_id]
+    );
+
+    // Registra na auditoria SEM registrar senhas ou tokens sensíveis
+    await registrarAuditoria({
+      usuario_id: item.usuario_id,
+      acao: 'ATIVACAO_CONTA',
+      entidade: 'usuarios',
+      entidade_id: item.usuario_id,
+      descricao: `Conta ativada com sucesso pelo usuário "${item.nome}" (${item.email}) e senha definitiva definida via link seguro.`,
+      ip,
+      user_agent: userAgent
+    });
+
+    return res.json({
+      success: true,
+      message: 'Sua conta foi ativada com sucesso! Você já pode entrar no sistema com seu e-mail e nova senha.'
+    });
+  } catch (err) {
+    console.error('[AUTH] Erro ao ativar conta:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao ativar conta. Tente novamente mais tarde.' });
   }
 });
 

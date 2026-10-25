@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   -- Mantido VARCHAR para adicionar perfis via seed sem alterar enum em produção.
   perfil           VARCHAR(50) NOT NULL DEFAULT 'OPERADOR',
   setor_id         BIGINT NULL,
-  status           ENUM('ATIVO','INATIVO','BLOQUEADO','PENDENTE') NOT NULL DEFAULT 'PENDENTE',
+  status           ENUM('ATIVO','INATIVO','BLOQUEADO','PENDENTE','AGUARDANDO_ATIVACAO','REJEITADO') NOT NULL DEFAULT 'PENDENTE',
   ultimo_acesso    DATETIME NULL,
   ultimo_heartbeat DATETIME NULL,
   deleted_at       DATETIME NULL,
@@ -240,3 +240,22 @@ CREATE TABLE IF NOT EXISTS comunicados (
     user_agent  TEXT NULL,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABELA: tokens_ativacao
+-- Links seguros e de uso único para ativação de contas e definição de senha
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tokens_ativacao (
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id    BIGINT NOT NULL,
+  token_hash    VARCHAR(64) NOT NULL,
+  expira_em     DATETIME NOT NULL,
+  usado_em      DATETIME NULL,
+  ip_criacao    VARCHAR(45) NULL,
+  ip_ativacao   VARCHAR(45) NULL,
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_token_hash (token_hash),
+  INDEX idx_usuario_id (usuario_id),
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

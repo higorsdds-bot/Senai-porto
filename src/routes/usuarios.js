@@ -14,6 +14,10 @@ const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
+const {
+  notificarNovoCadastroAdmin,
+  buscarEmailsAdministradoresGerais
+} = require('../services/email');
 
 // Todas as rotas exigem autenticação
 router.use(authMiddleware);
@@ -50,6 +54,12 @@ router.post('/pre-cadastro', requireAnyPermission('usuarios.pre_cadastrar', 'usu
           message: 'Já existe um pré-cadastro pendente para este e-mail aguardando aprovação do Administrador Geral.'
         });
       }
+      if (existing[0].status === 'AGUARDANDO_ATIVACAO') {
+        return res.status(409).json({
+          success: false,
+          message: 'Este colaborador já foi aprovado e aguarda ativação pelo e-mail.'
+        });
+      }
       return res.status(409).json({
         success: false,
         message: 'Este e-mail já está cadastrado no sistema.'
@@ -74,9 +84,22 @@ router.post('/pre-cadastro', requireAnyPermission('usuarios.pre_cadastrar', 'usu
       user_agent: req.headers['user-agent']
     });
 
+    // Notifica o Administrador Geral por e-mail sobre a nova solicitação de pré-cadastro
+    buscarEmailsAdministradoresGerais(pool)
+      .then(adminEmails => {
+        return notificarNovoCadastroAdmin({
+          adminEmails,
+          usuarioNome: String(nome).trim(),
+          usuarioEmail: cleanEmail,
+          solicitacaoId: result.insertId,
+          origem: `Pré-cadastro pelo setor Administrativo (${req.usuario.nome})`
+        });
+      })
+      .catch(err => console.error('[USUARIOS] Erro ao notificar administrador sobre pré-cadastro:', err.message));
+
     return res.status(201).json({
       success: true,
-      message: 'Colaborador pré-cadastrado com sucesso! A solicitação foi enviada ao Administrador Geral para definição de setor e função.',
+      message: 'Colaborador pré-cadastrado com sucesso! A notificação foi encaminhada ao Administrador Geral para análise e liberação.',
       data: { id: result.insertId }
     });
   } catch (err) {

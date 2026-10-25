@@ -7,7 +7,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { getPool, testConnection } = require('./src/config/database');
+const { getPool, testConnection, initSchemaExtensions } = require('./src/config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -133,7 +133,9 @@ async function start() {
     getPool();
     // Testar conexão
     const dbOk = await testConnection();
-    if (!dbOk) {
+    if (dbOk) {
+      await initSchemaExtensions();
+    } else {
       console.warn('[SERVER] ⚠️  Não foi possível conectar ao banco de dados.');
       console.warn('[SERVER] ⚠️  Verifique se o IP está autorizado no TiDB Cloud e se as credenciais estão corretas.');
       console.warn('[SERVER] ⚠️  A API iniciará mesmo assim, mas as rotas retornarão erro até a conexão ser estabelecida.');

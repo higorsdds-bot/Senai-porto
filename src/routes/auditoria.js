@@ -5,9 +5,14 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
+const {
+  gerarTokenAtivacao,
+  enviarEmailAtivacaoConta,
+  enviarEmailRejeicaoCadastro,
+  ACTIVATION_TOKEN_EXPIRES_HOURS
+} = require('../services/email');
 
 // Exige autenticação básica
 router.use(authMiddleware);
@@ -228,7 +233,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       emailFinal = cleanEmail;
     }
 
-    let sql = `UPDATE usuarios SET status = 'ATIVO', perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
+    let sql = `UPDATE usuarios SET status = 'AGUARDANDO_ATIVACAO', perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
     const params = [perfilFinal, setorFinal, nomeFinal, emailFinal];
 
     if (senha && String(senha).trim().length >= 8) {
@@ -242,19 +247,54 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
 
     await pool.query(sql, params);
 
+    // Gera token de alta entropia de uso único e validade limitada
+    const { token, tokenHash } = gerarTokenAtivacao();
+
+    // Invalida tokens anteriores não utilizados
+    await pool.query(
+      `UPDATE tokens_ativacao SET expira_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL`,
+      [id]
+    );
+
+    // Insere o hash do novo token com validade configurada
+    await pool.query(
+      `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+       VALUES (?, ?, NOW() + INTERVAL ? HOUR, ?)`,
+      [id, tokenHash, ACTIVATION_TOKEN_EXPIRES_HOURS, getClientIp(req)]
+    );
+
+    // Busca nome do setor para incluir no e-mail
+    let setorNome = null;
+    if (setorFinal) {
+      const [setores] = await pool.query(`SELECT nome FROM setores WHERE id = ? LIMIT 1`, [setorFinal]);
+      if (setores.length > 0) setorNome = setores[0].nome;
+    }
+
+    // Registra na auditoria SEM armazenar tokens ou senhas
     await registrarAuditoria({
       usuario_id: req.usuario.id,
       acao: 'APROVAR_CADASTRO',
       entidade: 'usuarios',
       entidade_id: parseInt(id, 10),
-      descricao: `Cadastro do usuário "${nomeFinal}" (${emailFinal}) foi APROVADO com perfil ${perfilFinal}${setorFinal ? ` e setor ID ${setorFinal}` : ''} com edição administrativa.`,
+      descricao: `Cadastro do usuário "${nomeFinal}" (${emailFinal}) foi APROVADO com perfil ${perfilFinal}${setorNome ? ` e setor ${setorNome}` : ''}. Link seguro de ativação enviado por e-mail (Validade: ${ACTIVATION_TOKEN_EXPIRES_HOURS}h).`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
+    // Envia o e-mail com link seguro ao novo usuário (sem senhas em texto)
+    enviarEmailAtivacaoConta({
+      usuarioNome: nomeFinal,
+      usuarioEmail: emailFinal,
+      token,
+      perfil: perfilFinal,
+      setorNome
+    }).catch(err => {
+      console.error('[AUDITORIA] Erro ao enviar e-mail de ativação:', err.message);
+    });
+
     return res.json({
       success: true,
-      message: `Acesso do usuário "${nomeFinal}" aprovado com sucesso!`
+      message: `Acesso do usuário "${nomeFinal}" aprovado com sucesso! Um e-mail com o link de ativação foi enviado para ${emailFinal}.`
     });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao aprovar cadastro:', err.message);
@@ -356,10 +396,16 @@ router.post('/solicitacoes/:id/rejeitar', async (req, res) => {
 
     await pool.query(
       `UPDATE usuarios
-       SET status = 'INATIVO',
+       SET status = 'REJEITADO',
            deleted_at = NOW(),
            updated_at = NOW()
        WHERE id = ?`,
+      [id]
+    );
+
+    // Invalida quaisquer tokens de ativação que pudessem estar abertos
+    await pool.query(
+      `UPDATE tokens_ativacao SET expira_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL`,
       [id]
     );
 
@@ -367,19 +413,113 @@ router.post('/solicitacoes/:id/rejeitar', async (req, res) => {
       usuario_id: req.usuario.id,
       acao: 'REJEITAR_CADASTRO',
       entidade: 'usuarios',
-      entidade_id: parseInt(id),
+      entidade_id: parseInt(id, 10),
       descricao: `Solicitação do usuário "${user[0].nome}" (${user[0].email}) foi REJEITADA.${motivo ? ` Motivo: ${motivo}` : ''}`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
+    // Notifica o solicitante por e-mail com o motivo quando informado
+    enviarEmailRejeicaoCadastro({
+      usuarioNome: user[0].nome,
+      usuarioEmail: user[0].email,
+      motivo: motivo ? String(motivo).trim() : null
+    }).catch(err => {
+      console.error('[AUDITORIA] Erro ao enviar e-mail de rejeição:', err.message);
+    });
+
     return res.json({
       success: true,
-      message: `Solicitação do usuário "${user[0].nome}" foi rejeitada.`
+      message: `Solicitação do usuário "${user[0].nome}" foi rejeitada e a notificação foi enviada por e-mail.`
     });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao rejeitar cadastro:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao rejeitar solicitação.' });
+  }
+});
+
+// ─── POST /api/v1/auditoria/usuarios/:id/reenviar-ativacao ────────────────────
+// Permite ao Administrador Geral reenviar o link seguro de ativação por e-mail
+router.post('/usuarios/:id/reenviar-ativacao', async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.perfil, u.status, s.nome AS setor_nome
+       FROM usuarios u
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE u.id = ? AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
+    }
+
+    const user = rows[0];
+
+    if (user.status === 'ATIVO') {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta conta já foi ativada e está em uso.'
+      });
+    }
+
+    if (user.status === 'REJEITADO' || user.status === 'INATIVO' || user.status === 'BLOQUEADO') {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta conta está inativa ou rejeitada. Altere o status antes de reenviar o link.'
+      });
+    }
+
+    // Gera novo token
+    const { token, tokenHash } = gerarTokenAtivacao();
+
+    // Invalida tokens anteriores
+    await pool.query(
+      `UPDATE tokens_ativacao SET expira_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL`,
+      [id]
+    );
+
+    // Salva novo token
+    await pool.query(
+      `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+       VALUES (?, ?, NOW() + INTERVAL ? HOUR, ?)`,
+      [id, tokenHash, ACTIVATION_TOKEN_EXPIRES_HOURS, getClientIp(req)]
+    );
+
+    // Garante que o status seja AGUARDANDO_ATIVACAO
+    await pool.query(`UPDATE usuarios SET status = 'AGUARDANDO_ATIVACAO', updated_at = NOW() WHERE id = ?`, [id]);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'REENVIAR_LINK_ATIVACAO',
+      entidade: 'usuarios',
+      entidade_id: parseInt(id, 10),
+      descricao: `Reenvio de link de ativação para "${user.nome}" (${user.email}) pelo Administrador Geral.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    enviarEmailAtivacaoConta({
+      usuarioNome: user.nome,
+      usuarioEmail: user.email,
+      token,
+      perfil: user.perfil,
+      setorNome: user.setor_nome
+    }).catch(err => {
+      console.error('[AUDITORIA] Erro ao reenviar e-mail de ativação:', err.message);
+    });
+
+    return res.json({
+      success: true,
+      message: `Novo link de ativação enviado com sucesso para ${user.email}.`
+    });
+  } catch (err) {
+    console.error('[AUDITORIA] Erro ao reenviar ativação:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao reenviar link de ativação.' });
   }
 });
 

@@ -220,6 +220,13 @@ class AuthManager {
 
     /** Guard: verifica autenticação ou ativa modo visitante */
     exigirAutenticacao() {
+        // Verifica se a URL contém token de ativação de conta
+        const tokenAtivacao = this.verificarRotaAtivacao();
+        if (tokenAtivacao) {
+            this.mostrarTelaAtivacao(tokenAtivacao);
+            return false;
+        }
+
         if (this.estaLogado()) {
             this.ocultarTelaLogin();
             this.preencherInfoUsuario();
@@ -231,6 +238,19 @@ class AuthManager {
         // Sem login: entra diretamente como visitante
         this.entrarComoVisitante();
         return false;
+    }
+
+    verificarRotaAtivacao() {
+        const hash = window.location.hash || '';
+        if (hash.toLowerCase().includes('ativar-conta')) {
+            if (hash.includes('token=')) {
+                const raw = hash.split('token=')[1];
+                return raw.split('&')[0].trim();
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('token')?.trim() || '';
+        }
+        return null;
     }
 
     async _atualizarPermissoes() {
@@ -513,10 +533,270 @@ class AuthManager {
         document.getElementById('app-conteudo')?.classList.add('hidden');
         if (window.lucide) lucide.createIcons();
     }
+
+    ocultarTelaAtivacao() {
+        const tela = document.getElementById('tela-ativacao');
+        if (tela) {
+            tela.classList.add('hidden');
+            tela.innerHTML = '';
+        }
+        document.getElementById('app-conteudo')?.classList.remove('hidden');
+    }
+
+    /**
+     * Tela dedicada de Ativação de Conta e Definição de Senha
+     * Carregada ao acessar o link seguro enviado por e-mail (#ativar-conta?token=...)
+     */
+    async mostrarTelaAtivacao(token) {
+        this.ocultarTelaLogin();
+        let tela = document.getElementById('tela-ativacao');
+        if (!tela) {
+            tela = document.createElement('div');
+            tela.id = 'tela-ativacao';
+            tela.className = 'fixed inset-0 z-[999] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto';
+            document.body.appendChild(tela);
+        }
+
+        tela.classList.remove('hidden');
+        document.getElementById('app-conteudo')?.classList.add('hidden');
+
+        // Estado inicial de carregamento
+        tela.innerHTML = `
+          <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-pulse">
+            <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="shield" class="w-7 h-7 animate-spin"></i>
+            </div>
+            <h3 class="text-base font-extrabold text-slate-900">Validando link de ativação...</h3>
+            <p class="text-xs text-slate-500 mt-2">Aguarde enquanto verificamos a segurança e autenticidade do seu link.</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            const res = await window.API.verificarTokenAtivacao(token);
+            const dadosUsuario = res?.data || res;
+
+            tela.innerHTML = `
+              <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 my-8 border border-slate-100 transition-all">
+                <div class="flex flex-col items-center mb-5 text-center">
+                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-emerald-600/30 mb-3">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                  </div>
+                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-extrabold text-[10px] uppercase tracking-wider mb-1">
+                    Solicitação Aprovada
+                  </span>
+                  <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Ativação de Conta</h1>
+                  <p class="text-xs text-slate-400 font-medium mt-0.5">HUB ES+ • Defina sua senha pessoal confidencial</p>
+                </div>
+
+                <!-- DADOS DO USUÁRIO IDENTIFICADO -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-5 text-xs text-slate-600 space-y-1.5">
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                    <span class="text-slate-400 font-semibold">Colaborador:</span>
+                    <strong class="text-slate-900">${dadosUsuario.nome || 'Usuário'}</strong>
+                  </div>
+                  <div class="flex justify-between items-center pb-1.5 border-b border-slate-200/60">
+                    <span class="text-slate-400 font-semibold">E-mail:</span>
+                    <strong class="font-mono text-slate-800">${dadosUsuario.email || ''}</strong>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-400 font-semibold">Perfil / Setor:</span>
+                    <span class="font-bold text-blue-600">${dadosUsuario.perfil || 'OPERADOR'} • ${dadosUsuario.setor_nome || 'Geral'}</span>
+                  </div>
+                </div>
+
+                <div id="ativacao-feedback" class="hidden mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed"></div>
+
+                <form id="form-ativar-conta" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nova Senha de Acesso *</label>
+                    <div class="relative">
+                      <input id="ativar-senha" type="password" required minlength="8"
+                        class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-all pr-10"
+                        placeholder="Mínimo de 8 caracteres">
+                      <button type="button" id="btn-toggle-senha-ativar" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Confirmar Nova Senha *</label>
+                    <input id="ativar-senha-conf" type="password" required minlength="8"
+                      class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-all"
+                      placeholder="Repita exatamente a nova senha">
+                  </div>
+
+                  <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 leading-relaxed">
+                    <strong>Importante:</strong> Este link é de <strong>uso único</strong> e deixará de funcionar imediatamente após a confirmação. Guarde sua senha com cuidado.
+                  </div>
+
+                  <button type="submit" id="btn-confirmar-ativacao"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                    Definir Senha e Ativar Minha Conta
+                  </button>
+                </form>
+
+                <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                  <button type="button" id="btn-ir-login-ativacao" class="text-xs text-blue-600 hover:text-blue-700 font-bold">
+                    Já tem acesso? Fazer Login
+                  </button>
+                </div>
+              </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+
+            // Alternar visualização da senha
+            const btnEye = tela.querySelector('#btn-toggle-senha-ativar');
+            const inputSenha = tela.querySelector('#ativar-senha');
+            btnEye?.addEventListener('click', () => {
+                const isPass = inputSenha.type === 'password';
+                inputSenha.type = isPass ? 'text' : 'password';
+                btnEye.innerHTML = isPass ? '<i data-lucide="eye-off" class="w-4 h-4"></i>' : '<i data-lucide="eye" class="w-4 h-4"></i>';
+                if (window.lucide) lucide.createIcons();
+            });
+
+            // Botão ir para login
+            tela.querySelector('#btn-ir-login-ativacao')?.addEventListener('click', () => {
+                window.location.hash = '';
+                this.ocultarTelaAtivacao();
+                this.mostrarTelaLogin();
+            });
+
+            // Submit do formulário de ativação
+            const formAtivar = tela.querySelector('#form-ativar-conta');
+            const feedbackEl = tela.querySelector('#ativacao-feedback');
+
+            const mostrarFeedbackAtivacao = (msg, tipo = 'erro') => {
+                feedbackEl.textContent = msg;
+                feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
+                    tipo === 'sucesso'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-red-50 text-red-600 border border-red-200'
+                );
+                feedbackEl.classList.remove('hidden');
+            };
+
+            formAtivar?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                feedbackEl.classList.add('hidden');
+                const senha = tela.querySelector('#ativar-senha').value;
+                const senhaConf = tela.querySelector('#ativar-senha-conf').value;
+                const btn = tela.querySelector('#btn-confirmar-ativacao');
+
+                if (!senha || senha.length < 8) {
+                    mostrarFeedbackAtivacao('A senha precisa ter no mínimo 8 caracteres.');
+                    return;
+                }
+                if (senha !== senhaConf) {
+                    mostrarFeedbackAtivacao('As senhas digitadas não coincidem.');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Ativando sua conta...';
+
+                try {
+                    await window.API.ativarConta({
+                        token,
+                        senha,
+                        confirmacao_senha: senhaConf
+                    });
+
+                    // Sucesso na ativação
+                    tela.innerHTML = `
+                      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-in fade-in duration-300">
+                        <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+                          <i data-lucide="check-circle" class="w-9 h-9"></i>
+                        </div>
+                        <h2 class="text-xl font-extrabold text-slate-900">Conta Ativada com Sucesso!</h2>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                          Sua senha confidencial foi registrada e sua conta está pronta para uso no <strong>HUB ES+</strong>.
+                        </p>
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 my-6 text-xs text-emerald-800 text-left">
+                          <p><strong>E-mail:</strong> ${dadosUsuario.email}</p>
+                          <p><strong>Nível de Acesso:</strong> ${dadosUsuario.perfil || 'OPERADOR'}</p>
+                          <p class="mt-2 text-[11px] text-emerald-700">Utilize seu e-mail e a senha que acabou de cadastrar para entrar.</p>
+                        </div>
+                        <button id="btn-concluir-ativacao-login"
+                          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer">
+                          Acessar Plataforma Agora
+                        </button>
+                      </div>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+
+                    tela.querySelector('#btn-concluir-ativacao-login')?.addEventListener('click', () => {
+                        window.location.hash = '';
+                        this.ocultarTelaAtivacao();
+                        this.mostrarTelaLogin();
+                        const inputEmail = document.getElementById('login-email');
+                        if (inputEmail) inputEmail.value = dadosUsuario.email || '';
+                    });
+                } catch (err) {
+                    mostrarFeedbackAtivacao(err.message || 'Erro ao concluir ativação.', 'erro');
+                    btn.disabled = false;
+                    btn.textContent = 'Definir Senha e Ativar Minha Conta';
+                }
+            });
+
+        } catch (err) {
+            // Token inválido, expirado ou já utilizado
+            tela.innerHTML = `
+              <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-in fade-in duration-300">
+                <div class="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+                  <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-lg font-extrabold text-slate-900">Link Indisponível ou Expirado</h2>
+                <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                  ${err.message || 'Este link de ativação é de uso único e já foi utilizado ou sua validade de 24 horas expirou.'}
+                </p>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl my-5 text-[11px] text-slate-600 text-left">
+                  <p><strong>O que fazer:</strong></p>
+                  <ul class="list-disc pl-4 mt-1 space-y-1 text-slate-500">
+                    <li>Se você já definiu sua senha, basta acessar a tela de login.</li>
+                    <li>Caso o prazo tenha expirado, solicite ao Administrador Geral o reenvio do link de ativação.</li>
+                  </ul>
+                </div>
+                <div class="space-y-2">
+                  <button id="btn-erro-ir-login"
+                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-xl transition-all cursor-pointer">
+                    Ir para a Tela de Login
+                  </button>
+                  <button id="btn-erro-visitante"
+                    class="w-full bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs py-2.5 rounded-xl border border-slate-200 transition-all cursor-pointer">
+                    Acessar como Visitante
+                  </button>
+                </div>
+              </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+
+            tela.querySelector('#btn-erro-ir-login')?.addEventListener('click', () => {
+                window.location.hash = '';
+                this.ocultarTelaAtivacao();
+                this.mostrarTelaLogin();
+            });
+
+            tela.querySelector('#btn-erro-visitante')?.addEventListener('click', () => {
+                window.location.hash = '#comunicacao';
+                this.ocultarTelaAtivacao();
+                this.entrarComoVisitante();
+            });
+        }
+    }
 }
 
 window.Auth = new AuthManager();
 document.addEventListener('DOMContentLoaded', () => {
     window.Auth.exigirAutenticacao();
     if (window.lucide) lucide.createIcons();
+});
+
+// Listener global para capturar clique em links de ativação dinamicamente
+window.addEventListener('hashchange', () => {
+    const token = window.Auth?.verificarRotaAtivacao?.();
+    if (token) {
+        window.Auth.mostrarTelaAtivacao(token);
+    }
 });

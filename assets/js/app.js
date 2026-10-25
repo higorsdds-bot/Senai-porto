@@ -128,6 +128,16 @@ class AppRouter {
 
   handleRoute() {
     let hash = window.location.hash.replace('#', '').trim().toLowerCase();
+
+    // Rota de ativação de conta com link seguro de uso único
+    if (hash.startsWith('ativar-conta')) {
+      const token = window.Auth?.verificarRotaAtivacao?.();
+      if (token) {
+        window.Auth.mostrarTelaAtivacao(token);
+        return;
+      }
+    }
+
     const isVisitante = window.Auth?.isVisitante();
 
     // REGRA ESTRITA DE VISITANTE:

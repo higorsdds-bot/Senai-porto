@@ -132,6 +132,19 @@ class ApiService {
     });
   }
 
+  async verificarTokenAtivacao(token) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/verificar-token-ativacao?token=${encodeURIComponent(token)}`, {
+      method: 'GET'
+    });
+  }
+
+  async ativarConta(dados) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/ativar-conta`, {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    });
+  }
+
   async heartbeat() {
     try {
       return await this.request(`${CONFIG.ENDPOINTS.AUTH}/heartbeat`, { method: 'POST' });
@@ -481,6 +494,12 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/solicitacoes/${id}/rejeitar`, {
       method: 'POST',
       body: JSON.stringify(dados)
+    });
+  }
+
+  async reenviarLinkAtivacao(id) {
+    return this.request(`${CONFIG.ENDPOINTS.AUDITORIA}/usuarios/${id}/reenviar-ativacao`, {
+      method: 'POST'
     });
   }
 

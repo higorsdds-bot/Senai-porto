@@ -46,8 +46,44 @@ async function testConnection() {
   }
 }
 
+async function initSchemaExtensions() {
+  try {
+    const p = getPool();
+    // 1. Garantir que o ENUM de status em usuarios suporte AGUARDANDO_ATIVACAO e REJEITADO
+    await p.query(`
+      ALTER TABLE usuarios 
+      MODIFY COLUMN status ENUM('ATIVO','INATIVO','BLOQUEADO','PENDENTE','AGUARDANDO_ATIVACAO','REJEITADO') NOT NULL DEFAULT 'PENDENTE'
+    `).catch(() => {});
+
+    // 2. Garantir que a tabela tokens_ativacao exista
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS tokens_ativacao (
+        id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id    BIGINT NOT NULL,
+        token_hash    VARCHAR(64) NOT NULL,
+        expira_em     DATETIME NOT NULL,
+        usado_em      DATETIME NULL,
+        ip_criacao    VARCHAR(45) NULL,
+        ip_ativacao   VARCHAR(45) NULL,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_token_hash (token_hash),
+        INDEX idx_usuario_id (usuario_id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `).catch(err => {
+      console.warn('[DATABASE] Aviso ao criar tabela tokens_ativacao:', err.message);
+    });
+
+    console.log('[DATABASE] ✅ Estrutura de tokens de ativação e status verificada com sucesso.');
+  } catch (err) {
+    console.warn('[DATABASE] Aviso na inicialização de extensões de schema:', err.message);
+  }
+}
+
 module.exports = {
   getPool,
   testConnection,
+  initSchemaExtensions,
   dbConfig
 };
+

@@ -53,13 +53,19 @@ async function authMiddleware(req, res, next) {
 
     const usuario = rows[0];
     if (usuario.status !== 'ATIVO') {
-      return res.status(401).json({
+      let msg = 'Conta inativa. Contate o administrador.';
+      if (usuario.status === 'BLOQUEADO') {
+        msg = 'Conta bloqueada. Contate o administrador.';
+      } else if (usuario.status === 'PENDENTE') {
+        msg = 'Sua solicitação de cadastro está pendente de aprovação por um administrador.';
+      } else if (usuario.status === 'AGUARDANDO_ATIVACAO') {
+        msg = 'Sua conta foi aprovada, mas ainda não foi ativada. Verifique o link de ativação enviado para o seu e-mail para definir sua senha.';
+      } else if (usuario.status === 'REJEITADO') {
+        msg = 'Sua solicitação de cadastro foi rejeitada. Acesso não permitido.';
+      }
+      return res.status(403).json({
         success: false,
-        message: usuario.status === 'BLOQUEADO'
-          ? 'Conta bloqueada. Contate o administrador.'
-          : usuario.status === 'PENDENTE'
-            ? 'Sua conta está pendente de aprovação por um administrador.'
-            : 'Conta inativa. Contate o administrador.'
+        message: msg
       });
     }
 
