@@ -206,14 +206,18 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA', 'VISITANTE'];
     const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : 'OPERADOR';
 
+    const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
+      ? Number(setor_id)
+      : (setor_id === null ? null : user[0].setor_id);
+
     await pool.query(
       `UPDATE usuarios
        SET status = 'ATIVO',
            perfil = ?,
-           setor_id = COALESCE(?, setor_id),
+           setor_id = ?,
            updated_at = NOW()
        WHERE id = ?`,
-      [perfilFinal, setor_id || null, id]
+      [perfilFinal, setorFinal, id]
     );
 
     await registrarAuditoria({
@@ -221,7 +225,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       acao: 'APROVAR_CADASTRO',
       entidade: 'usuarios',
       entidade_id: parseInt(id),
-      descricao: `Cadastro do usuário "${user[0].nome}" (${user[0].email}) foi APROVADO com perfil ${perfilFinal}.`,
+      descricao: `Cadastro do usuário "${user[0].nome}" (${user[0].email}) foi APROVADO com perfil ${perfilFinal}${setorFinal ? ` e setor ID ${setorFinal}` : ''}.`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });

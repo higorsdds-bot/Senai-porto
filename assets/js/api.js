@@ -180,6 +180,17 @@ class ApiService {
     }, () => window.MockDB.delete('usuarios', id));
   }
 
+  async preCadastrarUsuario(data) {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastro`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async getPreCadastros() {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastros`, { method: 'GET' });
+  }
+
   // =========================================================================
   // SETORES
   // =========================================================================

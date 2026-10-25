@@ -28,7 +28,8 @@ const MODULE_PERMISSIONS = {
   indicadores: ['indicadores.visualizar'],
   limpeza: ['limpeza.visualizar'],
   equipamentos: ['equipamentos.visualizar'],
-  auditoria: ['auditoria.visualizar']
+  auditoria: ['auditoria.visualizar'],
+  usuarios: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
 };
 
 const FIXED_PROFILE_PERMISSIONS = {
@@ -38,7 +39,8 @@ const FIXED_PROFILE_PERMISSIONS = {
     'compras.receber',
     'eventos.visualizar',
     'insumos.visualizar',
-    'insumos.baixar'
+    'insumos.baixar',
+    'usuarios.pre_cadastrar'
   ],
   LIMPEZA: [
     'comunicados.visualizar',

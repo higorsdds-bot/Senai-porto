@@ -195,7 +195,7 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 | **ADMIN / ADMINISTRADOR** | Acesso irrestrito a todas as rotas e ao módulo exclusivo de **Auditoria & Governança**. | Bypass total: tem todas as permissões. |
 | **GESTOR** | Gestão operacional de compras, ocorrências, limpeza, insumos, documentos, agenda e setores. | Possui conjunto amplo de permissões operacionais e de aprovação. |
 | **OPERADOR** | Visualização e movimentações rotineiras, abertura de ocorrências, solicitações e agendamento de eventos na **Agenda Inteligente** (`eventos.criar`). | Acesso padrão a módulos básicos de execução e criação de eventos. |
-| **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra e baixa de insumos. | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS`. |
+| **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra, baixa de insumos e pré-cadastro de novos colaboradores (sem atribuição de setor/cargo). | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS` (inclui `usuarios.pre_cadastrar`). |
 | **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
 | **VISITANTE** | Perfil de prioridade **baixíssima**, destinado a visitantes ou convidados temporários do espaço. | Acesso estritamente restrito a `comunicados.visualizar` e `eventos.visualizar`. Sem permissão de escrita em nenhum módulo. |
 
@@ -206,10 +206,10 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 - **Visibilidade de Menus:** A sidebar e o menu mobile ocultam automaticamente todos os links para os quais o visitante não possui permissão, exibindo apenas Comunicação e Agenda.
 
 ### Fluxo de Cadastro e Aprovação de Usuários
-1. Qualquer colaborador pode solicitar cadastro pela tela de login via `POST /api/v1/auth/solicitar-cadastro`.
-2. O usuário é inserido com o status `PENDENTE`.
-3. Usuários `PENDENTE` **não conseguem fazer login** (a API retorna HTTP 403).
-4. O **Administrador** visualiza a lista de pendentes no módulo **Auditoria & Governança** (aba Solicitações) e pode **Aprovar** (definindo Perfil e Setor) ou **Rejeitar**.
+1. Qualquer colaborador pode solicitar cadastro pela tela de login via `POST /api/v1/auth/solicitar-cadastro` OU o perfil **ADMINISTRACAO** pode pré-cadastrar colaboradores diretamente pelo módulo **Cadastrar Colaborador** (`POST /api/v1/usuarios/pre-cadastro`).
+2. No pré-cadastro feito pela Administração, o operador **não tem permissão nem opção de selecionar setor ou cargo**. O usuário é registrado com `setor_id = NULL`, status `PENDENTE` e auditoria de autoria do pré-cadastro.
+3. Usuários com status `PENDENTE` **não conseguem fazer login** (a API retorna HTTP 403).
+4. O **Administrador Geral** (`ADMIN`) visualiza as solicitações no módulo **Auditoria & Governança** (aba Solicitações Pendentes) e realiza a liberação formal, definindo obrigatoriamente tanto a **Função (Perfil)** quanto o **Setor de Lotação**.
 5. Quando o usuário está logado, um **heartbeat** roda a cada 60 segundos (`POST /api/v1/auth/heartbeat`), permitindo que a tela de auditoria veja quem está online em tempo real.
 
 ---

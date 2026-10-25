@@ -162,7 +162,7 @@ const AuditoriaModule = {
               Você está aprovando o acesso de <strong id="aprovar-user-nome" class="text-slate-900"></strong> (<span id="aprovar-user-email"></span>).
             </p>
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Perfil de Permissões</label>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Perfil de Permissões (Função)</label>
               <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold">
                 <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
                 <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
@@ -170,6 +170,12 @@ const AuditoriaModule = {
                 <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
                 <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
                 <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Setor de Lotação</label>
+              <select id="aprovar-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold">
+                <option value="">Selecione o setor de lotação...</option>
               </select>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -391,13 +397,17 @@ const AuditoriaModule = {
         e.preventDefault();
         const id = container.querySelector('#aprovar-user-id').value;
         const perfil = container.querySelector('#aprovar-user-perfil').value;
+        const setorId = container.querySelector('#aprovar-user-setor')?.value;
         const btn = container.querySelector('#btn-confirmar-aprovacao');
 
         btn.disabled = true;
         btn.textContent = 'Liberando acesso...';
 
         try {
-          await window.API.aprovarSolicitacaoCadastro(id, { perfil });
+          await window.API.aprovarSolicitacaoCadastro(id, {
+            perfil,
+            setor_id: setorId ? Number(setorId) : null
+          });
           if (window.UI?.toast) {
             window.UI.toast({
               title: 'Cadastro Aprovado',
@@ -667,7 +677,7 @@ const AuditoriaModule = {
                       </span>
                     </td>
                     <td class="py-3.5 px-4 text-right space-x-2">
-                      <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}')"
+                      <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'})"
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer">
                         <i data-lucide="check" class="w-3.5 h-3.5"></i> Liberar Acesso
                       </button>
@@ -686,12 +696,25 @@ const AuditoriaModule = {
     }
   },
 
-  abrirModalAprovacao(id, nome, email) {
+  async abrirModalAprovacao(id, nome, email, setor_id = null) {
     const modal = document.getElementById('modal-aprovar-usuario');
     if (!modal) return;
     document.getElementById('aprovar-user-id').value = id;
     document.getElementById('aprovar-user-nome').textContent = nome;
     document.getElementById('aprovar-user-email').textContent = email;
+
+    const selectSetor = document.getElementById('aprovar-user-setor');
+    if (selectSetor) {
+      selectSetor.innerHTML = '<option value="">Carregando setores...</option>';
+      try {
+        const setores = await window.API.getSetores().catch(() => []);
+        selectSetor.innerHTML = '<option value="">Selecione o setor de lotação...</option>' +
+          (setores || []).map(s => `<option value="${s.id}" ${setor_id && Number(setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>`).join('');
+      } catch (_) {
+        selectSetor.innerHTML = '<option value="">Setor não atribuído</option>';
+      }
+    }
+
     modal.classList.remove('hidden');
     if (window.lucide) lucide.createIcons();
   },

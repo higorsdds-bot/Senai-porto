@@ -65,6 +65,7 @@ const PERMISSOES = [
   { chave: 'comunicados.excluir',      nome: 'Excluir Comunicado' },
   { chave: 'usuarios.visualizar',      nome: 'Visualizar Usuários' },
   { chave: 'usuarios.criar',           nome: 'Criar Usuário' },
+  { chave: 'usuarios.pre_cadastrar',   nome: 'Pré-cadastrar Colaborador' },
   { chave: 'usuarios.editar',          nome: 'Editar Usuário' },
   { chave: 'usuarios.bloquear',        nome: 'Bloquear/Desbloquear Usuário' },
   { chave: 'setores.visualizar',       nome: 'Visualizar Setores' },
@@ -105,7 +106,8 @@ const PERFIL_PERMISSOES = {
     'comunicados.visualizar',
     'compras.visualizar_pedidos', 'compras.receber',
     'eventos.visualizar',
-    'insumos.visualizar', 'insumos.baixar'
+    'insumos.visualizar', 'insumos.baixar',
+    'usuarios.pre_cadastrar'
   ],
   LIMPEZA: [
     'comunicados.visualizar',

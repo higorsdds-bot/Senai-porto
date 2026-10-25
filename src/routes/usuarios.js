@@ -12,11 +12,98 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 // Todas as rotas exigem autenticação
 router.use(authMiddleware);
+
+// ─── POST /api/v1/usuarios/pre-cadastro ──────────────────────────────────────
+// Utilizado pelo setor Administrativo para pré-cadastrar colaboradores.
+// Não permite definir setor nem perfil; o usuário entra com status 'PENDENTE'
+// para que o Administrador Geral defina o setor e a função na etapa de aprovação.
+router.post('/pre-cadastro', requireAnyPermission('usuarios.pre_cadastrar', 'usuarios.criar'), async (req, res) => {
+  const { nome, email, senha } = req.body;
+  const erros = {};
+
+  if (!nome || String(nome).trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) erros.email = 'E-mail informado é inválido.';
+  if (!senha || String(senha).length < 8) erros.senha = 'A senha precisa ter pelo menos 8 caracteres.';
+
+  if (Object.keys(erros).length > 0) {
+    return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
+  }
+
+  try {
+    const pool = getPool();
+    const cleanEmail = String(email).toLowerCase().trim();
+
+    const [existing] = await pool.query(
+      `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
+      [cleanEmail]
+    );
+
+    if (existing.length > 0) {
+      if (existing[0].status === 'PENDENTE') {
+        return res.status(409).json({
+          success: false,
+          message: 'Já existe um pré-cadastro pendente para este e-mail aguardando aprovação do Administrador Geral.'
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        message: 'Este e-mail já está cadastrado no sistema.'
+      });
+    }
+
+    const senhaHash = await bcrypt.hash(String(senha), 12);
+    // Inserção com setor_id NULL e status PENDENTE (sem poder escolher setor ou função)
+    const [result] = await pool.query(
+      `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)
+       VALUES (?, ?, ?, 'OPERADOR', NULL, 'PENDENTE')`,
+      [String(nome).trim(), cleanEmail, senhaHash]
+    );
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'PRE_CADASTRO_USUARIO',
+      entidade: 'usuarios',
+      entidade_id: result.insertId,
+      descricao: `Pré-cadastro realizado pela Administração (${req.usuario.nome}) para "${String(nome).trim()}" (${cleanEmail}). Aguardando definição de setor e função pelo Administrador Geral.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Colaborador pré-cadastrado com sucesso! A solicitação foi enviada ao Administrador Geral para definição de setor e função.',
+      data: { id: result.insertId }
+    });
+  } catch (err) {
+    console.error('[USUARIOS] PRE-CADASTRO:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao registrar pré-cadastro.' });
+  }
+});
+
+// ─── GET /api/v1/usuarios/pre-cadastros ──────────────────────────────────────
+router.get('/pre-cadastros', requireAnyPermission('usuarios.pre_cadastrar', 'usuarios.visualizar'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.created_at,
+              s.nome AS setor_nome
+       FROM usuarios u
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE u.deleted_at IS NULL
+       ORDER BY u.created_at DESC
+       LIMIT 50`
+    );
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[USUARIOS] GET pre-cadastros:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao listar pré-cadastros.' });
+  }
+});
 
 // ─── GET /api/v1/usuarios ────────────────────────────────────────────────────
 router.get('/', requirePermission('usuarios.visualizar'), async (req, res) => {

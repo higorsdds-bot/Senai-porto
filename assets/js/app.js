@@ -82,6 +82,13 @@ class AppRouter {
         moduleKey: 'equipamentos',
         permissions: ['equipamentos.visualizar']
       },
+      'usuarios': {
+        title: 'Gestão de Usuários',
+        module: window.UsuariosModule || (window.Modules && window.Modules.usuarios),
+        navId: 'nav-usuarios',
+        moduleKey: 'usuarios',
+        permissions: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
+      },
       'auditoria': {
         title: 'Auditoria & Governança',
         module: window.AuditoriaModule || (window.Modules && window.Modules.auditoria),
@@ -264,6 +271,9 @@ class AppRouter {
     });
     document.querySelectorAll('[data-module-label="insumos"]').forEach(label => {
       label.textContent = isAdministracao ? 'Dar Baixa em Materiais' : 'Controle de Insumos';
+    });
+    document.querySelectorAll('[data-module-label="usuarios"]').forEach(label => {
+      label.textContent = isAdministracao ? 'Cadastrar Colaborador' : 'Gestão de Usuários';
     });
   }
 
