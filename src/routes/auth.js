@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { getPool } = require('../config/database');
 const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
@@ -292,7 +293,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
     });
   }
 
-  const { nome, email, senha, setor_id } = req.body;
+  const { nome, email, setor_id } = req.body;
 
   const erros = {};
   if (!nome || String(nome).trim().length < 3) {
@@ -300,9 +301,6 @@ router.post('/solicitar-cadastro', async (req, res) => {
   }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
     erros.email = 'E-mail informado é inválido.';
-  }
-  if (!senha || String(senha).length < 8) {
-    erros.senha = 'A senha inicial precisa ter pelo menos 8 caracteres.';
   }
 
   if (Object.keys(erros).length > 0) {
@@ -349,7 +347,10 @@ router.post('/solicitar-cadastro', async (req, res) => {
       });
     }
 
-    const senhaHash = await bcrypt.hash(String(senha), 12);
+    // Como a senha definitiva será definida pelo próprio usuário via link seguro de ativação,
+    // geramos um hash seguro temporário para preencher a coluna obrigatória do banco.
+    const senhaPlaceholder = crypto.randomBytes(32).toString('hex');
+    const senhaHash = await bcrypt.hash(senhaPlaceholder, 12);
 
     const [result] = await pool.query(
       `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)

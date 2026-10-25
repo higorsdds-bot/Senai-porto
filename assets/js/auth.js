@@ -360,36 +360,28 @@ class AuthManager {
           </form>
 
           <!-- FORMULÁRIO 2: SOLICITAÇÃO DE CADASTRO (STATUS PENDENTE) -->
-          <form id="form-cadastro" class="space-y-3 hidden" novalidate>
-            <p class="text-[11px] text-slate-500 bg-blue-50 border border-blue-100 rounded-xl p-3 leading-relaxed">
-              <strong>Novo por aqui?</strong> Solicite seu cadastro preenchendo os dados abaixo. Sua conta será criada com status <strong>PENDENTE</strong> e liberada após aprovação de um Administrador.
-            </p>
+          <form id="form-cadastro" class="space-y-4 hidden" novalidate>
+            <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-slate-600 leading-relaxed flex items-start gap-2.5">
+              <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-blue-900 block font-bold mb-0.5">Ativação Segura via E-mail</strong>
+                Preencha seus dados abaixo. Após a análise do Administrador Geral, você receberá um <strong>link seguro no seu e-mail</strong> para criar sua senha confidencial e ativar seu acesso.
+              </div>
+            </div>
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">Nome Completo *</label>
               <input id="cad-nome" type="text" required minlength="3"
-                class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                 placeholder="Seu nome completo">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Institucional *</label>
               <input id="cad-email" type="email" required
-                class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                 placeholder="seu.email@dominio.com">
             </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1">Senha de Acesso *</label>
-              <input id="cad-senha" type="password" required minlength="8"
-                class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                placeholder="Mínimo 8 caracteres">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1">Confirmar Senha *</label>
-              <input id="cad-senha-conf" type="password" required minlength="8"
-                class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                placeholder="Repita a senha">
-            </div>
             <button type="submit" id="btn-solicitar"
-              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
               Enviar Solicitação de Cadastro
             </button>
           </form>
@@ -484,8 +476,6 @@ class AuthManager {
                 limparFeedback();
                 const nome = tela.querySelector('#cad-nome').value.trim();
                 const email = tela.querySelector('#cad-email').value.trim();
-                const senha = tela.querySelector('#cad-senha').value;
-                const senhaConf = tela.querySelector('#cad-senha-conf').value;
                 const btn = tela.querySelector('#btn-solicitar');
 
                 if (!nome || nome.length < 3) {
@@ -496,26 +486,18 @@ class AuthManager {
                     mostrarFeedback('Por favor, informe um e-mail válido.');
                     return;
                 }
-                if (!senha || senha.length < 8) {
-                    mostrarFeedback('A senha precisa ter no mínimo 8 caracteres.');
-                    return;
-                }
-                if (senha !== senhaConf) {
-                    mostrarFeedback('As senhas digitadas não coincidem.');
-                    return;
-                }
 
                 btn.disabled = true;
                 btn.textContent = 'Enviando Solicitação...';
                 try {
-                    const res = await window.API.solicitarCadastro({ nome, email, senha });
+                    const res = await window.API.solicitarCadastro({ nome, email });
                     formCadastro.reset();
                     mostrarFeedback(
-                        res?.message || 'Solicitação enviada com sucesso! Aguarde a aprovação do Administrador.',
+                        res?.message || 'Solicitação enviada com sucesso! Aguarde a notificação por e-mail após a aprovação do Administrador.',
                         'sucesso'
                     );
-                    // Alterna para a aba de login após 3 segundos
-                    setTimeout(() => tabLogin.click(), 3000);
+                    // Alterna para a aba de login após 3.5 segundos
+                    setTimeout(() => tabLogin.click(), 3500);
                 } catch (err) {
                     mostrarFeedback(err.message || 'Erro ao enviar solicitação de cadastro.', 'erro');
                 } finally {
