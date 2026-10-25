@@ -291,20 +291,34 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       user_agent: req.headers['user-agent']
     });
 
+    const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+    const linkAtivacao = `${appUrl}/#ativar-conta?token=${encodeURIComponent(token)}`;
+
     // Envia o e-mail com link seguro ao novo usuário (sem senhas em texto)
-    enviarEmailAtivacaoConta({
-      usuarioNome: nomeFinal,
-      usuarioEmail: emailFinal,
-      token,
-      perfil: perfilFinal,
-      setorNome
-    }).catch(err => {
-      console.error('[AUDITORIA] Erro ao enviar e-mail de ativação:', err.message);
-    });
+    let emailStatus = null;
+    try {
+      emailStatus = await enviarEmailAtivacaoConta({
+        usuarioNome: nomeFinal,
+        usuarioEmail: emailFinal,
+        token,
+        perfil: perfilFinal,
+        setorNome
+      });
+    } catch (err) {
+      emailStatus = { success: false, error: err.message };
+    }
+
+    const emailEnviado = Boolean(emailStatus && emailStatus.success);
 
     return res.json({
       success: true,
-      message: `Acesso do usuário "${nomeFinal}" aprovado com sucesso! Um e-mail com o link de ativação foi enviado para ${emailFinal}.`
+      message: emailEnviado
+        ? `Acesso do usuário "${nomeFinal}" aprovado com sucesso! Um e-mail com o link de ativação foi enviado para ${emailFinal}.`
+        : `Acesso aprovado! Atenção: falha no envio do e-mail (${emailStatus?.provedor || 'serviço'}): ${emailStatus?.error || 'verifique configurações'}. Link de ativação disponível abaixo.`,
+      emailEnviado,
+      emailProvedor: emailStatus?.provedor || null,
+      emailErro: emailStatus?.error || null,
+      linkAtivacao
     });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao aprovar cadastro:', err.message);
@@ -513,19 +527,33 @@ router.post('/usuarios/:id/reenviar-ativacao', async (req, res) => {
       user_agent: req.headers['user-agent']
     });
 
-    enviarEmailAtivacaoConta({
-      usuarioNome: user.nome,
-      usuarioEmail: user.email,
-      token,
-      perfil: user.perfil,
-      setorNome: user.setor_nome
-    }).catch(err => {
-      console.error('[AUDITORIA] Erro ao reenviar e-mail de ativação:', err.message);
-    });
+    const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+    const linkAtivacao = `${appUrl}/#ativar-conta?token=${encodeURIComponent(token)}`;
+
+    let emailStatus = null;
+    try {
+      emailStatus = await enviarEmailAtivacaoConta({
+        usuarioNome: user.nome,
+        usuarioEmail: user.email,
+        token,
+        perfil: user.perfil,
+        setorNome: user.setor_nome
+      });
+    } catch (err) {
+      emailStatus = { success: false, error: err.message };
+    }
+
+    const emailEnviado = Boolean(emailStatus && emailStatus.success);
 
     return res.json({
       success: true,
-      message: `Novo link de ativação enviado com sucesso para ${user.email}.`
+      message: emailEnviado
+        ? `Novo link de ativação enviado com sucesso para ${user.email}.`
+        : `Token gerado, porém o disparo de e-mail falhou (${emailStatus?.error || 'Erro no provedor'}). Link disponível para cópia.`,
+      emailEnviado,
+      emailProvedor: emailStatus?.provedor || null,
+      emailErro: emailStatus?.error || null,
+      linkAtivacao
     });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao reenviar ativação:', err.message);
@@ -618,10 +646,11 @@ router.post('/testar-email', async (req, res) => {
     return res.json({
       success: true,
       message: resultado.simulated
-        ? `Modo Simulação: o e-mail foi exibido no console do servidor. Configure BREVO_API_KEY ou credenciais SMTP no Render para disparo real.`
-        : `E-mail de teste enviado com sucesso via ${provedor}! Verifique sua caixa de entrada (${emailDestino}).`,
+        ? `Modo Simulação: o e-mail foi exibido no console do servidor. Configure BREVO_API_KEY no Render para envio real.`
+        : `E-mail de teste enviado com sucesso via ${provedor}! ID da mensagem: ${resultado.messageId || 'N/A'}. Verifique a caixa de entrada, pasta de SPAM/Lixo Eletrônico ou aba Promoções em ${emailDestino}.`,
       provedor,
       remetente: `${remetente.name} <${remetente.email}>`,
+      destinatario: emailDestino,
       messageId: resultado.messageId || null
     });
   } else {
@@ -630,8 +659,11 @@ router.post('/testar-email', async (req, res) => {
       message: `Falha no envio via ${provedor}: ${resultado.error || resultado.message || 'Erro de conexão.'}`,
       provedor,
       remetente: `${remetente.name} <${remetente.email}>`,
-      dica: provedor === 'SMTP'
-        ? 'Dica: hospedagens como o plano Free do Render bloqueiam conexões nas portas SMTP (25/465/587). Recomendamos definir a variável BREVO_API_KEY no painel do Render para envio direto via HTTPS (porta 443).'
+      destinatario: emailDestino,
+      dica: provedor === 'BREVO_API'
+        ? 'Dica Brevo: Certifique-se de que o remetente está confirmado em Senders & IPs > Senders, e verifique se a conta já ativou o envio transacional no painel da Brevo.'
+        : provedor === 'SMTP'
+        ? 'Dica: hospedagens como o plano Free do Render bloqueiam conexões nas portas SMTP (25/465/587). Configure a variável BREVO_API_KEY no painel do Render para envio via HTTPS.'
         : undefined
     });
   }

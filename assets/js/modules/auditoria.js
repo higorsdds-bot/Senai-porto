@@ -418,22 +418,31 @@ const AuditoriaModule = {
 
     // Botão de Diagnóstico de Envio de E-mail
     container.querySelector('#btn-testar-email-auditoria')?.addEventListener('click', () => {
-      const emailAdmin = window.Auth?.getUsuario?.()?.email || '';
+      const userEmail = window.Auth?.getUsuario?.()?.email || '';
+      const emailAdmin = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail) ? userEmail : 'higor.sdds@gmail.com';
       const contentHtml = `
         <div class="space-y-4 text-xs">
           <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900">
-            <p class="font-bold">Diagnóstico Operacional de E-mail</p>
-            <p class="mt-1">Envie um e-mail de teste imediato para validar se seu provedor (Brevo API, Resend ou SMTP) está conectado e entregando mensagens sem bloqueios.</p>
+            <p class="font-bold flex items-center gap-1.5">
+              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600"></i> Diagnóstico Operacional de E-mail
+            </p>
+            <p class="mt-1 text-[11px] leading-relaxed text-indigo-800">
+              Envie um e-mail de teste imediato para validar se seu provedor (Brevo API, Resend ou SMTP) está conectado e entregando mensagens sem bloqueios.
+            </p>
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">E-mail de Destino para Teste *</label>
             <input type="email" id="input-teste-email-destino" value="${emailAdmin}" required
-              placeholder="Ex: seu-email@dominio.com"
+              placeholder="Ex: seu-email@gmail.com"
               class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white" />
           </div>
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-[11px] space-y-1">
-            <p><strong>Configuração recomendada para o Render:</strong></p>
-            <p>O plano Free do Render bloqueia conexões SMTP tradicionais (portas 25/465/587). Para envio 100% garantido, configure a variável de ambiente <code>BREVO_API_KEY</code> no Render.</p>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-[11px] space-y-1.5 leading-relaxed">
+            <p class="font-bold text-slate-700">Dicas para Provedor Brevo (Sendinblue):</p>
+            <ul class="list-disc pl-4 space-y-1 text-slate-500">
+              <li>O remetente configurado deve corresponder ao e-mail confirmado da sua conta Brevo.</li>
+              <li>Contas novas no Brevo podem direcionar o primeiro e-mail para a pasta <strong>Spam / Lixo Eletrônico</strong> ou para a aba <strong>Promoções</strong> do Gmail.</li>
+              <li>Acompanhe o status em tempo real pelo painel Brevo em <strong>Transactional &gt; Statistics</strong>.</li>
+            </ul>
           </div>
         </div>
       `;
@@ -442,8 +451,8 @@ const AuditoriaModule = {
         window.UI.openModal({
           title: 'Testar Conexão de E-mail',
           contentHtml,
-          saveLabel: 'Enviar E-mail de Teste',
-          cancelLabel: 'Cancelar',
+          saveLabel: 'Disparar E-mail de Teste',
+          cancelLabel: 'Fechar',
           onSave: async () => {
             const dest = document.getElementById('input-teste-email-destino')?.value?.trim();
             if (!dest || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest)) {
@@ -462,6 +471,42 @@ const AuditoriaModule = {
                   type: 'success'
                 });
               }
+
+              if (window.UI?.openModal) {
+                setTimeout(() => {
+                  window.UI.openModal({
+                    title: 'Resultado do Teste de E-mail',
+                    contentHtml: `
+                      <div class="space-y-3 text-xs">
+                        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900">
+                          <p class="font-bold flex items-center gap-1.5 text-emerald-800">
+                            ✅ Disparo Realizado com Sucesso!
+                          </p>
+                          <p class="mt-1 text-[11px] leading-relaxed text-emerald-700">
+                            A requisição foi aceita pelo provedor <strong>${res?.provedor || 'BREVO_API'}</strong>.
+                          </p>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-700 space-y-1.5">
+                          <div><strong>Provedor:</strong> ${res?.provedor || 'BREVO_API'}</div>
+                          <div><strong>Remetente:</strong> ${res?.remetente || 'Configurado'}</div>
+                          <div><strong>Destinatário:</strong> ${dest}</div>
+                          ${res?.messageId ? `<div><strong>ID da Mensagem:</strong> <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200">${res.messageId}</code></div>` : ''}
+                        </div>
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] space-y-1">
+                          <p class="font-bold">⚠️ Não encontrou na Caixa de Entrada?</p>
+                          <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                            <li>Verifique a pasta <strong>Spam (Lixo Eletrônico)</strong> e a aba <strong>Promoções</strong> do Gmail.</li>
+                            <li>No painel da Brevo, acesse <strong>Transactional &gt; Real-time / Logs</strong> para verificar se a mensagem está com status "Delivered" ou em análise de primeira ativação.</li>
+                          </ol>
+                        </div>
+                      </div>
+                    `,
+                    cancelLabel: 'Entendido',
+                    hideSave: true
+                  });
+                }, 300);
+              }
+
               return true;
             } catch (err) {
               if (window.UI?.toast) {
@@ -523,22 +568,58 @@ const AuditoriaModule = {
         btn.textContent = 'Liberando acesso...';
 
         try {
-          await window.API.aprovarSolicitacaoCadastro(id, {
+          const res = await window.API.aprovarSolicitacaoCadastro(id, {
             nome,
             email,
             perfil,
             setor_id: setorId ? Number(setorId) : null,
             senha: senha || undefined
           });
-          if (window.UI?.toast) {
+
+          document.getElementById('modal-aprovar-usuario')?.classList.add('hidden');
+          await this._carregarTudo(container);
+
+          if (res?.linkAtivacao) {
+            window.UI.openModal({
+              title: res?.emailEnviado ? 'Acesso Liberado com Sucesso' : 'Acesso Liberado (Atenção ao E-mail)',
+              contentHtml: `
+                <div class="space-y-3 text-xs">
+                  <div class="p-3.5 ${res?.emailEnviado ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl">
+                    <p class="font-bold">${res?.message}</p>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Link Direto de Ativação (Uso Único):</label>
+                    <div class="flex gap-2">
+                      <input type="text" id="input-link-ativacao-copiar" readonly value="${res.linkAtivacao}"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-mono text-slate-700" />
+                      <button type="button" id="btn-copiar-link-ativacao-modal"
+                        class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs whitespace-nowrap">
+                        Copiar
+                      </button>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500">Você também pode enviar este link diretamente para o colaborador.</p>
+                  </div>
+                </div>
+              `,
+              cancelLabel: 'Fechar',
+              hideSave: true
+            });
+
+            document.getElementById('btn-copiar-link-ativacao-modal')?.addEventListener('click', () => {
+              const inp = document.getElementById('input-link-ativacao-copiar');
+              if (inp) {
+                inp.select();
+                navigator.clipboard?.writeText(inp.value);
+                if (window.UI?.toast) window.UI.toast({ title: 'Copiado', message: 'Link copiado para a área de transferência!', type: 'success' });
+              }
+            });
+          } else if (window.UI?.toast) {
             window.UI.toast({
               title: 'Cadastro Aprovado',
-              message: `O acesso de "${nome}" foi liberado com sucesso!`,
+              message: res?.message || `O acesso de "${nome}" foi liberado com sucesso!`,
               type: 'success'
             });
           }
-          document.getElementById('modal-aprovar-usuario')?.classList.add('hidden');
-          await this._carregarTudo(container);
         } catch (err) {
           if (window.UI?.toast) {
             window.UI.toast({ title: 'Erro na aprovação', message: err.message || 'Erro ao aprovar cadastro.', type: 'error' });

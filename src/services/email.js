@@ -84,23 +84,54 @@ function getTransporter() {
  * o endereço remetente corresponda a essa conta para evitar rejeições SPF/DMARC (ex: 550 5.7.1).
  */
 function parseRemetente() {
-  const raw = (process.env.EMAIL_FROM || process.env.SMTP_FROM || '').trim();
-  const authUser = (process.env.SMTP_USER || process.env.BREVO_SENDER_EMAIL || process.env.RESEND_SENDER_EMAIL || '').trim();
+  // 1. Prioridade máxima: Configuração do Brevo API
+  if (process.env.BREVO_API_KEY) {
+    const brevoEmail = (
+      process.env.BREVO_SENDER_EMAIL ||
+      process.env.SMTP_FROM ||
+      process.env.EMAIL_FROM ||
+      ''
+    ).trim();
 
-  // Se o usuário especificou um formato completo "Nome" <email@dominio>
+    if (brevoEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(brevoEmail) && !brevoEmail.includes('@smtp-brevo.com')) {
+      return {
+        name: (process.env.BREVO_SENDER_NAME || 'HUB ES+ | SECULT').trim(),
+        email: brevoEmail
+      };
+    }
+  }
+
+  // 2. Provedor Resend API
+  if (process.env.RESEND_API_KEY) {
+    const resendEmail = (
+      process.env.RESEND_SENDER_EMAIL ||
+      process.env.SMTP_FROM ||
+      process.env.EMAIL_FROM ||
+      ''
+    ).trim();
+    if (resendEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendEmail)) {
+      return {
+        name: (process.env.RESEND_SENDER_NAME || 'HUB ES+ | SECULT').trim(),
+        email: resendEmail
+      };
+    }
+  }
+
+  // 3. Formato explícito "Nome <email>" em EMAIL_FROM ou SMTP_FROM
+  const raw = (process.env.EMAIL_FROM || process.env.SMTP_FROM || '').trim();
   const match = raw.match(/^\s*"?([^"<]*?)"?\s*<\s*([^>\s]+)\s*>\s*$/);
   if (match) {
     const specifiedEmail = match[2].trim();
-    // Se o e-mail informado não for o dummy padrão notificacoes@secult.es.gov.br
-    if (!specifiedEmail.includes('notificacoes@secult.es.gov.br')) {
+    if (!specifiedEmail.includes('notificacoes@secult.es.gov.br') && !specifiedEmail.includes('@smtp-brevo.com')) {
       return { name: match[1].trim() || 'HUB ES+ | SECULT', email: specifiedEmail };
     }
-  } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) && !raw.includes('notificacoes@secult.es.gov.br')) {
+  } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw) && !raw.includes('notificacoes@secult.es.gov.br') && !raw.includes('@smtp-brevo.com')) {
     return { name: 'HUB ES+ | SECULT', email: raw };
   }
 
-  // Se tiver um usuário autenticado (ex: Gmail, Brevo, etc), usamos ele como remetente
-  if (authUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authUser)) {
+  // 4. Se houver usuário autenticado no SMTP (somente se não for login técnico @smtp-brevo.com)
+  const authUser = (process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || '').trim();
+  if (authUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authUser) && !authUser.includes('@smtp-brevo.com')) {
     return { name: 'HUB ES+ | SECULT', email: authUser };
   }
 
@@ -116,27 +147,42 @@ function parseRemetente() {
  */
 async function enviarViaBrevo({ destinatarios, assunto, texto, html }) {
   const remetente = parseRemetente();
+  const apiKey = (process.env.BREVO_API_KEY || '').trim();
+
+  if (!apiKey) {
+    throw new Error('BREVO_API_KEY não está configurada no ambiente do servidor.');
+  }
+
+  const payload = {
+    sender: remetente,
+    to: destinatarios.map(email => ({ email })),
+    subject: assunto,
+    htmlContent: html,
+    textContent: texto
+  };
+
   const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'accept': 'application/json',
       'content-type': 'application/json',
-      'api-key': process.env.BREVO_API_KEY
+      'api-key': apiKey
     },
-    body: JSON.stringify({
-      sender: remetente,
-      to: destinatarios.map(email => ({ email })),
-      subject: assunto,
-      htmlContent: html,
-      textContent: texto
-    }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(15000)
   });
 
   if (!resp.ok) {
-    const corpo = await resp.text().catch(() => '');
+    let corpo = '';
+    try {
+      const errObj = await resp.json();
+      corpo = errObj.message || JSON.stringify(errObj);
+    } catch (_) {
+      corpo = await resp.text().catch(() => '');
+    }
     throw new Error(`Brevo API HTTP ${resp.status}: ${corpo.slice(0, 300)}`);
   }
+
   const data = await resp.json().catch(() => ({}));
   return data.messageId || null;
 }
@@ -644,6 +690,8 @@ Administração HUB ES+ • SECULT
  * Valida o formato estritamente para não enviar a endereços inválidos (como fallbacks sem domínio).
  */
 async function buscarEmailsAdministradoresGerais(pool) {
+  const emails = [];
+
   try {
     const [rows] = await pool.query(
       `SELECT email, nome FROM usuarios
@@ -652,31 +700,42 @@ async function buscarEmailsAdministradoresGerais(pool) {
          AND deleted_at IS NULL`
     );
 
-    const emails = rows
+    const validFromDb = rows
       .map(r => (r.email || '').trim().toLowerCase())
-      .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+      .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !e.includes('@smtp-brevo.com'));
 
-    if (emails.length > 0) {
-      return [...new Set(emails)];
-    }
+    emails.push(...validFromDb);
   } catch (err) {
     console.error('[EMAIL] Erro ao buscar e-mails dos administradores:', err.message);
   }
 
-  // Fallback seguro: verifica se ADMIN_DEFAULT_EMAIL possui domínio válido
-  const fallback = [];
-  const defaultAdmin = (process.env.ADMIN_DEFAULT_EMAIL || '').trim().toLowerCase();
-  if (defaultAdmin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(defaultAdmin)) {
-    fallback.push(defaultAdmin);
+  // Fallback e complementos com e-mails reais do administrador do sistema
+  const defaultNotify = (process.env.ADMIN_NOTIFY_EMAIL || process.env.ADMIN_DEFAULT_EMAIL || '').trim().toLowerCase();
+  if (defaultNotify && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(defaultNotify) && !emails.includes(defaultNotify)) {
+    emails.push(defaultNotify);
   }
 
-  // Se o usuário configurou SMTP_USER com email válido (ex: Gmail pessoal), usa ele
-  const smtpUser = (process.env.SMTP_USER || process.env.BREVO_SENDER_EMAIL || '').trim().toLowerCase();
-  if (smtpUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpUser) && !fallback.includes(smtpUser)) {
-    fallback.push(smtpUser);
+  // O e-mail configurado no Brevo (ex: higor.sdds@gmail.com) é o canal real do administrador
+  const brevoSender = (process.env.BREVO_SENDER_EMAIL || '').trim().toLowerCase();
+  if (brevoSender && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(brevoSender) && !emails.includes(brevoSender)) {
+    emails.push(brevoSender);
   }
 
-  return fallback;
+  const smtpFrom = (process.env.SMTP_FROM || '').trim().toLowerCase();
+  if (smtpFrom && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpFrom) && !smtpFrom.includes('@smtp-brevo.com') && !emails.includes(smtpFrom)) {
+    emails.push(smtpFrom);
+  }
+
+  const smtpUser = (process.env.SMTP_USER || '').trim().toLowerCase();
+  if (smtpUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpUser) && !smtpUser.includes('@smtp-brevo.com') && !emails.includes(smtpUser)) {
+    emails.push(smtpUser);
+  }
+
+  // Remove duplicados e exclui dummy secult se houver e-mails externos configurados
+  const distinct = [...new Set(emails)];
+  const externalEmails = distinct.filter(e => !e.endsWith('@secult.es.gov.br'));
+
+  return externalEmails.length > 0 ? externalEmails : distinct;
 }
 
 module.exports = {
