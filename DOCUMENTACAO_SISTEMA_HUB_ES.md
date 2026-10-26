@@ -1,0 +1,432 @@
+# HUB ES+ | Plataforma Administrativa Integrada
+## Documento de Especificação Técnica, Arquitetura e Casos de Uso
+
+---
+
+**Entidades Responsáveis:**  
+Secretaria da Cultura (SECULT) • Governo do Estado do Espírito Santo  
+Serviço Nacional de Aprendizagem Industrial (SENAI)  
+**Projeto:** Centro de Inovação e Criatividade HUB ES+  
+**Versão da Documentação:** 4.0.0 (Compatível com Versão-testeV4)  
+**Status do Sistema:** Operacional em Produção (Render + TiDB Cloud + Brevo API)  
+**Data de Emissão:** 25 de Outubro de 2026  
+
+---
+
+## Sumário Executivo
+
+1. [Visão Geral do Projeto](#1-visão-geral-do-projeto)
+2. [Arquitetura de Software & Tecnologias](#2-arquitetura-de-software--tecnologias)
+3. [Como se Conecta: Guia de Integração e Infraestrutura](#3-como-se-conecta-guia-de-integração-e-infraestrutura)
+4. [Atores do Sistema & Matriz de Perfis (RBAC)](#4-atores-do-sistema--matriz-de-perfis-rbac)
+5. [Módulos Funcionais e Regras de Negócio](#5-módulos-funcionais-e-regras-de-negócio)
+6. [Catálogo Formal de Casos de Uso (UML / Engenharia de Software)](#6-catálogo-formal-de-casos-de-uso)
+7. [Modelo de Dados & Banco Relacional (TiDB / MySQL)](#7-modelo-de-dados--banco-relacional)
+8. [Dicionário de Endpoints da API REST](#8-dicionário-de-endpoints-da-api-rest)
+9. [Segurança, Auditoria e Governança](#9-segurança-auditoria-e-governança)
+
+---
+
+## 1. Visão Geral do Projeto
+
+O **HUB ES+** é uma plataforma corporativa web unificada desenvolvida para informatizar, orquestrar e auditar todas as operações do centro de inovação e criatividade **HUB ES+**, situado em Vitória/ES.
+
+O sistema integra em uma única interface responsiva a gestão operacional de 11 setores distintos, eliminando controles manuais em planilhas, reduzindo tempos de resposta a incidentes e garantindo conformidade com as exigências de transparência e auditoria do setor público.
+
+### Objetivos Estratégicos:
+- **Centralização Operacional:** Monitoramento unificado de estoque, compras, ocorrências, agendamento de espaços e equipe de higienização.
+- **Governança e Transparência Pública:** Rastreabilidade estrita de cada ação realizada (quem, quando, o quê, de qual IP e em qual entidade).
+- **Segurança de Acesso Zero-Trust:** Política rígida de permissões granulares (RBAC), aprovação administrativa de novos cadastros e ativação de contas com links de uso único e criptografados (sem tráfego de senhas em texto puro).
+
+---
+
+## 2. Arquitetura de Software & Tecnologias
+
+A solução adota uma arquitetura em camadas no padrão **Single Page Application (SPA)** no frontend comunicando-se de forma assíncrona com uma **RESTful API** no backend, apoiada por serviços em nuvem de alta disponibilidade.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (Navegador Web)                        │
+│   Vanilla JS Modular (ES6+) • Tailwind CSS • Lucide Icons • Chart.js   │
+│            Hash Routing (#dashboard, #auditoria, #agenda...)           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Requisições HTTPS / JSON
+                                    │ Authorization: Bearer <JWT>
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                        BACKEND (Serviço Render)                        │
+│                 Node.js 18+ LTS • Express.js 5.x REST API              │
+│       Middlewares: CORS • JWT Auth • RBAC Permissions • Auditoria      │
+└───┬───────────────────────────────┬────────────────────────────────┬───┘
+    │ Pool de Conexões              │ Chamadas REST HTTPS            │ Gravação em Disco
+    │ MySQL2 / TLS 1.2+             │ Porta 443 / JSON               │ Multipart Form
+┌───▼──────────────────────┐   ┌────▼─────────────────────┐    ┌─────▼──────────────┐
+│     TiDB Cloud MySQL     │   │     Brevo API (v3)       │    │ Diretório uploads/ │
+│ Banco Serverless Cloud   │   │  E-mails Transacionais   │    │ Fotos e Evidências │
+│  Tabelas com Soft Delete │   │   Links de Ativação      │    │  de Ocorrências    │
+└──────────────────────────┘   └──────────────────────────┘    └────────────────────┘
+```
+
+### 2.1. Backend
+- **Ambiente:** Node.js (CommonJS: `require` / `module.exports`).
+- **Framework Web:** Express.js 5.x.
+- **Camada de Dados:** `mysql2/promise` com pool de conexões reutilizável e consultas parametrizadas contra injeção SQL (`?`).
+- **Autenticação:** JSON Web Token (`jsonwebtoken`) com expiração de 8 horas e renovação transparente via heartbeat.
+- **Criptografia:** `bcryptjs` (custo computacional salt 12) e `crypto` (tokens de entropia alta SHA-256).
+- **Tratamento de Arquivos:** `multer` com limitação de tipos MIME e tamanho máximo de 20MB.
+
+### 2.2. Frontend
+- **Arquitetura:** Single Page Application (SPA) em **Vanilla JavaScript puro** (sem React, Vue ou Angular, garantindo máxima performance, leveza e independência de dependências externas).
+- **Roteador:** Roteamento por hash (`window.location.hash`), capturando alterações via evento `hashchange` no arquivo `assets/js/app.js`.
+- **Estilização:** Tailwind CSS (utilitários de design atômico) e folhas complementares (`assets/css/style.css` e `assets/css/tema-escuro.css`).
+- **Tema:** Alternância em tempo real entre modo Claro e modo Escuro com persistência local em `localStorage`.
+- **Renderização de Métricas:** Chart.js para dashboards gráficos interativos.
+- **Ícones:** Lucide Icons com injeção automática no ciclo de vida dos módulos.
+
+---
+
+## 3. Como se Conecta: Guia de Integração e Infraestrutura
+
+A aplicação foi projetada para execução em nuvem moderna (PaaS/DBaaS) com suporte a ambientes de desenvolvimento local.
+
+### 3.1. Variáveis de Ambiente (`.env`)
+
+| Variável | Descrição | Exemplo de Valor |
+| :--- | :--- | :--- |
+| `PORT` | Porta de escuta da aplicação Express | `3000` ou fornecida pelo Render |
+| `NODE_ENV` | Modo de execução do ambiente | `production` ou `development` |
+| `APP_URL` | URL canônica pública do frontend | `https://senai-porto.onrender.com` |
+| `DB_HOST` | Host do banco de dados TiDB Cloud | `gateway01.us-east-1.prod.aws.tidbcloud.com` |
+| `DB_PORT` | Porta de conexão do banco | `4000` |
+| `DB_USER` | Usuário de autenticação do TiDB | `xxxxxxxx.root` |
+| `DB_PASS` | Senha da instância do banco | `****************` |
+| `DB_NAME` | Nome do banco de dados lógico | `hub_es_gestao` |
+| `DB_SSL` | Habilitação de túnel SSL/TLS | `true` (Obrigatório no TiDB Cloud) |
+| `JWT_SECRET` | Chave criptográfica para assinar tokens | `chave-secreta-de-alta-entropia-32bytes` |
+| `BREVO_API_KEY` | Chave de API v3 da Brevo para HTTPS | `xkeysib-xxxxxxxxxxxxxxxxxxxx` |
+| `BREVO_SENDER_EMAIL` | E-mail do remetente validado na Brevo | `higor.sdds@gmail.com` |
+| `BREVO_SENDER_NAME` | Nome exibido como remetente | `HUB ES+ | SECULT` |
+| `ADMIN_DEFAULT_EMAIL`| E-mail de fallback do Administrador | `higor.sdds@gmail.com` |
+
+### 3.2. Integração com o Banco de Dados (TiDB Cloud)
+- A conexão é gerenciada por um pool singleton em `src/config/database.js`.
+- O TiDB Cloud exige conexão criptografada via TLS 1.2+. Por isso, o driver `mysql2` é inicializado com:
+  ```javascript
+  ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+  ```
+- O pool mantém reconexão automática e listeners de keep-alive para evitar que conexões ociosas caiam.
+
+### 3.3. Integração com o Serviço de E-mails (Brevo API via HTTPS)
+- Em hospedagens gratuitas (como o Render Free Tier), **portas SMTP tradicionais (25, 465 e 587) são bloqueadas** pelo firewall da infraestrutura.
+- Para contornar essa restrição com 100% de confiabilidade, o serviço `src/services/email.js` realiza chamadas diretas via **HTTPS (Porta 443)** para a API REST da Brevo:
+  - **Endpoint:** `POST https://api.brevo.com/v3/smtp/email`
+  - **Header:** `api-key: process.env.BREVO_API_KEY`
+  - **Remetente:** Utiliza o endereço validado pelo proprietário (`BREVO_SENDER_EMAIL`).
+- **Fallback de Contingência:** O sistema também gera na interface administrativa o link seguro de ativação com botão "Copiar", garantindo continuidade caso o serviço de e-mail do destinatário sofra instabilidades temporárias.
+
+---
+
+## 4. Atores do Sistema & Matriz de Perfis (RBAC)
+
+O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Access Control - RBAC)** com 6 perfis padronizados:
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│                                ADMIN                                  │
+│         (Acesso Irrestrito + Auditoria + Governança de Acessos)       │
+└───────────────────────────────────┬───────────────────────────────────┘
+                                    │
+       ┌────────────────────────────┼────────────────────────────┐
+       ▼                            ▼                            ▼
+   ┌───────┐                   ┌──────────┐                ┌───────────┐
+   │GESTOR │                   │ OPERADOR │                │ ADMINIST. │
+   └───┬───┘                   └────┬─────┘                └─────┬─────┘
+       │                            │                            │
+       └────────────────────────────┼────────────────────────────┘
+                                    ▼
+                             ┌─────────────┐
+                             │   LIMPEZA   │
+                             └──────┬──────┘
+                                    ▼
+                             ┌─────────────┐
+                             │  VISITANTE  │
+                             └─────────────┘
+```
+
+### 4.1. Descrição dos Atores
+1. **ADMIN (Administrador Geral):** Possui autoridade máxima. Visualiza e manipula auditoria, logs de governança, aprova solicitações de novos colaboradores, reenvia links de ativação, cadastra setores e configurações centrais.
+2. **GESTOR (Gestor Operacional):** Responsável pela aprovação de requisições de compras, validação de cronogramas, visualização executiva do dashboard e indicadores de SLA.
+3. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário e visualiza comunicados.
+4. **ADMINISTRACAO (Setor Administrativo):** Responsável direto pelo almoxarifado, entradas/baixas de insumos, cotação de compras e gestão patrimonial de equipamentos.
+5. **LIMPEZA (Equipe de Higienização):** Focado exclusivamente na visualização e execução de checklists de limpeza, registro de higienização de ambientes e baixa de insumos de limpeza.
+6. **VISITANTE (Consulta Pública):** Perfil de leitura externa para consultar eventos da agenda pública e comunicados institucionais liberados para a comunidade.
+
+---
+
+## 5. Módulos Funcionais e Regras de Negócio
+
+### Módulo 1: Autenticação, Cadastro e Ativação Segura
+- **Auto-solicitação na Tela de Login:** Qualquer profissional pode submeter nome e e-mail corporativo. O usuário é inserido com status `PENDENTE` e **nenhuma senha é solicitada nesta etapa**.
+- **Notificação ao Administrador:** O sistema dispara um e-mail para o Administrador Geral informando que há uma nova solicitação pendente.
+- **Aprovação em Auditoria:** O Administrador acessa `#auditoria`, define o perfil (`OPERADOR`, `GESTOR`, etc.) e setor, e clica em "Confirmar e Liberar".
+- **Token de Uso Único:** O sistema gera um token criptográfico de alta entropia (32 bytes / 256 bits), salva seu hash SHA-256 no banco com validade de 24 horas, e envia um link exclusivo para o e-mail do usuário (`#ativar-conta?token=...`).
+- **Definição Pessoal da Senha:** O usuário abre o link, digita sua própria senha pessoal (mínimo de 8 caracteres) e o status é promovido para `ATIVO`. O token é invalidado imediatamente após o primeiro uso.
+
+### Módulo 2: Dashboard & Indicadores Operacionais
+- Consolida contadores dinâmicos de insumos abaixo do estoque mínimo, ocorrências pendentes, eventos agendados para hoje e status da equipe de limpeza.
+- Gráficos Chart.js demonstrando consumo de materiais por setor e tempo médio de atendimento (SLA) de ocorrências.
+
+### Módulo 3: Gestão Documental
+- Repositório central de arquivos categorizados (Regulamentos, Editais, Modelos de Termos, Atas de Reunião).
+- Suporte a download direto, filtragem por categoria e upload seguro com metadados de quem postou.
+
+### Módulo 4: Controle de Insumos & Almoxarifado
+- Cadastro de materiais com código interno, unidade de medida, quantidade atual e quantidade mínima de segurança.
+- Registro transacional imutável de movimentações: **Entrada** (reposição), **Saída** (consumo setorial) e **Baixa** (descarte/avaria).
+- Alertas visuais em vermelho quando o estoque atinge ou fica abaixo do limiar crítico.
+
+### Módulo 5: Compras & Suprimentos
+- Ciclo de compras em 4 fases: **Solicitado** $\rightarrow$ **Em Cotação** $\rightarrow$ **Aprovado** $\rightarrow$ **Concluído**.
+- Registro de fornecedor, valor estimado, prazo de entrega e anexos de propostas.
+- Quando a compra é concluída, o almoxarifado pode integrar a entrada direta no módulo de insumos.
+
+### Módulo 6: Agenda Inteligente & Espaços Físicos
+- Gestão de reservas para salas multiuso, laboratório maker, estúdio de gravação, salas de reunião e auditório principal.
+- Validação no banco de dados contra conflitos de horário (double-booking) para um mesmo espaço.
+- Separação entre eventos públicos (exibidos no portal) e reuniões internas restritas.
+
+### Módulo 7: Ocorrências Técnicas & Manutenção
+- Abertura de chamados com título, descrição, categoria (Elétrica, Hidráulica, TI, Estrutural), localização exata e prioridade (Baixa, Média, Alta, Urgente).
+- **Recurso de Câmera/Webcam:** Permite ao colaborador capturar a evidência fotográfica da avaria diretamente pelo navegador no smartphone ou notebook, ou anexar foto da galeria.
+- Fluxo de status: `ABERTO` $\rightarrow$ `EM_ANDAMENTO` $\rightarrow$ `RESOLVIDO` $\rightarrow$ `CANCELADO`.
+
+### Módulo 8: Central de Comunicação
+- Publicação de informativos, avisos de manutenção programada e comunicados urgentes da direção.
+- Segmentação por setor ou publicação geral para todo o centro.
+
+### Módulo 9: Controle de Limpeza & Higienização
+- Cronograma diário/semanal de setores a serem higienizados (banheiros, salas, áreas comuns, copa).
+- Checklist dinâmico com confirmação de realização, horário e operador responsável.
+
+### Módulo 10: Controle Patrimonial de Equipamentos
+- Cadastro de equipamentos (computadores, projetores, impressoras 3D, câmeras, ferramentas) com número de patrimônio e status (Em Uso, Disponível, Em Manutenção, Baixado).
+
+### Módulo 11: Auditoria, Monitoramento & Governança (Admin Only)
+- **Heartbeat em Tempo Real:** A cada 2 minutos, o frontend envia um sinal assíncrono para o backend atualizando o timestamp de presença do usuário. O painel exibe se o operador está "Online" ou o horário do último acesso.
+- **Trilha de Auditoria Geral:** Tabela que armazena todas as inserções, edições e exclusões realizadas no sistema com data/hora, ID do usuário, nome, endereço IP e navegador (User-Agent).
+- **Diagnóstico de E-mail:** Interface dedicada para envio de teste em tempo real, validando o provedor e exibindo os IDs de entrega da Brevo API.
+
+---
+
+## 6. Catálogo Formal de Casos de Uso
+
+### Caso de Uso UC01: Solicitação e Ativação Segura de Novo Usuário
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC01** |
+| **Nome** | Solicitar Cadastro e Ativar Conta via E-mail |
+| **Ator Primário** | Candidato a Colaborador / Usuário Externo |
+| **Atores Secundários** | Administrador Geral, Serviço de E-mail Brevo |
+| **Pré-condição** | O usuário possui um e-mail corporativo ou pessoal válido e acessa a tela inicial. |
+| **Fluxo Principal** | 1. O usuário clica na aba "Solicitar Acesso" na tela de login.<br>2. O usuário informa Nome Completo e E-mail, e submete o formulário.<br>3. O sistema valida que o e-mail não existe no banco e registra o usuário com status `PENDENTE`.<br>4. O sistema gera registro de auditoria e notifica o Administrador por e-mail.<br>5. O Administrador aprova o cadastro no módulo de Auditoria e define perfil e setor.<br>6. O sistema gera um token seguro SHA-256 e envia um e-mail com link exclusivo de uso único.<br>7. O usuário clica no link, é direcionado para a tela de definição de senha e digita sua senha pessoal.<br>8. O sistema calcula o hash bcrypt (salt 12), atualiza o status para `ATIVO` e invalida o token.<br>9. O usuário é redirecionado para a tela de login com sua conta liberada. |
+| **Fluxos Alternativos** | **3a. E-mail já cadastrado:** O sistema exibe mensagem de alerta informando que o e-mail já existe e impede a duplicidade.<br>**7a. Link expirado (>24h):** O sistema exibe mensagem de token vencido e orienta o usuário a contatar o administrador para reenvio. |
+| **Pós-condição** | Conta criada com status `ATIVO`, senha cifrada com bcrypt e token de ativação inutilizado. |
+
+---
+
+### Caso de Uso UC02: Aprovação Administrativa de Acesso e Governança
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC02** |
+| **Nome** | Analisar e Aprovar Solicitação de Cadastro Pendente |
+| **Ator Primário** | Administrador Geral (`ADMIN`) |
+| **Atores Secundários** | Serviço de E-mail Brevo, Tabela de Auditoria |
+| **Pré-condição** | O Administrador está autenticado no sistema e existe pelo menos uma solicitação `PENDENTE`. |
+| **Fluxo Principal** | 1. O Administrador acessa a aba "Auditoria & Governança" (`#auditoria`).<br>2. Na aba "Solicitações Pendentes", o Administrador localiza o registro do candidato.<br>3. O Administrador clica em "Analisar / Aprovar".<br>4. O Administrador seleciona o Perfil de Acesso (`OPERADOR`, `GESTOR`, etc.) e o Setor de Lotação.<br>5. O Administrador clica no botão "Confirmar e Liberar".<br>6. O sistema atualiza o usuário para `AGUARDANDO_ATIVACAO`, grava a ação na auditoria e despacha o e-mail com link de uso único via Brevo API.<br>7. O sistema exibe na tela o status do e-mail e disponibiliza o botão "Copiar Link de Ativação" para contingência.<br>8. A lista de solicitações pendentes é atualizada. |
+| **Fluxo de Exceção** | **5a. Falha no envio do e-mail:** O sistema aprova o usuário no banco, exibe um aviso amarelo informando o erro do provedor de e-mail e disponibiliza o link de ativação diretamente na tela para cópia imediata. |
+| **Pós-condição** | Solicitação processada, privilégios concedidos e ação registrada na auditoria. |
+
+---
+
+### Caso de Uso UC03: Registro de Ocorrência Técnica com Evidência Fotográfica
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC03** |
+| **Nome** | Abrir Chamado Técnico de Manutenção com Foto |
+| **Ator Primário** | Colaborador Autenticado (qualquer perfil exceto Visitante) |
+| **Pré-condição** | Usuário logado e com permissão `ocorrencias.criar`. |
+| **Fluxo Principal** | 1. O usuário clica no menu "Ocorrências" (`#ocorrencias`) e clica em "Nova Ocorrência".<br>2. O usuário preenche Título, Categoria, Localização, Prioridade e Descrição do problema.<br>3. O usuário opta por ligar a câmera do dispositivo (webcam) e clica em "Capturar Foto", ou seleciona um arquivo de imagem da galeria.<br>4. O sistema pré-visualiza a foto capturada.<br>5. O usuário clica em "Salvar Ocorrência".<br>6. O frontend envia a requisição multipart para o backend, que salva a foto no disco e registra a ocorrência no banco de dados com status `ABERTO`.<br>7. O chamado passa a ser exibido no painel de manutenções e o dashboard é incrementado. |
+| **Pós-condição** | Chamado registrado com identificador numérico, foto indexada e trilha de auditoria criada. |
+
+---
+
+### Caso de Uso UC04: Movimentação de Estoque e Alerta de Insumo Crítico
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC04** |
+| **Nome** | Registrar Saída / Baixa de Insumo no Almoxarifado |
+| **Ator Primário** | Almoxarife / Colaborador Autorizado (`ADMIN`, `ADMINISTRACAO`) |
+| **Pré-condição** | Item cadastrado previamente no catálogo de insumos. |
+| **Fluxo Principal** | 1. O usuário acessa o módulo "Insumos" (`#insumos`).<br>2. Localiza o item desejado pelo campo de busca ou código.<br>3. Clica em "Registrar Movimentação".<br>4. Seleciona o tipo `SAIDA` ou `BAIXA`, informa a quantidade, o setor de destino e uma justificativa.<br>5. O sistema subtrai a quantidade do saldo atual em transação no banco.<br>6. Caso a quantidade resultante seja menor ou igual à quantidade mínima definida, o sistema marca o item com bandeira de atenção vermelha.<br>7. A movimentação é registrada com sucesso no histórico histórico imutável. |
+| **Fluxo de Exceção** | **5a. Quantidade superior ao saldo:** O sistema impede a operação e retorna o erro "Saldo insuficiente em estoque". |
+| **Pós-condição** | Estoque atualizado, histórico de movimentação persistido e alertas de reposição disparados se aplicável. |
+
+---
+
+### Caso de Uso UC05: Agendamento Inteligente de Espaço Físico
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC05** |
+| **Nome** | Reservar Sala ou Espaço do HUB ES+ |
+| **Ator Primário** | Colaborador Autenticado |
+| **Pré-condição** | Espaço físico cadastrado e ativo. |
+| **Fluxo Principal** | 1. O usuário acessa o módulo "Agenda" (`#agenda`).<br>2. Clica no botão "Novo Agendamento".<br>3. Seleciona o Espaço Físico (ex: Auditório Principal), Data, Horário de Início e Horário de Término.<br>4. Define o Título do Evento, Responsável, Setor e Número Estimado de Participantes.<br>5. O sistema valida se não há conflito de horário com nenhuma outra reserva para aquele mesmo espaço.<br>6. O agendamento é salvo com sucesso e inserido na visualização de calendário e na lista de compromissos do dia. |
+| **Fluxo de Exceção** | **5a. Conflito de Horário:** O sistema bloqueia a reserva e exibe a mensagem: "O espaço selecionado já possui um agendamento conflitante neste intervalo de horário." |
+| **Pós-condição** | Reserva consolidada e refletida na agenda geral e no dashboard de ocupação. |
+
+---
+
+### Caso de Uso UC06: Execução de Checklist de Limpeza Setorial
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC06** |
+| **Nome** | Registrar Higienização de Ambiente |
+| **Ator Primário** | Colaborador da Equipe de Limpeza (`LIMPEZA`, `ADMIN`) |
+| **Pré-condição** | Setores e rotinas de limpeza previamente configurados. |
+| **Fluxo Principal** | 1. O colaborador acessa o módulo "Limpeza" (`#limpeza`).<br>2. Visualiza a lista de ambientes e suas respectivas periodicidades.<br>3. Clica em "Registrar Limpeza" no ambiente correspondente.<br>4. Marca os itens do checklist atendidos (recolhimento de lixo, higienização de pisos, reposição de sabonete e papel).<br>5. Registra eventuais observações e confirma a execução.<br>6. O sistema atualiza o timestamp da última limpeza, calcula o status do ambiente para "Higienizado" e grava o histórico. |
+| **Pós-condição** | Ambiente atualizado com data/hora e identificação do executor; painel operacional atualizado. |
+
+---
+
+### Caso de Uso UC07: Diagnóstico Operacional de Envio de E-mails
+
+| Elemento | Descrição |
+| :--- | :--- |
+| **Identificador** | **UC07** |
+| **Nome** | Executar Teste em Tempo Real do Serviço de E-mails |
+| **Ator Primário** | Administrador Geral (`ADMIN`) |
+| **Atores Secundários** | API REST Brevo |
+| **Pré-condição** | Usuário logado com privilégio de administrador. |
+| **Fluxo Principal** | 1. O Administrador acessa `#auditoria`.<br>2. Clica no botão superior "Testar E-mail".<br>3. O sistema abre o modal de diagnóstico pré-preenchido com o e-mail do administrador.<br>4. O Administrador clica em "Disparar E-mail de Teste".<br>5. O backend executa o disparo imediato via HTTPS na rota `/v3/smtp/email` da Brevo.<br>6. A Brevo retorna código HTTP 201 com o `messageId`.<br>7. O sistema exibe um relatório com o ID da mensagem, provedor ativo (`BREVO_API`), remetente utilizado e instruções para conferência de caixa de entrada/spam. |
+| **Fluxo de Exceção** | **6a. Erro no provedor (ex: remetente não validado):** O sistema exibe a mensagem de erro detalhada retornada pela Brevo com as orientações para resolução. |
+| **Pós-condição** | Registro do disparo gravado no log do servidor e no histórico da Brevo. |
+
+---
+
+## 7. Modelo de Dados & Banco Relacional
+
+O banco de dados utiliza a engine relacional padrão do MySQL 8.0 / TiDB. Todas as tabelas de negócio utilizam convenção de **Soft Delete** via coluna `deleted_at TIMESTAMP NULL` para garantir conformidade legal com regras de auditoria pública.
+
+```
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│     SETORES     │       │    USUARIOS     │       │    AUDITORIA    │
+├─────────────────┤       ├─────────────────┤       ├─────────────────┤
+│ id (PK)         │◄──┐   │ id (PK)         │◄──┐   │ id (PK)         │
+│ nome            │   └───┤ setor_id (FK)   │   └───┤ usuario_id (FK) │
+│ sigla           │       │ nome            │       │ acao            │
+│ created_at      │       │ email           │       │ entidade        │
+│ deleted_at      │       │ senha           │       │ entidade_id     │
+└─────────────────┘       │ perfil          │       │ descricao       │
+                          │ status          │       │ ip              │
+                          │ created_at      │       │ user_agent      │
+                          │ ultimo_acesso   │       │ created_at      │
+                          │ deleted_at      │       └─────────────────┘
+                          └────────┬────────┘
+                                   │
+       ┌───────────────────────────┼───────────────────────────┐
+       ▼                           ▼                           ▼
+┌──────────────────┐      ┌──────────────────┐       ┌──────────────────┐
+│   OCORRENCIAS    │      │    INSUMOS       │       │     EVENTOS      │
+├──────────────────┤      ├──────────────────┤       ├──────────────────┤
+│ id (PK)          │      │ id (PK)          │       │ id (PK)          │
+│ usuario_id (FK)  │      │ nome             │       │ usuario_id (FK)  │
+│ titulo           │      │ categoria        │       │ titulo           │
+│ descricao        │      │ quantidade_atual │       │ espaco_nome      │
+│ categoria        │      │ estoque_minimo   │       │ data_inicio      │
+│ prioridade       │      │ unidade_medida   │       │ data_fim         │
+│ status           │      │ deleted_at       │       │ status           │
+│ foto_url         │      └────────┬─────────┘       │ deleted_at       │
+│ deleted_at       │               │                 └──────────────────┘
+└──────────────────┘               ▼
+                          ┌──────────────────┐
+                          │   MOVIMENTACOES  │
+                          ├──────────────────┤
+                          │ id (PK)          │
+                          │ insumo_id (FK)   │
+                          │ usuario_id (FK)  │
+                          │ tipo (E/S/B)     │
+                          │ quantidade       │
+                          │ motivo           │
+                          │ created_at       │
+                          └──────────────────┘
+```
+
+### 7.1. Principais Tabelas:
+- **`usuarios`**: Armazena as contas, hashes bcrypt de senha, vínculos com setores, status (`PENDENTE`, `AGUARDANDO_ATIVACAO`, `ATIVO`, `INATIVO`) e timestamp do heartbeat.
+- **`setores`**: Unidades organizacionais do HUB ES+ (Direção, Almoxarifado, TI, Comunicação, Operações, etc.).
+- **`tokens_ativacao`**: Armazena os hashes SHA-256 dos links de ativação, validade e flag de utilização (`usado_em`).
+- **`auditoria`**: Registra permanentemente todas as operações administrativas, alterações cadastrais e acessos.
+- **`ocorrencias`**: Chamados de manutenção corretiva e preventiva com URLs das fotos capturadas.
+- **`insumos` & `movimentacoes_insumos`**: Saldo de almoxarifado e kardex eletrônico de movimentações.
+- **`compras` & `itens_compra`**: Requisições de suprimentos, cotações e status de pedidos.
+- **`eventos`**: Calendário de reservas e utilização de salas e auditório.
+- **`limpeza_registros`**: Logs de checklists de higienização de ambientes.
+- **`equipamentos`**: Inventário patrimonial de ativos do centro.
+- **`comunicados`**: Mural eletrônico de avisos e comunicados institucionais.
+- **`documentos`**: Repositório indexado de manuais, atas e resoluções.
+
+---
+
+## 8. Dicionário de Endpoints da API REST
+
+Todas as rotas estão montadas sob o prefixo `/api/v1/`.
+
+| Método | Endpoint | Proteção | Descrição |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/auth/login` | Público | Autenticação via e-mail e senha. Retorna Token JWT e perfil. |
+| `POST` | `/api/v1/auth/solicitar-cadastro` | Público | Auto-solicitação de acesso por novos colaboradores. |
+| `GET` | `/api/v1/auth/verificar-token-ativacao` | Público | Validação prévia da legitimidade e validade de um link de ativação. |
+| `POST` | `/api/v1/auth/concluir-ativacao` | Público | Definição da senha pessoal do usuário e ativação definitiva da conta. |
+| `POST` | `/api/v1/auth/heartbeat` | Autenticado | Sinal de presença assíncrono para status online no monitor de auditoria. |
+| `GET` | `/api/v1/dashboard/metricas` | Autenticado | Retorna totais consolidados de insumos, ocorrências, agenda e alertas. |
+| `GET` | `/api/v1/usuarios` | `usuarios.visualizar` | Listagem paginada e filtrada de usuários do sistema. |
+| `POST` | `/api/v1/usuarios` | `usuarios.criar` | Cadastro direto de colaborador pelo administrador. |
+| `PUT` | `/api/v1/usuarios/:id` | `usuarios.editar` | Atualização cadastral de colaborador. |
+| `DELETE`| `/api/v1/usuarios/:id` | `usuarios.excluir` | Exclusão lógica (`soft delete`) de usuário. |
+| `GET` | `/api/v1/auditoria` | `ADMIN` / `auditoria.visualizar` | Listagem geral da trilha de logs e eventos auditados. |
+| `GET` | `/api/v1/auditoria/solicitacoes-pendentes` | `ADMIN` / `auditoria.visualizar` | Lista solicitações de cadastro aguardando parecer. |
+| `POST` | `/api/v1/auditoria/solicitacoes/:id/aprovar`| `ADMIN` / `auditoria.aprovar` | Aprova acesso, gera token SHA-256 e envia e-mail de ativação. |
+| `POST` | `/api/v1/auditoria/solicitacoes/:id/rejeitar`| `ADMIN` / `auditoria.aprovar` | Rejeita pedido com justificativa e notifica por e-mail. |
+| `POST` | `/api/v1/auditoria/usuarios/:id/reenviar-ativacao`| `ADMIN` / `auditoria.aprovar` | Invalida token anterior e gera novo link de ativação. |
+| `POST` | `/api/v1/auditoria/testar-email` | `ADMIN` / `auditoria.visualizar` | Dispara diagnóstico em tempo real via Brevo API HTTPS. |
+| `GET` | `/api/v1/ocorrencias` | `ocorrencias.visualizar` | Listagem de ocorrências técnicas e manutenções. |
+| `POST` | `/api/v1/ocorrencias` | `ocorrencias.criar` | Abertura de ocorrência com upload ou captura de imagem. |
+| `PUT` | `/api/v1/ocorrencias/:id/status` | `ocorrencias.atender` | Atualização de status da ocorrência (Em andamento / Resolvido). |
+| `GET` | `/api/v1/insumos` | `insumos.visualizar` | Catálogo de materiais e saldos de almoxarifado. |
+| `POST` | `/api/v1/insumos/:id/movimentar` | `insumos.movimentar` | Registro de entrada, saída ou baixa de estoque. |
+| `GET` | `/api/v1/agenda/eventos` | `agenda.visualizar` | Listagem de reservas e ocupação de espaços. |
+| `POST` | `/api/v1/agenda/eventos` | `agenda.criar` | Nova reserva com checagem de conflitos. |
+| `GET` | `/api/v1/publico/eventos` | Público | Consulta pública dos eventos e palestras abertas do HUB. |
+| `GET` | `/api/v1/publico/comunicados`| Público | Consulta pública dos informes oficiais do centro. |
+
+---
+
+## 9. Segurança, Auditoria e Governança
+
+1. **Princípio do Menor Privilégio (PoLP):** Cada perfil visualiza exclusivamente os módulos e recursos necessários para sua função. Menus e rotas não autorizados são bloqueados tanto no frontend quanto validados no middleware backend.
+2. **Proteção de Senhas:** Nenhuma senha trafega em texto puro em e-mails. As senhas dos usuários utilizam função de dispersão criptográfica lenta **`bcryptjs` com custo de iteração 12**.
+3. **Prevenção de Abusos (Rate Limiting):**
+   - Rate limiting na rota de login contra ataques de força bruta.
+   - Rate limiting de 30 e-mails por hora por endereço contra ataques de inundação (email-bomb).
+4. **Proteção Contra SQL Injection:** 100% das consultas ao banco de dados utilizam declarações preparadas (`prepared statements`) através do driver `mysql2`.
+5. **Prevenção contra XSS e CSRF:** Tokens JWT trafegam exclusivamente nos cabeçalhos `Authorization: Bearer`, neutralizando ataques comuns de CSRF baseados em cookies.
+6. **Integridade de Auditoria:** Registros da tabela `auditoria` são estritamente de escrita (`INSERT-only`). Nenhuma rota da aplicação permite alteração ou exclusão de registros auditados.
+
+---
+
+*Documento técnico homologado para fins de documentação de software, confecção de relatórios de conformidade, diagramação UML e exportação em PDF.*
