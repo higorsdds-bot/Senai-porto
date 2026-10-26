@@ -54,68 +54,71 @@ const AuditoriaModule = {
           </div>
           <div class="flex items-center gap-2">
             <button id="btn-testar-email-auditoria"
-              class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+              class="btn-secondary"
               title="Testar envio de e-mail e verificar provedor ativo">
-              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600"></i> Testar E-mail
+              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i> 
+              <span>Testar E-mail</span>
             </button>
             <button id="btn-refresh-auditoria"
-              class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
-              <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i> Atualizar Dados
+              class="btn-secondary"
+              title="Atualizar dados de governança">
+              <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i> 
+              <span>Atualizar Dados</span>
             </button>
           </div>
         </div>
 
         <!-- CARDS DE MÉTRICAS RÁPIDAS -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="auditoria-kpis">
-          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-hub-sm flex items-center justify-between">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Usuários Online</span>
-              <div class="text-2xl font-black text-slate-900 mt-1" id="kpi-online">--</div>
-              <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-online">--</div>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ativos nos últimos 5 min
               </span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <i data-lucide="radio" class="w-6 h-6"></i>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-hub-sm flex items-center justify-between">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cadastros Pendentes</span>
-              <div class="text-2xl font-black text-amber-600 mt-1" id="kpi-pendentes">--</div>
-              <span class="text-[10px] text-amber-600 font-bold mt-0.5" id="kpi-pendentes-desc">Aguardando aprovação</span>
+              <div class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1" id="kpi-pendentes">--</div>
+              <span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-0.5" id="kpi-pendentes-desc">Aguardando aprovação</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <i data-lucide="user-check" class="w-6 h-6"></i>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-hub-sm flex items-center justify-between">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total de Usuários</span>
-              <div class="text-2xl font-black text-slate-900 mt-1" id="kpi-total-usuarios">--</div>
+              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-total-usuarios">--</div>
               <span class="text-[10px] text-slate-400 font-medium mt-0.5">Cadastrados no banco</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <i data-lucide="users" class="w-6 h-6"></i>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-hub-sm flex items-center justify-between">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ações Auditadas</span>
-              <div class="text-2xl font-black text-slate-900 mt-1" id="kpi-total-logs">--</div>
+              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-total-logs">--</div>
               <span class="text-[10px] text-slate-400 font-medium mt-0.5">Eventos registrados</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <i data-lucide="shield" class="w-6 h-6"></i>
             </div>
           </div>
         </div>
 
         <!-- NAVEGAÇÃO POR ABAS -->
-        <div class="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+        <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-1">
           <button type="button" data-tab="solicitacoes"
             class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-blue-600 border-blue-600">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
@@ -123,18 +126,18 @@ const AuditoriaModule = {
             <span id="badge-aba-pendentes" class="hidden px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-extrabold">0</span>
           </button>
           <button type="button" data-tab="online"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
             <i data-lucide="activity" class="w-4 h-4"></i>
             <span>Usuários Online</span>
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           </button>
           <button type="button" data-tab="usuarios"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
             <i data-lucide="users" class="w-4 h-4"></i>
             <span>Todos os Usuários & Histórico</span>
           </button>
           <button type="button" data-tab="logs"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             <span>Trilha de Auditoria (Logs)</span>
           </button>
@@ -148,13 +151,13 @@ const AuditoriaModule = {
       </div>
 
       <!-- MODAL DE HISTÓRICO INDIVIDUAL DE USUÁRIO -->
-      <div id="modal-historico-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div id="conteudo-historico-usuario" class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto"></div>
+      <div id="modal-historico-usuario" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div id="conteudo-historico-usuario" class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto modal-enter border border-slate-200 dark:border-slate-800"></div>
       </div>
 
       <!-- MODAL DE APROVAÇÃO COM DIGITAÇÃO E EDIÇÃO COMPLETA (ADMIN) -->
-      <div id="modal-aprovar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-100">
+      <div id="modal-aprovar-usuario" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-200 dark:border-slate-800 modal-enter">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
             <div>
               <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">

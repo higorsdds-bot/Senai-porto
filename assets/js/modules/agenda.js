@@ -78,7 +78,7 @@ window.AgendaModule = {
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Gestão de auditórios, laboratórios, estúdios e eventos do HUB ES+</p>
           </div>
           ${canCreate ? `
-            <button id="btn-novo-evento" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all cursor-pointer">
+            <button id="btn-novo-evento" class="btn-primary">
               <i data-lucide="calendar-plus" class="w-4 h-4"></i>
               Agendar Evento
             </button>
@@ -189,11 +189,11 @@ window.AgendaModule = {
 
                   <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
                     <span class="text-[11px] font-mono text-slate-400 dark:text-slate-500">#EVT-${item.id}</span>
-                    <div class="flex items-center gap-1">
-                      ${canEdit ? `<button onclick="window.AgendaModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-colors cursor-pointer" title="Editar">
+                    <div class="flex items-center gap-1.5">
+                      ${canEdit ? `<button onclick="window.AgendaModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                       </button>` : ''}
-                      ${canDelete ? `<button onclick="window.AgendaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer" title="Excluir">
+                      ${canDelete ? `<button onclick="window.AgendaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                       </button>` : ''}
                     </div>

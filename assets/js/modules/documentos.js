@@ -61,7 +61,7 @@ window.DocumentosModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Gestão Documental</h1>
             <p class="text-xs text-slate-500 font-medium">Arquivos normativos, termos, atas e relatórios oficiais do HUB ES+</p>
           </div>
-          <button id="btn-novo-doc" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
+          <button id="btn-novo-doc" class="btn-primary">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Novo Documento
           </button>
@@ -131,13 +131,13 @@ window.DocumentosModule = {
                         </td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.DocumentosModule._downloadDoc('${item.arquivo}')" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Baixar Arquivo">
+                            <button onclick="window.DocumentosModule._downloadDoc('${item.arquivo}')" class="btn-action-table action-primary" title="Baixar Arquivo">
                               <i data-lucide="download" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="window.DocumentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
+                            <button onclick="window.DocumentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="window.DocumentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                            <button onclick="window.DocumentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                           </div>
@@ -150,12 +150,12 @@ window.DocumentosModule = {
             </div>
 
             <!-- Paginação -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Exibindo ${startIndex + 1} - ${Math.min(startIndex + this.pageSize, filtered.length)} de ${filtered.length}</span>
-              <div class="flex items-center gap-1.5">
-                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-doc-prev" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Anterior</button>
+              <div class="flex items-center gap-2">
+                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-doc-prev" class="btn-secondary py-1 px-3 text-xs">Anterior</button>
                 <span class="px-2 font-medium">${this.currentPage} / ${totalPages}</span>
-                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-doc-next" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Próxima</button>
+                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-doc-next" class="btn-secondary py-1 px-3 text-xs">Próxima</button>
               </div>
             </div>
           </div>

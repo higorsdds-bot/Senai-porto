@@ -61,14 +61,14 @@ window.EquipamentosModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Controle de Equipamentos</h1>
             <p class="text-xs text-slate-500 font-medium">Gestão patrimonial de bens duráveis, TI e infraestrutura do HUB ES+</p>
           </div>
-          <button id="btn-novo-equipamento" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-600/20 transition-all">
+          <button id="btn-novo-equipamento" class="btn-primary">
             <i data-lucide="hard-drive" class="w-4 h-4"></i>
             Cadastrar Equipamento
           </button>
         </div>
 
         <!-- Barra de Busca -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-3">
           <div class="relative w-full sm:w-80">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
             <input 
@@ -76,7 +76,7 @@ window.EquipamentosModule = {
               type="text" 
               placeholder="Buscar por nome ou número de patrimônio..." 
               value="${this.searchTerm}"
-              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
         </div>
@@ -90,10 +90,10 @@ window.EquipamentosModule = {
             onActionClick: () => this._openFormModal(container)
           })
           : `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                <thead class="bg-slate-50/75 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                   <tr>
                     <th class="px-6 py-3.5">ID</th>
                     <th class="px-6 py-3.5">Equipamento / Ativo</th>
@@ -102,26 +102,26 @@ window.EquipamentosModule = {
                     <th class="px-6 py-3.5 text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                   ${paginatedItems.map(item => {
                     const resp = this.usuarios.find(u => Number(u.id) === Number(item.responsavel_id))?.nome || 'Não vinculado';
                     return `
-                      <tr class="hover:bg-slate-50/60 transition-colors">
+                      <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-800">
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                           <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 flex items-center justify-center shrink-0">
                               <i data-lucide="cpu" class="w-4 h-4"></i>
                             </div>
                             <span class="max-w-md line-clamp-1">${item.nome}</span>
                           </div>
                         </td>
                         <td class="px-6 py-4">
-                          <span class="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                          <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                             ${item.patrimonio}
                           </span>
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">
                           <div class="flex items-center gap-1.5">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
                             ${resp}
@@ -129,10 +129,10 @@ window.EquipamentosModule = {
                         </td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Editar">
+                            <button onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                            <button onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                           </div>
@@ -145,12 +145,12 @@ window.EquipamentosModule = {
             </div>
 
             <!-- Paginação -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Exibindo ${startIndex + 1} - ${Math.min(startIndex + this.pageSize, filtered.length)} de ${filtered.length}</span>
               <div class="flex items-center gap-1.5">
-                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-equip-prev" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Anterior</button>
+                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-equip-prev" class="btn-secondary px-2.5 py-1 text-xs">Anterior</button>
                 <span class="px-2 font-medium">${this.currentPage} / ${totalPages}</span>
-                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-equip-next" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Próxima</button>
+                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-equip-next" class="btn-secondary px-2.5 py-1 text-xs">Próxima</button>
               </div>
             </div>
           </div>

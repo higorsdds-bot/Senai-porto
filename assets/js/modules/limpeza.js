@@ -112,7 +112,7 @@ window.LimpezaModule = {
             <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Controle de Limpeza</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Acompanhe se os ambientes estão limpos ou necessitam de higienização</p>
           </div>
-          <button id="btn-nova-limpeza" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 active:bg-teal-800 rounded-xl shadow-md shadow-teal-600/20 transition-all">
+          <button id="btn-nova-limpeza" class="btn-primary">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             Nova Rotina de Limpeza
           </button>
@@ -216,11 +216,11 @@ window.LimpezaModule = {
                     const isLimpo = this._isLimpo(item.status);
 
                     return `
-                      <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
                         <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">
                           <div class="flex items-center gap-2">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i>
+                            <i data-lucide="map-pin" class="w-4 h-4 text-sky-600 dark:text-sky-400"></i>
                             <span>${item.local}</span>
                           </div>
                         </td>
@@ -234,32 +234,32 @@ window.LimpezaModule = {
                           ${this._renderStatusBadge(item.status)}
                         </td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
-                          <div class="flex items-center justify-end gap-2">
+                          <div class="flex items-center justify-end gap-1.5">
                             <!-- Ação rápida: Alternar se tá limpo ou não -->
                             ${isLimpo ? `
                               <button 
                                 onclick="window.LimpezaModule.alternarStatusRapido(document.getElementById('main-content'), ${item.id}, 'nao_limpo')" 
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors shadow-sm" 
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors shadow-sm cursor-pointer" 
                                 title="Marcar este ambiente como Não Limpo"
                               >
                                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                                <span>Marcar Não Limpo</span>
+                                <span>Não Limpo</span>
                               </button>
                             ` : `
                               <button 
                                 onclick="window.LimpezaModule.alternarStatusRapido(document.getElementById('main-content'), ${item.id}, 'limpo')" 
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors shadow-sm" 
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors shadow-sm cursor-pointer" 
                                 title="Marcar este ambiente como Limpo"
                               >
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                <span>Marcar Limpo</span>
+                                <span>Limpo</span>
                               </button>
                             `}
 
                             <!-- Editar Status completo / Vistoria -->
                             <button 
                               onclick="window.LimpezaModule._openStatusModal(document.getElementById('main-content'), ${item.id})" 
-                              class="p-1.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-teal-200 dark:hover:border-teal-800" 
+                              class="btn-action-table action-primary" 
                               title="Alterar Status / Vistoria"
                             >
                               <i data-lucide="clipboard-check" class="w-4 h-4"></i>
@@ -268,7 +268,7 @@ window.LimpezaModule = {
                             <!-- Editar Dados Cadastrais -->
                             <button 
                               onclick="window.LimpezaModule._openFormModal(document.getElementById('main-content'), ${item.id})" 
-                              class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-lg transition-colors" 
+                              class="btn-action-table action-edit" 
                               title="Editar Detalhes"
                             >
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -277,7 +277,7 @@ window.LimpezaModule = {
                             <!-- Excluir -->
                             <button 
                               onclick="window.LimpezaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" 
-                              class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition-colors" 
+                              class="btn-action-table action-delete" 
                               title="Excluir"
                             >
                               <i data-lucide="trash-2" class="w-4 h-4"></i>

@@ -76,7 +76,7 @@ window.ComunicacaoModule = {
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Transmissão de informativos gerais, avisos de manutenção e notícias institucionais</p>
           </div>
           ${podeCriar ? `
-            <button id="btn-novo-comunicado" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-xl shadow-md shadow-purple-600/20 transition-all">
+            <button id="btn-novo-comunicado" class="btn-primary">
               <i data-lucide="send" class="w-4 h-4"></i>
               Novo Comunicado
             </button>
@@ -169,13 +169,12 @@ window.ComunicacaoModule = {
                     </div>
 
                     <div class="flex items-center gap-1.5">
-                      <button onclick="window.ComunicacaoModule.abrirDetalhes(${item.id})" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg transition-colors" title="Visualizar comunicado completo">
-                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                        <span>Ver</span>
+                      <button onclick="window.ComunicacaoModule.abrirDetalhes(${item.id})" class="btn-action-table action-primary" title="Visualizar comunicado completo">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
                       </button>
 
                       ${podeExcluir ? `
-                        <button onclick="window.ComunicacaoModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors" title="Excluir comunicado">
+                        <button onclick="window.ComunicacaoModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir comunicado">
                           <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                       ` : ''}

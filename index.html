@@ -252,10 +252,10 @@
         <div class="flex items-center gap-3 sm:gap-4 topbar-right">
           <!-- Botão de Notificações / Comunicados -->
           <button id="btn-topbar-notifications"
-            class="relative p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            class="relative p-2.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl transition-all"
             aria-label="Comunicados & Avisos" title="Comunicados & Avisos">
             <i data-lucide="bell" class="w-4 h-4"></i>
-            <span id="badge-topbar-notifications" class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+            <span id="badge-topbar-notifications" class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900 status-ping"></span>
           </button>
 
           <!-- Botão de tema -->
@@ -264,25 +264,25 @@
             <i data-lucide="sun" class="w-4 h-4 icone-sol hidden"></i>
           </button>
 
-
           <!-- Perfil do Usuário Logado -->
-          <div class="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200">
+          <div class="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
             <div
-              class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+              class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white font-bold text-xs flex items-center justify-center shadow-sm ring-2 ring-white dark:ring-slate-800">
               AB
             </div>
             <div class="hidden md:block text-left">
-              <span data-usuario-nome class="block text-xs font-bold text-slate-800 leading-tight">Usuário</span>
+              <span data-usuario-nome class="block text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">Usuário</span>
               <span data-usuario-perfil class="block text-[10px] text-slate-400 font-medium"></span>
             </div>
 
             <!-- BOTÃO SAIR -->
             <button id="btn-logout" onclick="Auth.logout()"
-              class="ml-1 p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-              title="Sair">
+              class="ml-1 p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+              title="Sair da Plataforma">
               <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
           </div>
+        </div>
       </header>
 
       <!-- CONTEÚDO DINÂMICO DOS MÓDULOS -->

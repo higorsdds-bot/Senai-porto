@@ -62,7 +62,7 @@ window.IndicadoresModule = {
               <p class="text-xs text-slate-500 font-medium">Performance de infraestrutura, logística e atendimento às demandas do HUB ES+</p>
             </div>
             
-            <button id="btn-export-bi" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-sm transition-colors">
+            <button id="btn-export-bi" class="btn-secondary">
               <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
               Exportar CSV / PDF
             </button>
@@ -70,50 +70,50 @@ window.IndicadoresModule = {
 
           <!-- Métricas de Eficiência -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Resolução de Chamados</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resolução de Chamados</span>
                 <div class="flex items-baseline gap-2 mt-2">
-                  <span class="text-3xl font-black text-slate-900">${taxaResolucaoOcorrencias}%</span>
-                  <span class="text-xs font-semibold text-emerald-600">Meta: 85%</span>
+                  <span class="text-3xl font-black text-slate-900 dark:text-slate-100">${taxaResolucaoOcorrencias}%</span>
+                  <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Meta: 85%</span>
                 </div>
-                <div class="w-48 bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="w-48 bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
                   <div class="bg-emerald-500 h-full rounded-full" style="width: ${taxaResolucaoOcorrencias}%"></div>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <i data-lucide="check-check" class="w-6 h-6"></i>
               </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Conclusão de Higienização</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Conclusão de Higienização</span>
                 <div class="flex items-baseline gap-2 mt-2">
-                  <span class="text-3xl font-black text-slate-900">${taxaEficienciaLimpeza}%</span>
-                  <span class="text-xs font-semibold text-teal-600">Meta: 90%</span>
+                  <span class="text-3xl font-black text-slate-900 dark:text-slate-100">${taxaEficienciaLimpeza}%</span>
+                  <span class="text-xs font-semibold text-teal-600 dark:text-teal-400">Meta: 90%</span>
                 </div>
-                <div class="w-48 bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="w-48 bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
                   <div class="bg-teal-500 h-full rounded-full" style="width: ${taxaEficienciaLimpeza}%"></div>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                 <i data-lucide="sparkles" class="w-6 h-6"></i>
               </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Atendimento de Compras</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Atendimento de Compras</span>
                 <div class="flex items-baseline gap-2 mt-2">
-                  <span class="text-3xl font-black text-slate-900">${indiceAtendimentoCompras}%</span>
-                  <span class="text-xs font-semibold text-blue-600">Meta: 75%</span>
+                  <span class="text-3xl font-black text-slate-900 dark:text-slate-100">${indiceAtendimentoCompras}%</span>
+                  <span class="text-xs font-semibold text-blue-600 dark:text-blue-400">Meta: 75%</span>
                 </div>
-                <div class="w-48 bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="w-48 bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
                   <div class="bg-blue-600 h-full rounded-full" style="width: ${indiceAtendimentoCompras}%"></div>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                 <i data-lucide="trending-up" class="w-6 h-6"></i>
               </div>
             </div>
@@ -122,13 +122,13 @@ window.IndicadoresModule = {
           <!-- Gráficos de Indicadores -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Gráfico: Ocorrências e Eficiência -->
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Volume e Fluxo de Ocorrências Técnicas</h3>
-                  <p class="text-xs text-slate-500">Comportamento dos chamados nos últimos meses</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Volume e Fluxo de Ocorrências Técnicas</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Comportamento dos chamados nos últimos meses</p>
                 </div>
-                <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded-lg">Histórico</span>
+                <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg">Histórico</span>
               </div>
               <div class="h-64 relative">
                 <canvas id="chart-indicador-ocorrencias"></canvas>
@@ -136,13 +136,13 @@ window.IndicadoresModule = {
             </div>
 
             <!-- Gráfico: Alocação de Equipamentos e Ativos -->
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Distribuição do Ativo Patrimonial</h3>
-                  <p class="text-xs text-slate-500">Equipamentos e bens alocados por responsável</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Distribuição do Ativo Patrimonial</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Equipamentos e bens alocados por responsável</p>
                 </div>
-                <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded-lg">Patrimônio</span>
+                <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg">Patrimônio</span>
               </div>
               <div class="h-64 relative">
                 <canvas id="chart-indicador-equipamentos"></canvas>

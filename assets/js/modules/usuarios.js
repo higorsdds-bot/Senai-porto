@@ -160,7 +160,7 @@ window.UsuariosModule = {
               <button 
                 type="submit" 
                 id="btn-enviar-pre-cad" 
-                class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+                class="btn-primary w-full justify-center py-2.5"
               >
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span>Enviar para Aprovação do Admin Geral</span>
@@ -379,7 +379,7 @@ window.UsuariosModule = {
             <p class="text-xs text-slate-500 font-medium">Controle de credenciais, perfis de acesso e lotação setorial</p>
           </div>
           ${window.Auth?.isAdmin() ? `
-            <button id="btn-novo-usuario-admin" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-600/20 transition-all cursor-pointer">
+            <button id="btn-novo-usuario-admin" class="btn-primary">
               <i data-lucide="user-plus" class="w-4 h-4"></i>
               <span>Novo Usuário</span>
             </button>
@@ -387,7 +387,7 @@ window.UsuariosModule = {
         </div>
 
         <!-- Barra de Busca e Filtros -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
           <div class="relative w-full md:w-80">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
             <input 
@@ -395,17 +395,17 @@ window.UsuariosModule = {
               type="text" 
               placeholder="Buscar por nome ou e-mail..." 
               value="${this.searchTerm}"
-              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
           <div class="flex items-center gap-3 w-full md:w-auto">
-            <select id="select-filtro-setor-user" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            <select id="select-filtro-setor-user" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
               <option value="">Todos os Setores</option>
               ${this.setores.map(s => `<option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>`).join('')}
             </select>
 
-            <select id="select-filtro-status-user" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            <select id="select-filtro-status-user" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
               <option value="">Todos os Status</option>
               <option value="ATIVO" ${this.statusFilter === 'ATIVO' ? 'selected' : ''}>Ativo</option>
               <option value="PENDENTE" ${this.statusFilter === 'PENDENTE' ? 'selected' : ''}>Pendente</option>
@@ -416,10 +416,10 @@ window.UsuariosModule = {
         </div>
 
         <!-- Tabela -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
-              <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+              <thead class="bg-slate-50/75 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th class="px-6 py-3.5">Colaborador</th>
                   <th class="px-6 py-3.5">E-mail</th>
@@ -428,7 +428,7 @@ window.UsuariosModule = {
                   <th class="px-6 py-3.5">Status</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${paginatedItems.length === 0 ? `
                   <tr>
                     <td colspan="5" class="px-6 py-8 text-center text-slate-400">
@@ -436,25 +436,22 @@ window.UsuariosModule = {
                     </td>
                   </tr>
                 ` : paginatedItems.map(u => `
-                  <tr class="hover:bg-slate-50/60 transition-colors">
-                    <td class="px-6 py-4 font-bold text-slate-900 flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-xs">
+                  <tr class="hub-table-row">
+                    <td class="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold text-xs">
                         ${this._iniciais(u.nome)}
                       </div>
                       <span>${this._esc(u.nome)}</span>
                     </td>
-                    <td class="px-6 py-4 text-slate-600 font-mono text-[11px]">${this._esc(u.email)}</td>
+                    <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono text-[11px]">${this._esc(u.email)}</td>
                     <td class="px-6 py-4">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         ${u.perfil}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-slate-600">${this._esc(u.setor_nome || 'Geral')}</td>
+                    <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${this._esc(u.setor_nome || 'Geral')}</td>
                     <td class="px-6 py-4">
-                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold ${u.status === 'ATIVO' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : u.status === 'PENDENTE' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}">
-                        <span class="w-1.5 h-1.5 rounded-full ${u.status === 'ATIVO' ? 'bg-emerald-500' : u.status === 'PENDENTE' ? 'bg-amber-500 animate-pulse' : 'bg-slate-400'}"></span>
-                        ${u.status}
-                      </span>
+                      ${window.UI.renderBadge(u.status)}
                     </td>
                   </tr>
                 `).join('')}

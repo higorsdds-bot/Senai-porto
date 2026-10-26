@@ -289,14 +289,14 @@ class AppRouter {
 
   _updateActiveNav(activeNavId) {
     document.querySelectorAll('.nav-link').forEach(link => {
-      link.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
+      link.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active-route');
       link.classList.add('text-slate-600', 'hover:bg-slate-100/80', 'hover:text-slate-900');
     });
 
     const activeLinks = document.querySelectorAll(`[data-nav-id="${activeNavId}"]`);
     activeLinks.forEach(link => {
       link.classList.remove('text-slate-600', 'hover:bg-slate-100/80', 'hover:text-slate-900');
-      link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
+      link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active-route');
     });
   }
 

@@ -96,12 +96,12 @@ window.DashboardModule = {
               <p class="text-xs text-slate-500 font-medium">Centralização das operações administrativas do HUB ES+</p>
             </div>
             
-            <div class="flex items-center gap-2">
-              <button id="btn-export-kpis" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-sm transition-colors">
+            <div class="flex items-center gap-2.5">
+              <button id="btn-export-kpis" class="btn-secondary">
                 <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
                 Exportar Relatório
               </button>
-              <button onclick="window.location.hash = '#compras'" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all">
+              <button onclick="window.location.hash = '#compras'" class="btn-primary">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Nova Solicitação
               </button>
@@ -133,7 +133,7 @@ window.DashboardModule = {
                   </p>
                 </div>
               </div>
-              <button onclick="window.UI.visualizarComunicadosAlta()" class="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl shadow-sm transition-all shrink-0">
+              <button onclick="window.UI.visualizarComunicadosAlta()" class="btn-danger text-xs py-2 px-3.5 shrink-0">
                 <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                 ${comunicadosAltaNaoVistos.length > 1 ? `Ver Todos os Comunicados (${comunicadosAltaNaoVistos.length})` : 'Ler Comunicado'}
               </button>
@@ -143,87 +143,87 @@ window.DashboardModule = {
           <!-- Cards de KPIs Clicáveis -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <!-- Card 1: Ocorrências -->
-            <div onclick="window.location.hash = '#ocorrencias'" class="hub-card cursor-pointer bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
+            <div onclick="window.location.hash = '#ocorrencias'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 dark:bg-rose-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
               <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Ocorrências Ativas</span>
-                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ocorrências Ativas</span>
+                <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center ring-4 ring-rose-500/5">
                   <i data-lucide="alert-octagon" class="w-5 h-5"></i>
                 </div>
               </div>
               <div class="mt-4 relative z-10">
                 <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900">${ocorrenciasAbertas}</span>
-                  <span class="text-xs font-medium text-rose-600 flex items-center">
+                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
+                  <span class="text-xs font-medium text-rose-600 dark:text-rose-400 flex items-center">
                     ${ocorrenciasAbertas > 0 ? 'Requer atenção' : 'Normal'}
                   </span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>${ocorrencias.length} registradas no total</span>
-                  <span class="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">Ver &rarr;</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                 </p>
               </div>
             </div>
 
             <!-- Card 2: Compras Pendentes -->
-            <div onclick="window.location.hash = '#compras'" class="hub-card cursor-pointer bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
+            <div onclick="window.location.hash = '#compras'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 dark:bg-amber-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
               <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Compras Pendentes</span>
-                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Compras Pendentes</span>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-4 ring-amber-500/5">
                   <i data-lucide="shopping-cart" class="w-5 h-5"></i>
                 </div>
               </div>
               <div class="mt-4 relative z-10">
                 <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900">${comprasPendentes}</span>
-                  <span class="text-xs font-medium text-amber-600 flex items-center">Aguardando aprovação</span>
+                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
+                  <span class="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center">Aguardando aprovação</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>${compras.length} pedidos no fluxo</span>
-                  <span class="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">Ver &rarr;</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                 </p>
               </div>
             </div>
 
             <!-- Card 3: Agenda / Eventos -->
-            <div onclick="window.location.hash = '#agenda'" class="hub-card cursor-pointer bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-sky-50 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
+            <div onclick="window.location.hash = '#agenda'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-sky-50 dark:bg-sky-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
               <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Eventos Agendados</span>
-                <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Eventos Agendados</span>
+                <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center ring-4 ring-sky-500/5">
                   <i data-lucide="calendar" class="w-5 h-5"></i>
                 </div>
               </div>
               <div class="mt-4 relative z-10">
                 <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900">${eventosAgendados}</span>
-                  <span class="text-xs font-medium text-sky-600">Auditórios & Labs</span>
+                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
+                  <span class="text-xs font-medium text-sky-600 dark:text-sky-400">Auditórios & Labs</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>Próximos compromissos</span>
-                  <span class="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">Ver &rarr;</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                 </p>
               </div>
             </div>
 
             <!-- Card 4: Documentos & Insumos -->
-            <div onclick="window.location.hash = '#documentos'" class="hub-card cursor-pointer bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
+            <div onclick="window.location.hash = '#documentos'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
               <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Repositório Digital</span>
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Repositório Digital</span>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center ring-4 ring-emerald-500/5">
                   <i data-lucide="file-text" class="w-5 h-5"></i>
                 </div>
               </div>
               <div class="mt-4 relative z-10">
                 <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900">${totalDocs}</span>
-                  <span class="text-xs font-medium text-emerald-600">Arquivos indexados</span>
+                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${totalDocs}</span>
+                  <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Arquivos indexados</span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>${insumosCriticos > 0 ? `${insumosCriticos} insumos baixos` : 'Estoque regular'}</span>
-                  <span class="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">Ver &rarr;</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                 </p>
               </div>
             </div>

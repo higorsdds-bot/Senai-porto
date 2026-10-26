@@ -76,14 +76,14 @@ window.ComprasModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">${ownRequestsOnly ? 'Solicitação de Materiais de Consumo' : orderEntryOnly ? 'Entrada em Pedidos de Compra' : 'Gestão de Compras'}</h1>
             <p class="text-xs text-slate-500 font-medium">${ownRequestsOnly ? 'Solicite materiais e acompanhe o status das suas solicitações.' : orderEntryOnly ? 'Consulte pedidos aprovados e registre a entrada dos materiais.' : 'Pedidos gerados, aprovação e entrada de materiais.'}</p>
           </div>
-          ${canCreate ? `<button id="btn-nova-compra" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-md shadow-blue-600/20 transition-all cursor-pointer">
+          ${canCreate ? `<button id="btn-nova-compra" class="btn-primary">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             ${ownRequestsOnly ? 'Solicitar Material' : isAdminGeral ? 'Gerar Pedido' : 'Nova Solicitação'}
           </button>` : ''}
         </div>
 
         <!-- Filtros e Busca -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
           <div class="relative w-full lg:w-72">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
             <input 
@@ -91,12 +91,12 @@ window.ComprasModule = {
               type="text" 
               placeholder="Buscar por produto/item..." 
               value="${this.searchTerm}"
-              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
           <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <select id="select-filtro-status-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            <select id="select-filtro-status-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-900">
               <option value="">Todos os Status</option>
               <option value="pendente" ${this.statusFilter === 'pendente' ? 'selected' : ''}>Pendente</option>
               <option value="aprovado" ${this.statusFilter === 'aprovado' ? 'selected' : ''}>Aprovado</option>
@@ -104,7 +104,7 @@ window.ComprasModule = {
               <option value="cancelado" ${this.statusFilter === 'cancelado' ? 'selected' : ''}>Cancelado</option>
             </select>
 
-            ${this.setores.length ? `<select id="select-filtro-setor-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            ${this.setores.length ? `<select id="select-filtro-setor-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-900">
               <option value="">Todos os Setores</option>
               ${this.setores.map(s => `
                 <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
@@ -122,10 +122,10 @@ window.ComprasModule = {
             onActionClick: canCreate ? () => this._openFormModal(container) : null
           })
           : `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50/75 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                <thead class="bg-slate-50/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th class="px-6 py-3.5">ID</th>
                     <th class="px-6 py-3.5">Produto / Descrição</th>
@@ -134,40 +134,40 @@ window.ComprasModule = {
                     <th class="px-6 py-3.5 text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                   ${paginatedItems.map(item => {
                     const isOwner = Number(item.solicitante_id) === Number(currentUserId);
                     const canEditThisItem = canEdit || (isOwner && item.status === 'pendente');
 
                     return `
-                      <tr class="hover:bg-slate-50/60 transition-colors">
+                      <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-800">
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                           <span class="max-w-xs line-clamp-1">${item.produto}</span>
-                          ${item.valor_estimado ? `<span class="block text-[11px] font-mono text-emerald-600 font-bold">R$ ${Number(item.valor_estimado).toFixed(2)}</span>` : ''}
+                          ${item.valor_estimado ? `<span class="block text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">R$ ${Number(item.valor_estimado).toFixed(2)}</span>` : ''}
                         </td>
-                        ${ownRequestsOnly ? '' : `<td class="px-6 py-4 text-slate-600">
+                        ${ownRequestsOnly ? '' : `<td class="px-6 py-4 text-slate-600 dark:text-slate-300">
                           <div class="flex items-center gap-1.5">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
                             ${item.solicitante_nome || '—'}
                           </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-600">${item.setor_nome || '—'}</td>`}
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300">${item.setor_nome || '—'}</td>`}
                         <td class="px-6 py-4">
                           ${window.UI.renderBadge(item.status)}
                         </td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            ${canReceive && item.status === 'aprovado' ? `<button onclick="window.ComprasModule._registrarEntrada(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer" title="Dar entrada no pedido">
+                            ${canReceive && item.status === 'aprovado' ? `<button onclick="window.ComprasModule._registrarEntrada(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-success" title="Dar entrada no pedido">
                               <i data-lucide="package-check" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canApprove ? `<button onclick="window.ComprasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer" title="Mudar Status">
+                            ${canApprove ? `<button onclick="window.ComprasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-primary" title="Mudar Status">
                               <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canEditThisItem ? `<button onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer" title="${isAdminGeral ? 'Digitar / Editar Tudo (Administrador)' : isOwner ? 'Editar minha solicitação' : 'Editar Pedido'}">
+                            ${canEditThisItem ? `<button onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="${isAdminGeral ? 'Digitar / Editar Tudo (Administrador)' : isOwner ? 'Editar minha solicitação' : 'Editar Pedido'}">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canDelete ? `<button onclick="window.ComprasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Excluir">
+                            ${canDelete ? `<button onclick="window.ComprasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>` : ''}
                           </div>
@@ -180,12 +180,12 @@ window.ComprasModule = {
             </div>
 
             <!-- Paginação -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Exibindo ${startIndex + 1} - ${Math.min(startIndex + this.pageSize, filtered.length)} de ${filtered.length}</span>
-              <div class="flex items-center gap-1.5">
-                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-compra-prev" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Anterior</button>
+              <div class="flex items-center gap-2">
+                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-compra-prev" class="btn-secondary py-1 px-3 text-xs">Anterior</button>
                 <span class="px-2 font-medium">${this.currentPage} / ${totalPages}</span>
-                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-compra-next" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Próxima</button>
+                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-compra-next" class="btn-secondary py-1 px-3 text-xs">Próxima</button>
               </div>
             </div>
           </div>

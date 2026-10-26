@@ -1,19 +1,38 @@
 /* ==========================================================================
-   HUB ES+ - Custom Styling & Design System Extensions
-   Complementa o Tailwind CSS com glassmorphism, microanimações e scrollbars
+   HUB ES+ - Design System & Custom Styling Extensions
+   Governo do Estado do Espírito Santo | SECULT & SENAI
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --hub-blue-900: #0a192f;
-  --hub-blue-800: #0f2b48;
+  /* Paleta Corporativa HUB ES+ */
+  --hub-navy-950: #060d17;
+  --hub-navy-900: #0a192f;
+  --hub-navy-800: #0f2b48;
+  --hub-blue-700: #004d99;
   --hub-blue-600: #0066cc;
-  --hub-blue-500: #0284c7;
+  --hub-blue-500: #0080ff;
+  --hub-cyan-500: #0284c7;
+  --hub-cyan-400: #38bdf8;
+  --hub-teal-500: #0d9488;
   --hub-coral: #ff5722;
   --hub-emerald: #10b981;
   --hub-amber: #f59e0b;
+  --hub-rose: #f43f5e;
   --hub-purple: #8b5cf6;
+
+  /* Superfícies & Bordas */
+  --hub-bg-light: #f8fafc;
+  --hub-surface-light: #ffffff;
+  --hub-border-light: #e2e8f0;
+  --hub-border-subtle: rgba(226, 232, 240, 0.8);
+  
+  /* Sombras */
+  --shadow-subtle: 0 1px 3px rgba(10, 25, 47, 0.05), 0 1px 2px rgba(10, 25, 47, 0.03);
+  --shadow-card: 0 4px 16px -2px rgba(10, 25, 47, 0.06), 0 2px 6px -1px rgba(10, 25, 47, 0.03);
+  --shadow-elevated: 0 12px 32px -4px rgba(10, 25, 47, 0.12), 0 4px 12px -2px rgba(10, 25, 47, 0.04);
+  --shadow-modal: 0 25px 50px -12px rgba(10, 25, 47, 0.25), 0 0 0 1px rgba(10, 25, 47, 0.05);
 }
 
 body {
@@ -22,31 +41,43 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar Customizada */
+/* Scrollbar Customizada Suave */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Glassmorphism Classes */
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ==========================================================================
+   GLASSMORPHISM & SUPERFÍCIES REFINADAS
+   ========================================================================== */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--hub-border-subtle);
 }
 
 .glass-header {
@@ -55,17 +86,203 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Efeito de Card Hover */
+.dark .glass-header {
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Cards com elevação e microinteração */
 .hub-card {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .hub-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px -10px rgba(15, 43, 72, 0.12);
+  box-shadow: var(--shadow-elevated);
 }
 
-/* Shimmer Loading Animation para Skeleton */
+/* ==========================================================================
+   BOTÕES PROFISSIONAIS (DESIGN SYSTEM)
+   ========================================================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0052a3 0%, #0369a1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 102, 204, 0.32);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 102, 204, 0.2);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-secondary:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.dark .btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+.dark .btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
+}
+
+.btn-danger:active {
+  transform: translateY(1px);
+}
+
+/* Botões de Ação em Tabelas */
+.btn-action-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.btn-action-table:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: scale(1.08);
+}
+
+.btn-action-table.action-edit:hover {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.btn-action-table.action-success:hover {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.btn-action-table.action-delete:hover {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.btn-action-table.action-primary:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.dark .btn-action-table:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+/* ==========================================================================
+   INPUTS E FORMULÁRIOS MODERNOS
+   ========================================================================== */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+}
+
+/* ==========================================================================
+   MODAIS E ANIMAÇÕES EXECUTIVAS
+   ========================================================================== */
+@keyframes modalSlideUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-enter {
+  animation: modalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Shimmer Loading Animation para Skeletons */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -81,7 +298,14 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
-/* Toast Animations */
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* ==========================================================================
+   TOASTS E NOTIFICAÇÕES
+   ========================================================================== */
 @keyframes toastSlideIn {
   from {
     transform: translateY(100%) scale(0.95);
@@ -109,7 +333,7 @@ body {
 }
 
 .toast-exit {
-  animation: toastSlideOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: toastSlideOut 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Pulse sutil para status ativos */
@@ -131,7 +355,25 @@ body {
 
 @keyframes ping {
   75%, 100% {
-    transform: scale(2);
+    transform: scale(2.2);
     opacity: 0;
   }
+}
+
+/* Efeito de destaque no item ativo da Sidebar */
+.nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 204, 0.28) !important;
+}
+
+/* Estilo de tabela refinada */
+.hub-table-row {
+  transition: background-color 0.15s ease;
+}
+.hub-table-row:hover {
+  background-color: rgba(241, 245, 249, 0.7);
+}
+.dark .hub-table-row:hover {
+  background-color: rgba(30, 41, 59, 0.5);
 }

@@ -22,7 +22,7 @@ const OcorrenciasModule = {
             <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Ocorrências Técnicas</h2>
             <p class="text-xs text-slate-400 font-semibold mt-0.5">Registre e acompanhe chamados e problemas com fotos e anexos.</p>
           </div>
-          <button id="btn-nova-ocorrencia" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer">
+          <button id="btn-nova-ocorrencia" class="btn-primary">
             <i data-lucide="plus" class="w-4 h-4"></i> Nova Ocorrência
           </button>
         </div>
@@ -135,12 +135,10 @@ const OcorrenciasModule = {
 
             <!-- BOTÕES DE SUBMIT -->
             <div class="sm:col-span-2 flex items-center gap-3 pt-2">
-              <button type="submit" id="oc-btn-salvar"
-                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2.5 rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-60 cursor-pointer">
+              <button type="submit" id="oc-btn-salvar" class="btn-primary">
                 Salvar Ocorrência
               </button>
-              <button type="button" id="oc-btn-cancelar"
-                class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer">
+              <button type="button" id="oc-btn-cancelar" class="btn-secondary">
                 Cancelar
               </button>
             </div>
@@ -457,13 +455,11 @@ const OcorrenciasModule = {
   },
 
   _statusBadge(status) {
-    const map = {
-      aberto: 'bg-amber-50 text-amber-700 border-amber-200',
-      em_andamento: 'bg-blue-50 text-blue-700 border-blue-200',
-      resolvido: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    };
+    if (window.UI?.renderBadge) {
+      return window.UI.renderBadge(status);
+    }
     const label = { aberto: 'Aberto', em_andamento: 'Em Andamento', resolvido: 'Resolvido' }[status] || status;
-    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wide ${map[status] || 'bg-slate-50 text-slate-600 border-slate-200'}">${label}</span>`;
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wide bg-slate-50 text-slate-600 border-slate-200">${label}</span>`;
   },
 
   async _carregar(container) {

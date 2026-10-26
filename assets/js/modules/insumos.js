@@ -75,7 +75,7 @@ window.InsumosModule = {
             <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Controle de Insumos</h1>
             <p class="text-xs text-slate-500 font-medium">Controle de materiais de consumo com monitoramento automático de estoque mínimo</p>
           </div>
-          ${canCreate ? `<button id="btn-novo-insumo" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-md shadow-emerald-600/20 transition-all">
+          ${canCreate ? `<button id="btn-novo-insumo" class="btn-primary">
             <i data-lucide="package-plus" class="w-4 h-4"></i>
             Cadastrar Insumo
           </button>` : ''}
@@ -136,11 +136,11 @@ window.InsumosModule = {
                     const isCritical = item.quantidade <= item.estoque_minimo;
                     const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
                     return `
-                      <tr class="hover:bg-slate-50/60 transition-colors">
+                      <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-800">
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                           <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-lg ${isCritical ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-lg ${isCritical ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'} flex items-center justify-center shrink-0">
                               <i data-lucide="${isCritical ? 'alert-triangle' : 'box'}" class="w-4 h-4"></i>
                             </div>
                             <span class="max-w-md line-clamp-1">${item.nome}</span>
@@ -148,24 +148,24 @@ window.InsumosModule = {
                         </td>
                         <td class="px-6 py-4">
                           <div class="flex items-center gap-2">
-                            <span class="text-sm font-extrabold ${isCritical ? 'text-rose-600' : 'text-slate-800'}">${item.quantidade}</span>
+                            <span class="text-sm font-extrabold ${isCritical ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100'}">${item.quantidade}</span>
                             <span class="text-slate-500 font-mono text-[11px]">${item.unidade}</span>
                             ${isCritical ? `
-                              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-600 border border-rose-200">Crítico</span>
+                              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900/50">Crítico</span>
                             ` : ''}
                           </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-600 font-mono">${item.estoque_minimo} ${item.unidade}</td>
-                        <td class="px-6 py-4 text-slate-600">${setor}</td>
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">${item.estoque_minimo} ${item.unidade}</td>
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${setor}</td>
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            ${canStockOut || canMoveStock ? `<button onclick="window.InsumosModule._openAdjustModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="${canStockOut && !canMoveStock ? 'Dar baixa no estoque' : 'Movimentar estoque'}">
+                            ${canStockOut || canMoveStock ? `<button onclick="window.InsumosModule._openAdjustModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-primary" title="${canStockOut && !canMoveStock ? 'Dar baixa no estoque' : 'Movimentar estoque'}">
                               <i data-lucide="plus-minus" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canEdit ? `<button onclick="window.InsumosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Editar">
+                            ${canEdit ? `<button onclick="window.InsumosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canDelete ? `<button onclick="window.InsumosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                            ${canDelete ? `<button onclick="window.InsumosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>` : ''}
                           </div>
@@ -178,12 +178,12 @@ window.InsumosModule = {
             </div>
 
             <!-- Paginação -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+            <div class="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Exibindo ${startIndex + 1} - ${Math.min(startIndex + this.pageSize, filtered.length)} de ${filtered.length}</span>
               <div class="flex items-center gap-1.5">
-                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-ins-prev" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Anterior</button>
+                <button ${this.currentPage <= 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-ins-prev" class="btn-secondary px-2.5 py-1 text-xs">Anterior</button>
                 <span class="px-2 font-medium">${this.currentPage} / ${totalPages}</span>
-                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-ins-next" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors">Próxima</button>
+                <button ${this.currentPage >= totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} id="btn-ins-next" class="btn-secondary px-2.5 py-1 text-xs">Próxima</button>
               </div>
             </div>
           </div>
