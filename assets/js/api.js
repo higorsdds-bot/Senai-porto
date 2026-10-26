@@ -274,20 +274,87 @@ class ApiService {
   }
 
   // =========================================================================
-  // DOCUMENTOS
+  // DOCUMENTOS (com suporte a upload FormData e download real)
   // =========================================================================
-  async getDocumentos() {
-    return this.request(CONFIG.ENDPOINTS.DOCUMENTOS, { method: 'GET' }, () => window.MockDB.getAll('documentos'));
+  async getDocumentos(filtros = {}) {
+    const params = new URLSearchParams();
+    if (filtros.status) params.set('status', filtros.status);
+    if (filtros.setor_id) params.set('setor_id', filtros.setor_id);
+    if (filtros.q) params.set('q', filtros.q);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}${qs}`, { method: 'GET' }, () => window.MockDB.getAll('documentos'));
+  }
+
+  async getDocumentoById(id) {
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}`, { method: 'GET' });
   }
 
   async createDocumento(data) {
-    return this.request(CONFIG.ENDPOINTS.DOCUMENTOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('documentos', data));
+    const isFormData = data instanceof FormData;
+    return this.request(CONFIG.ENDPOINTS.DOCUMENTOS, {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data)
+    }, () => window.MockDB.create('documentos', data));
+  }
+
+  async updateDocumento(id, data) {
+    const isFormData = data instanceof FormData;
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}`, {
+      method: 'PUT',
+      body: isFormData ? data : JSON.stringify(data)
+    });
+  }
+
+  async alterarStatusDocumento(id, status) {
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
   }
 
   async deleteDocumento(id) {
     return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('documentos', id));
+  }
+
+  async downloadDocumento(id, nomePadrao = 'documento.pdf') {
+    const token = this.getToken();
+    const endpoint = `${this.baseUrl}${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}/download`;
+
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao baixar documento.');
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    let filename = nomePadrao;
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i);
+    if (match && match[1]) {
+      try {
+        filename = decodeURIComponent(match[1].trim());
+      } catch (_) {
+        filename = match[1].trim();
+      }
+    }
+
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    return true;
   }
 
   // =========================================================================

@@ -33,6 +33,11 @@ class AuthManager {
         return this.usuario;
     }
 
+    /** Alias de compatibilidade para getUsuario */
+    getUser() {
+        return this.getUsuario();
+    }
+
     estaLogado() {
         return !!this.getToken();
     }

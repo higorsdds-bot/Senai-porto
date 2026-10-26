@@ -112,7 +112,7 @@ window.LimpezaModule = {
             <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Controle de Limpeza</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Acompanhe se os ambientes estão limpos ou necessitam de higienização</p>
           </div>
-          <button id="btn-nova-limpeza" class="btn-primary">
+          <button id="btn-nova-limpeza" onclick="window.LimpezaModule._openFormModal(document.getElementById('main-content'))" class="btn-primary cursor-pointer">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             Nova Rotina de Limpeza
           </button>
@@ -347,9 +347,23 @@ window.LimpezaModule = {
     }
   },
 
-  _openFormModal(container, editId = null) {
+  async _openFormModal(container, editId = null) {
+    const mainContainer = container || document.getElementById('main-content');
     const isEdit = !!editId;
-    const item = isEdit ? this.items.find(i => Number(i.id) === Number(editId)) : null;
+    const item = isEdit ? (this.items || []).find(i => Number(i.id) === Number(editId)) : null;
+
+    // Se a lista de usuários estiver vazia, tenta obter da API ou do usuário atual
+    if (!Array.isArray(this.usuarios) || this.usuarios.length === 0) {
+      try {
+        const u = await window.API.getUsuarios().catch(() => []);
+        if (Array.isArray(u) && u.length > 0) this.usuarios = u;
+      } catch (_) {}
+    }
+
+    const currentUser = window.Auth?.getUsuario();
+    const listaUsuarios = Array.isArray(this.usuarios) && this.usuarios.length > 0
+      ? this.usuarios
+      : (currentUser ? [currentUser] : [{ id: 1, nome: 'Responsável Operacional' }]);
 
     const modalContent = `
       <form id="form-limpeza" class="space-y-4">
@@ -369,8 +383,10 @@ window.LimpezaModule = {
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Responsável Designado *</label>
           <select name="responsavel_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500">
             <option value="">Selecione o responsável...</option>
-            ${(this.usuarios.length > 0 ? this.usuarios : (window.Auth?.getUser() ? [window.Auth.getUser()] : [])).map(u => `
-              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && window.Auth?.getUser()?.id === u.id ? 'selected' : '')}>${u.nome}</option>
+            ${listaUsuarios.map(u => `
+              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && currentUser?.id === u.id ? 'selected' : '')}>
+                ${u.nome} ${u.perfil ? `(${u.perfil})` : ''}
+              </option>
             `).join('')}
           </select>
         </div>
@@ -411,7 +427,7 @@ window.LimpezaModule = {
             window.UI.toast({ title: 'Rotina Cadastrada', message: 'Tarefa de higienização agendada.' });
           }
 
-          await this.render(container);
+          await this.render(mainContainer);
           return true;
         } catch (err) {
           console.error('Erro ao salvar limpeza:', err);

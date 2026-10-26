@@ -207,8 +207,8 @@ window.EquipamentosModule = {
           <label class="block text-xs font-semibold text-slate-700 mb-1">Responsável pela Guarda (responsavel_id) *</label>
           <select name="responsavel_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white">
             <option value="">Selecione o responsável...</option>
-            ${(this.usuarios && this.usuarios.length > 0 ? this.usuarios : (window.Auth?.getUser() ? [window.Auth.getUser()] : [])).map(u => `
-              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && window.Auth?.getUser()?.id === u.id ? 'selected' : '')}>${u.nome} (${u.email || 'responsável'})</option>
+            ${(this.usuarios && this.usuarios.length > 0 ? this.usuarios : (window.Auth?.getUsuario() ? [window.Auth.getUsuario()] : [])).map(u => `
+              <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && window.Auth?.getUsuario()?.id === u.id ? 'selected' : '')}>${u.nome} (${u.email || 'responsável'})</option>
             `).join('')}
           </select>
         </div>

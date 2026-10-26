@@ -9,7 +9,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
@@ -119,15 +119,15 @@ router.get('/:id/download', requirePermission('documentos.baixar'), async (req, 
   }
 });
 
-// POST /api/v1/documentos (upload de arquivo)
-router.post('/', requirePermission('documentos.enviar'), upload.single('arquivo'), async (req, res) => {
+// POST /api/v1/documentos (upload e armazenamento de documento)
+router.post('/', requireAnyPermission('documentos.enviar', 'documentos.criar'), upload.single('arquivo'), async (req, res) => {
   if (!req.file) {
-    return res.status(422).json({ success: false, message: 'Arquivo é obrigatório.', errors: { arquivo: 'Envie um arquivo.' } });
+    return res.status(422).json({ success: false, message: 'Arquivo do documento é obrigatório.', errors: { arquivo: 'Selecione um arquivo para upload.' } });
   }
   const { titulo, descricao, setor_id } = req.body;
   if (!titulo || titulo.trim().length < 3) {
     if (req.file) fs.unlinkSync(req.file.path);
-    return res.status(422).json({ success: false, message: 'Título inválido.', errors: { titulo: 'Mínimo 3 caracteres.' } });
+    return res.status(422).json({ success: false, message: 'Título inválido.', errors: { titulo: 'O título do documento deve ter no mínimo 3 caracteres.' } });
   }
   try {
     const pool = getPool();
@@ -137,18 +137,107 @@ router.post('/', requirePermission('documentos.enviar'), upload.single('arquivo'
     const [result] = await pool.query(
       `INSERT INTO documentos (titulo, descricao, setor_id, responsavel_id, nome_original, nome_armazenado, caminho, mime_type, tamanho, extensao, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo')`,
-      [titulo.trim(), descricao?.trim() || null, setor_id || null, req.usuario.id, req.file.originalname, req.file.filename, caminho, req.file.mimetype, req.file.size, ext]
+      [titulo.trim(), descricao?.trim() || null, setor_id ? Number(setor_id) : null, req.usuario.id, req.file.originalname, req.file.filename, caminho, req.file.mimetype, req.file.size, ext]
     );
-    await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'ENVIAR_DOCUMENTO', entidade: 'documentos', entidade_id: result.insertId, descricao: `Documento "${titulo.trim()}" enviado (${req.file.originalname}).`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'ENVIAR_DOCUMENTO',
+      entidade: 'documentos',
+      entidade_id: result.insertId,
+      descricao: `Documento oficial "${titulo.trim()}" armazenado com sucesso (${req.file.originalname}, ${(req.file.size / 1024).toFixed(1)} KB).`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
     return res.status(201).json({
       success: true,
-      message: 'Documento enviado.',
-      data: { id: result.insertId, caminho, tamanho: req.file.size }
+      message: 'Documento armazenado com sucesso no repositório.',
+      data: { id: result.insertId, caminho, tamanho: req.file.size, nome_original: req.file.originalname }
     });
   } catch (err) {
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     console.error('[DOCUMENTOS] POST:', err.message);
-    return res.status(500).json({ success: false, message: 'Erro ao salvar documento.' });
+    return res.status(500).json({ success: false, message: 'Erro ao armazenar documento.' });
+  }
+});
+
+// PUT /api/v1/documentos/:id (edição de metadados e substituição opcional de arquivo)
+router.put('/:id', requireAnyPermission('documentos.enviar', 'documentos.criar', 'documentos.editar'), upload.single('arquivo'), async (req, res) => {
+  const { id } = req.params;
+  const { titulo, descricao, setor_id } = req.body;
+
+  if (titulo !== undefined && String(titulo).trim().length < 3) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(422).json({ success: false, message: 'Título inválido.', errors: { titulo: 'Mínimo de 3 caracteres.' } });
+  }
+
+  try {
+    const pool = getPool();
+    const [existing] = await pool.query(
+      `SELECT * FROM documentos WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+
+    if (!existing.length) {
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(404).json({ success: false, message: 'Documento não encontrado.' });
+    }
+
+    const docAtual = existing[0];
+    let sql = 'UPDATE documentos SET updated_at = NOW()';
+    const params = [];
+
+    if (titulo !== undefined) {
+      sql += ', titulo = ?';
+      params.push(String(titulo).trim());
+    }
+    if (descricao !== undefined) {
+      sql += ', descricao = ?';
+      params.push(descricao ? String(descricao).trim() : null);
+    }
+    if (setor_id !== undefined) {
+      sql += ', setor_id = ?';
+      params.push(setor_id ? Number(setor_id) : null);
+    }
+
+    // Se enviou um novo arquivo para substituir o existente
+    if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const caminho = `/uploads/documentos/${req.file.filename}`;
+      sql += ', nome_original = ?, nome_armazenado = ?, caminho = ?, mime_type = ?, tamanho = ?, extensao = ?';
+      params.push(req.file.originalname, req.file.filename, caminho, req.file.mimetype, req.file.size, ext);
+
+      // Remove arquivo antigo do disco
+      if (docAtual.caminho) {
+        const oldPath = path.join(process.cwd(), docAtual.caminho.replace(/^\//, ''));
+        if (fs.existsSync(oldPath)) {
+          try { fs.unlinkSync(oldPath); } catch (_) {}
+        }
+      }
+    }
+
+    sql += ' WHERE id = ? AND deleted_at IS NULL';
+    params.push(id);
+
+    await pool.query(sql, params);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_DOCUMENTO',
+      entidade: 'documentos',
+      entidade_id: parseInt(id, 10),
+      descricao: `Documento #${id} ("${titulo || docAtual.titulo}") atualizado por ${req.usuario.nome}${req.file ? ' (novo anexo substituído)' : ''}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: 'Documento atualizado com sucesso.'
+    });
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error('[DOCUMENTOS] PUT:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao atualizar documento.' });
   }
 });
 
