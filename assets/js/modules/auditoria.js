@@ -865,7 +865,7 @@ const AuditoriaModule = {
   },
 
   async _carregarTudo(container) {
-    await Promise.all([
+    await Promise.allSettled([
       this._carregarSolicitacoes(container),
       this._carregarOnline(container),
       this._carregarUsuarios(container),

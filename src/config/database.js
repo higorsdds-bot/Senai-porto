@@ -8,9 +8,13 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || 'ID8DWpL0AghkR1Q0',
   database: process.env.DB_DATABASE || 'secult_db',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 40,
+  maxIdle: 20,
+  idleTimeout: 60000,
   queueLimit: 0,
-  connectTimeout: 10000,
+  connectTimeout: 15000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
   charset: 'utf8mb4'
 };
 

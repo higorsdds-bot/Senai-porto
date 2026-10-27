@@ -22,13 +22,21 @@ window.AgendaModule = {
 
       if (isVisitante) {
         // Modo visitante: consome rota pública sem requisição de usuários
-        eventos = await window.API.getPublicEventos();
+        eventos = await window.API.getPublicEventos().catch(() => []);
         usuarios = [];
       } else {
-        eventos = await window.API.getEventos();
-        // Usuários para seleção de responsável são carregados se tiver permissão de visualização
-        usuarios = window.Auth.hasPermission('usuarios.visualizar')
-          ? await window.API.getUsuarios()
+        const podeVerUsuarios = window.Auth?.hasPermission('usuarios.visualizar');
+        const [eventosRes, usuariosRes] = await Promise.allSettled([
+          window.API.getEventos(),
+          podeVerUsuarios ? window.API.getUsuarios() : Promise.resolve([])
+        ]);
+
+        eventos = eventosRes.status === 'fulfilled' && Array.isArray(eventosRes.value)
+          ? eventosRes.value
+          : (this.items && this.items.length ? this.items : []);
+
+        usuarios = usuariosRes.status === 'fulfilled' && Array.isArray(usuariosRes.value)
+          ? usuariosRes.value
           : [];
       }
 

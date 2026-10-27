@@ -8,10 +8,22 @@ const { getPool } = require('../config/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secult_hub_es_jwt_secret_token_2026_super_secure_key';
 
+// Cache em memória de usuários autenticados para evitar avalanche de queries repetidas
+const _userAuthCache = new Map();
+const USER_CACHE_TTL = 30 * 1000; // 30 segundos
+
+function clearUserAuthCache(userId = null) {
+  if (userId) {
+    _userAuthCache.delete(Number(userId));
+  } else {
+    _userAuthCache.clear();
+  }
+}
+
 /**
  * Middleware que verifica e decodifica o JWT.
  * Em caso de falha, retorna 401.
- * Em caso de sucesso, popula req.usuario com os dados completos do banco.
+ * Em caso de sucesso, popula req.usuario com os dados completos do banco (com cache em memória de 30s).
  */
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -35,6 +47,15 @@ async function authMiddleware(req, res, next) {
     });
   }
 
+  const userId = Number(payload.id);
+  const now = Date.now();
+  const cached = _userAuthCache.get(userId);
+
+  if (cached && now < cached.expiresAt) {
+    req.usuario = cached.usuario;
+    return next();
+  }
+
   try {
     const pool = getPool();
     const [rows] = await pool.query(
@@ -44,15 +65,17 @@ async function authMiddleware(req, res, next) {
        LEFT JOIN setores s ON s.id = u.setor_id
        WHERE u.id = ? AND u.deleted_at IS NULL
        LIMIT 1`,
-      [payload.id]
+      [userId]
     );
 
     if (!rows.length) {
+      _userAuthCache.delete(userId);
       return res.status(401).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
     const usuario = rows[0];
     if (usuario.status !== 'ATIVO') {
+      _userAuthCache.delete(userId);
       let msg = 'Conta inativa. Contate o administrador.';
       if (usuario.status === 'BLOQUEADO') {
         msg = 'Conta bloqueada. Contate o administrador.';
@@ -69,6 +92,12 @@ async function authMiddleware(req, res, next) {
       });
     }
 
+    // Salva no cache da sessão
+    _userAuthCache.set(userId, {
+      usuario,
+      expiresAt: now + USER_CACHE_TTL
+    });
+
     req.usuario = usuario;
     next();
   } catch (err) {
@@ -77,4 +106,4 @@ async function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { authMiddleware, JWT_SECRET };
+module.exports = { authMiddleware, clearUserAuthCache, JWT_SECRET };

@@ -17,10 +17,20 @@ window.InsumosModule = {
     container.innerHTML = window.UI.renderTableSkeleton(5, 5);
 
     try {
-      const insumos = await window.API.getInsumos();
-      const setores = window.Auth.hasPermission('setores.visualizar')
-        ? await window.API.getSetores()
+      const podeVerSetores = window.Auth?.hasPermission('setores.visualizar');
+      const [insumosRes, setoresRes] = await Promise.allSettled([
+        window.API.getInsumos(),
+        podeVerSetores ? window.API.getSetores() : Promise.resolve([])
+      ]);
+
+      const insumos = insumosRes.status === 'fulfilled' && Array.isArray(insumosRes.value)
+        ? insumosRes.value
+        : (this.items && this.items.length ? this.items : []);
+
+      const setores = setoresRes.status === 'fulfilled' && Array.isArray(setoresRes.value)
+        ? setoresRes.value
         : [];
+
       this.items = insumos;
       this.setores = setores;
       this._renderView(container);
@@ -354,16 +364,26 @@ window.InsumosModule = {
       saveLabel: onlyStockOut ? 'Registrar Saída' : 'Registrar Movimentação',
       maxWidth: 'max-w-sm',
       onSave: async () => {
-        const val = document.getElementById('input-novo-saldo').value;
+        const val = document.getElementById('input-novo-saldo')?.value;
         const quantidade = Number(val);
-        if (!Number.isInteger(quantidade) || quantidade <= 0) return false;
+        if (!Number.isInteger(quantidade) || quantidade <= 0) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe uma quantidade válida maior que zero.', type: 'warning' });
+          return false;
+        }
         const tipo = onlyStockOut
           ? 'SAIDA'
-          : document.getElementById('select-tipo-movimentacao').value;
-        await window.API.movimentarInsumo(id, { tipo, quantidade });
-        window.UI.toast({ title: 'Estoque atualizado', message: `Movimentação de ${tipo.toLowerCase()} registrada.` });
-        await this.render(container);
-        return true;
+          : document.getElementById('select-tipo-movimentacao')?.value || 'SAIDA';
+
+        try {
+          await window.API.movimentarInsumo(id, { tipo, quantidade });
+          window.UI.toast({ title: 'Estoque Atualizado', message: `Movimentação de ${tipo.toLowerCase()} registrada com sucesso.`, type: 'success' });
+          await this.render(container);
+          return true;
+        } catch (err) {
+          console.error('Erro ao movimentar insumo:', err);
+          window.UI.toast({ title: 'Falha na Movimentação', message: err.message || 'Não foi possível registrar a movimentação.', type: 'error' });
+          return false;
+        }
       }
     });
   },

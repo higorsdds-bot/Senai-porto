@@ -25,30 +25,22 @@ router.use(authMiddleware);
  */
 async function requireAdminDirect(req, res, next) {
   try {
-    const pool = getPool();
-    const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.perfil, u.status
-       FROM usuarios u
-       WHERE u.id = ? AND u.deleted_at IS NULL
-       LIMIT 1`,
-      [req.usuario.id]
-    );
-
-    if (!rows.length || rows[0].status !== 'ATIVO') {
+    const usuario = req.usuario;
+    if (!usuario || usuario.status !== 'ATIVO') {
       return res.status(403).json({
         success: false,
         message: 'Acesso negado. Usuário inexistente ou inativo.'
       });
     }
 
-    const perfilNorm = String(rows[0].perfil || '')
+    const perfilNorm = String(usuario.perfil || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '');
 
     const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(perfilNorm);
-    const podeAuditoria = isAdmin || await hasPermission(rows[0], 'auditoria.visualizar');
+    const podeAuditoria = isAdmin || await hasPermission(usuario, 'auditoria.visualizar');
 
     if (!podeAuditoria) {
       return res.status(403).json({
@@ -57,7 +49,7 @@ async function requireAdminDirect(req, res, next) {
       });
     }
 
-    req.adminUsuario = rows[0];
+    req.adminUsuario = usuario;
     next();
   } catch (err) {
     console.error('[AUDITORIA] Erro na validação de permissão de admin:', err.message);
