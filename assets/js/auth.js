@@ -15,18 +15,34 @@ class AuthManager {
     }
 
     getToken() {
-        return localStorage.getItem(CONFIG.STORAGE_TOKEN);
+        return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_TOKEN))
+            || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_TOKEN))
+            || null;
     }
 
     getUsuario() {
         if (!this.usuario) {
-            const raw = localStorage.getItem(CONFIG.STORAGE_USUARIO);
+            // Prioridade primária: sessionStorage (isolamento individual por aba)
+            // Fallback: localStorage (persistência entre reinicializações do navegador)
+            const raw = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_USUARIO))
+                || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_USUARIO));
             if (raw) {
                 try {
                     this.usuario = JSON.parse(raw);
                     this.permissoes = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
                     this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
                     this.permissionsReady = Array.isArray(this.usuario?.permissoes);
+
+                    // Sincroniza para o sessionStorage da aba atual caso tenha vindo do fallback
+                    if (typeof sessionStorage !== 'undefined') {
+                        if (!sessionStorage.getItem(CONFIG.STORAGE_TOKEN)) {
+                            const t = localStorage.getItem(CONFIG.STORAGE_TOKEN);
+                            if (t) sessionStorage.setItem(CONFIG.STORAGE_TOKEN, t);
+                        }
+                        if (!sessionStorage.getItem(CONFIG.STORAGE_USUARIO)) {
+                            sessionStorage.setItem(CONFIG.STORAGE_USUARIO, raw);
+                        }
+                    }
                 } catch { this.usuario = null; }
             }
         }
@@ -156,8 +172,16 @@ class AuthManager {
                 permissoes: res.data.permissoes || [],
                 modulos: res.data.modulos || []
             };
-            localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
-            localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+            // Isola a sessão ativamente nesta aba via sessionStorage
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
+                sessionStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+            }
+            // Mantém no localStorage como fallback global de persistência
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
+                localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+            }
             this.usuario = usuario;
             this.permissoes = usuario.permissoes;
             this.modulos = usuario.modulos;
@@ -184,8 +208,14 @@ class AuthManager {
 
     forcarLogout() {
         this.pararHeartbeat();
-        localStorage.removeItem(CONFIG.STORAGE_TOKEN);
-        localStorage.removeItem(CONFIG.STORAGE_USUARIO);
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem(CONFIG.STORAGE_TOKEN);
+            sessionStorage.removeItem(CONFIG.STORAGE_USUARIO);
+        }
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem(CONFIG.STORAGE_TOKEN);
+            localStorage.removeItem(CONFIG.STORAGE_USUARIO);
+        }
         this.usuario = null;
         this.permissoes = [];
         this.modulos = [];
@@ -266,7 +296,13 @@ class AuthManager {
             this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
             this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
             this.permissionsReady = true;
-            localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(this.usuario));
+            const usuarioSerializado = JSON.stringify(this.usuario);
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+            }
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+            }
             this.preencherInfoUsuario();
             window.App?.handleRoute();
         } catch (err) {

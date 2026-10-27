@@ -11,7 +11,9 @@ class ApiService {
   }
 
   getToken() {
-    return localStorage.getItem(window.CONFIG.STORAGE_TOKEN) || null;
+    return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(window.CONFIG.STORAGE_TOKEN))
+      || (typeof localStorage !== 'undefined' && localStorage.getItem(window.CONFIG.STORAGE_TOKEN))
+      || null;
   }
 
   /**
@@ -116,8 +118,14 @@ class ApiService {
     try {
       await this.request(`${CONFIG.ENDPOINTS.AUTH}/logout`, { method: 'POST' });
     } finally {
-      localStorage.removeItem(CONFIG.STORAGE_TOKEN);
-      localStorage.removeItem(CONFIG.STORAGE_USUARIO);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(CONFIG.STORAGE_TOKEN);
+        sessionStorage.removeItem(CONFIG.STORAGE_USUARIO);
+      }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(CONFIG.STORAGE_TOKEN);
+        localStorage.removeItem(CONFIG.STORAGE_USUARIO);
+      }
     }
   }
 
