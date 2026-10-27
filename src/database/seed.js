@@ -94,7 +94,6 @@ const PERFIL_PERMISSOES = {
   OPERADOR: [
     'dashboard.visualizar',
     'limpeza.visualizar', 'limpeza.criar',
-    'compras.visualizar', 'compras.criar',
     'equipamentos.visualizar',
     'documentos.visualizar', 'documentos.baixar',
     'ocorrencias.visualizar', 'ocorrencias.criar',

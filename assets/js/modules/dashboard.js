@@ -80,6 +80,17 @@ window.DashboardModule = {
       const totalDocs = documentos.length;
       const insumosCriticos = insumos.filter(i => i.quantidade <= i.estoque_minimo).length;
 
+      // Validação de permissões para ações rápidas no Dashboard
+      const usuario = window.Auth?.getUsuario();
+      const perfil = String(usuario?.perfil || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '');
+      const isOperador = perfil === 'OPERADOR';
+      const podeCriarSolicitacao = !isOperador && window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('compras.criar')) : false;
+      const podeAcessarCompras = !isOperador && window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('compras.visualizar') || window.Auth.hasPermission('compras.visualizar_pedidos') || window.Auth.hasPermission('compras.visualizar_proprias')) : false;
+
       // Renderiza o Dashboard com KPIs interativos
       container.innerHTML = `
         <div class="space-y-6">
@@ -101,10 +112,12 @@ window.DashboardModule = {
                 <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
                 Exportar Relatório
               </button>
-              <button onclick="window.location.hash = '#compras'" class="btn-primary">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Nova Solicitação
-              </button>
+              ${podeCriarSolicitacao ? `
+                <button onclick="window.location.hash = '#compras'" class="btn-primary">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  Nova Solicitação
+                </button>
+              ` : ''}
             </div>
           </div>
 
@@ -166,8 +179,8 @@ window.DashboardModule = {
             </div>
 
             <!-- Card 2: Compras Pendentes -->
-            <div onclick="window.location.hash = '#compras'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 dark:bg-amber-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
+            <div ${podeAcessarCompras ? `onclick="window.location.hash = '#compras'"` : ''} class="hub-card ${podeAcessarCompras ? 'cursor-pointer' : ''} bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 dark:bg-amber-950/20 rounded-full -mr-8 -mt-8 ${podeAcessarCompras ? 'group-hover:scale-110' : ''} transition-transform duration-300"></div>
               <div class="flex items-center justify-between relative z-10">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Compras Pendentes</span>
                 <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-4 ring-amber-500/5">
@@ -181,7 +194,7 @@ window.DashboardModule = {
                 </div>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>${compras.length} pedidos no fluxo</span>
-                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
+                  ${podeAcessarCompras ? `<span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>` : ''}
                 </p>
               </div>
             </div>
