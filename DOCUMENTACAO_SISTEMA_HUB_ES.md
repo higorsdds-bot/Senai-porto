@@ -69,13 +69,15 @@ A solução adota uma arquitetura em camadas no padrão **Single Page Applicatio
 ### 2.1. Backend
 - **Ambiente:** Node.js (CommonJS: `require` / `module.exports`).
 - **Framework Web:** Express.js 5.x.
-- **Camada de Dados:** `mysql2/promise` com pool de conexões reutilizável e consultas parametrizadas contra injeção SQL (`?`).
-- **Autenticação:** JSON Web Token (`jsonwebtoken`) com expiração de 8 horas e renovação transparente via heartbeat.
+- **Camada de Dados:** `mysql2/promise` com pool de conexões escalado para alta concorrência (40 conexões, `maxIdle: 20`, keep-alive ativo) e consultas parametrizadas contra injeção SQL (`?`).
+- **Autenticação:** JSON Web Token (`jsonwebtoken`) com expiração de 8 horas, renovação via heartbeat e cache em memória (TTL 30s) para validação ultra-rápida sem saturação do banco de dados.
 - **Criptografia:** `bcryptjs` (custo computacional salt 12) e `crypto` (tokens de entropia alta SHA-256).
-- **Tratamento de Arquivos:** `multer` com limitação de tipos MIME e tamanho máximo de 20MB.
+- **Tratamento de Arquivos:** `multer` com limitação de tipos MIME e tamanho máximo de 20MB a 25MB.
 
 ### 2.2. Frontend
 - **Arquitetura:** Single Page Application (SPA) em **Vanilla JavaScript puro** (sem React, Vue ou Angular, garantindo máxima performance, leveza e independência de dependências externas).
+- **Gerenciamento de Sessão:** Isolamento por aba com prioridade em `sessionStorage` (fallback em `localStorage`), viabilizando a operação de múltiplas contas e perfis simultaneamente no mesmo navegador sem sobrescrita de sessão ao recarregar a página com F5.
+- **Resiliência a Concorrência:** Carregamento assíncrono defensivo com `Promise.allSettled` e fallbacks seguros para que a indisponibilidade de sub-recursos nunca trave os módulos principais.
 - **Roteador:** Roteamento por hash (`window.location.hash`), capturando alterações via evento `hashchange` no arquivo `assets/js/app.js`.
 - **Estilização:** Tailwind CSS (utilitários de design atômico) e folhas complementares (`assets/css/style.css` e `assets/css/tema-escuro.css`).
 - **Tema:** Alternância em tempo real entre modo Claro e modo Escuro com persistência local em `localStorage`.
@@ -113,7 +115,11 @@ A aplicação foi projetada para execução em nuvem moderna (PaaS/DBaaS) com su
   ```javascript
   ssl: { minVersion: 'TLSv1.2', rejectUnauthorized: true }
   ```
-- O pool mantém reconexão automática e listeners de keep-alive para evitar que conexões ociosas caiam.
+- **Dimensionamento para Alta Concorrência:**
+  - `connectionLimit: 40`: Suporta até 40 conexões simultâneas para atender requisições de múltiplas contas e abas ativas.
+  - `maxIdle: 20` e `idleTimeout: 60000`: Mantém conexões prontas sem sobrecarregar a infraestrutura em nuvem.
+  - `enableKeepAlive: true` e `keepAliveInitialDelay: 10000`: Dispara pacotes TCP keep-alive preventivos, evitando que firewalls ou o TiDB Cloud encerrem conexões ociosas prematuramente.
+- O pool mantém reconexão automática e tratamento graceful de erros transitórios.
 
 ### 3.3. Integração com o Serviço de E-mails (Brevo API via HTTPS)
 - Em hospedagens gratuitas (como o Render Free Tier), **portas SMTP tradicionais (25, 465 e 587) são bloqueadas** pelo firewall da infraestrutura.
@@ -155,7 +161,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 ### 4.1. Descrição dos Atores
 1. **ADMIN (Administrador Geral):** Possui autoridade máxima. Visualiza e manipula auditoria, logs de governança, aprova solicitações de novos colaboradores, reenvia links de ativação, cadastra setores e configurações centrais.
 2. **GESTOR (Gestor Operacional):** Responsável pela aprovação de requisições de compras, validação de cronogramas, visualização executiva do dashboard e indicadores de SLA.
-3. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário e visualiza comunicados.
+3. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário, agenda salas/laboratórios na Agenda Inteligente e visualiza comunicados. **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas) e o botão "Nova Solicitação" no Dashboard permanece oculto para este perfil.
 4. **ADMINISTRACAO (Setor Administrativo):** Responsável direto pelo almoxarifado, entradas/baixas de insumos, cotação de compras e gestão patrimonial de equipamentos.
 5. **LIMPEZA (Equipe de Higienização):** Focado exclusivamente na visualização e execução de checklists de limpeza, registro de higienização de ambientes e baixa de insumos de limpeza.
 6. **VISITANTE (Consulta Pública):** Perfil de leitura externa para consultar eventos da agenda pública e comunicados institucionais liberados para a comunidade.
@@ -174,6 +180,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 ### Módulo 2: Dashboard & Indicadores Operacionais
 - Consolida contadores dinâmicos de insumos abaixo do estoque mínimo, ocorrências pendentes, eventos agendados para hoje e status da equipe de limpeza.
 - Gráficos Chart.js demonstrando consumo de materiais por setor e tempo médio de atendimento (SLA) de ocorrências.
+- **Controle Visual de Acesso:** O botão "Nova Solicitação" e o card rápido de Compras são renderizados condicionalmente à permissão `compras.criar`. Para perfis não autorizados (como `OPERADOR`), o botão é removido e o card é desarmado visual e funcionalmente.
 
 ### Módulo 3: Gestão Documental
 - Repositório central de arquivos categorizados (Regulamentos, Editais, Modelos de Termos, Atas de Reunião).
@@ -186,6 +193,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 
 ### Módulo 5: Compras & Suprimentos
 - Ciclo de compras em 4 fases: **Solicitado** $\rightarrow$ **Em Cotação** $\rightarrow$ **Aprovado** $\rightarrow$ **Concluído**.
+- Permissões restritas aos perfis `ADMIN`, `GESTOR` e `ADMINISTRACAO` (`OPERADOR` não possui permissão de visualização ou criação de compras).
 - Registro de fornecedor, valor estimado, prazo de entrega e anexos de propostas.
 - Quando a compra é concluída, o almoxarifado pode integrar a entrada direta no módulo de insumos.
 
@@ -426,6 +434,8 @@ Todas as rotas estão montadas sob o prefixo `/api/v1/`.
 4. **Proteção Contra SQL Injection:** 100% das consultas ao banco de dados utilizam declarações preparadas (`prepared statements`) através do driver `mysql2`.
 5. **Prevenção contra XSS e CSRF:** Tokens JWT trafegam exclusivamente nos cabeçalhos `Authorization: Bearer`, neutralizando ataques comuns de CSRF baseados em cookies.
 6. **Integridade de Auditoria:** Registros da tabela `auditoria` são estritamente de escrita (`INSERT-only`). Nenhuma rota da aplicação permite alteração ou exclusão de registros auditados.
+7. **Isolamento de Sessão Multi-Aba (Anti-Contaminação):** Priorização de `sessionStorage` para segregação de tokens e perfis entre abas do mesmo navegador, prevenindo que recarregamentos com F5 sobrescrevam a conta ativa com outra sessão em testes simultâneos ou cenários multiusuário.
+8. **Resiliência a Concorrência & Cache de Autorização:** Cache em memória de 30 segundos (`_userAuthCache`) para autorizações em rotas de alto tráfego e dimensionamento do pool MySQL2 com 40 conexões e keep-alive preventivo, garantindo estabilidade e fluidez durante requisições simultâneas de múltiplas contas sem sobrecarga no TiDB Cloud.
 
 ---
 

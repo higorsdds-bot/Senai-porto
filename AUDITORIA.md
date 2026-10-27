@@ -265,6 +265,9 @@ if (req.user?.perfil === 'ADMIN') {
 | **TC-09** | Criação de Evento na Agenda | `OPERADOR` | Abrir modal, preencher formulário e salvar evento | Formulário funciona com operador logado autoatribuído | **PASS** |
 | **TC-10** | Acesso à Trilha de Auditoria | `GESTOR` | Acesso bloqueado por RBAC | Bloqueado no menu, na rota e na API (403) | **PASS** |
 | **TC-11** | Consulta ao Endpoint de Indicadores | Backend | Retornar arrays limpos de dados para o gráfico | Retorna tuplas com arrays de metadados do MySQL | **FAIL** *(Corrigível com P1)* |
+| **TC-12** | Isolamento de Sessão Multi-Aba (F5) | Multi-contas (`ADMIN`, `GESTOR`, `LIMPEZA`, `OPERADOR`) | Cada aba preserva a sua conta ativa após recarregar a tela (F5) | Sessão recuperada de `sessionStorage` sem sobrescrita cruzada | **PASS** |
+| **TC-13** | Concorrência e Carga de Requisições Simultâneas | 3 contas ativas simultaneamente em abas separadas | Navegação fluida, Agenda, Insumos e tabelas atualizando sem travamentos | Pool escalado (40 conexões), keep-alive e cache de auth (30s) absorvem o tráfego com estabilidade | **PASS** |
+| **TC-14** | Restrição de Compras no Dashboard para OPERADOR | `OPERADOR` | Dashboard sem botão "Nova Solicitação" e com card de compras desarmado | Botão omitido na renderização, card desarmado e rota `/compras` bloqueada na API com 403 | **PASS** |
 
 ---
 
@@ -294,6 +297,18 @@ if (req.user?.perfil === 'ADMIN') {
 8. `assets/js/modules/ocorrencias.js` e `assets/js/modules/auditoria.js`
    * **Alteração:** Substituir todas as chamadas nativas `alert(...)` e `confirm(...)` por `window.showToast(...)` e modais integrados.
    * **Objetivo:** Cumprir a regra de ouro do `AGENTS.md` (zero alertas nativos de navegador).
+9. `assets/js/api.js` e `assets/js/auth.js`
+   * **Alteração:** Priorização de `sessionStorage` para token e usuário, mantendo persistência simultânea em `localStorage`.
+   * **Objetivo:** Garantir isolamento rigoroso de sessão por aba no navegador, impedindo que múltiplos logins simultâneos se sobrescrevam no F5.
+10. `src/config/database.js` e `src/middleware/auth.js`
+   * **Alteração:** Expansão do pool MySQL2 para 40 conexões (`maxIdle: 20`, keep-alive ativo) e implementação de cache em memória de 30s (`_userAuthCache`) para autorizações.
+   * **Objetivo:** Eliminar gargalo de conexões ao TiDB Cloud e suprimir rajadas de queries repetitivas durante o uso simultâneo de múltiplas contas.
+11. `assets/js/modules/agenda.js`, `insumos.js` e `auditoria.js`
+   * **Alteração:** Substituição de `Promise.all` por `Promise.allSettled` e adição de `try/catch` defensivo nos salvamentos de modais.
+   * **Objetivo:** Garantir resiliência completa contra falhas ou latências em sub-recursos, impedindo o congelamento da Agenda Inteligente e do Almoxarifado.
+12. `assets/js/modules/dashboard.js`, `src/database/seed.js` e `src/database/migrate-remove-compras-operador.js`
+   * **Alteração:** Revogação das permissões `compras.visualizar` e `compras.criar` do perfil `OPERADOR`, ocultação condicional do botão "Nova Solicitação" no Dashboard e desarme visual do card de compras.
+   * **Objetivo:** Impedir abertura indevida de compras pelo operador e manter a interface visualmente higienizada e aderente ao RBAC.
 
 ---
 
@@ -306,9 +321,12 @@ if (req.user?.perfil === 'ADMIN') {
   - ✅ **Isolamento de Dados (Anti-IDOR):**
     - `LIMPEZA`: consultas a compras e materiais são restritas no backend às suas próprias solicitações (`WHERE c.solicitante_id = req.usuario.id`).
     - `ADMINISTRACAO`: visualiza apenas pedidos aprovados/entregues para dar entrada no estoque.
-    - `OPERADOR`: não tem acesso à gestão de usuários, senhas ou trilha de auditoria.
+    - `OPERADOR`: não tem acesso à gestão de usuários, senhas, compras ou trilha de auditoria.
     - `VISITANTE`: restrito estritamente a comunicados públicos e agenda de eventos públicos.
-  - ✅ **Sub-recursos Desacoplados:** Módulos de Limpeza, Comunicação, Equipamentos, Documentos e Dashboard agora utilizam tratamento de fallback (`.catch(() => [])`), permitindo que cada cargo opere suas telas sem interrupções por 403 em recursos secundários.
+  - ✅ **Isolamento de Sessão por Aba (Multi-Aba com F5):** Priorização de `sessionStorage` garante que o navegador execute abas simultâneas com contas distintas (`ADMIN`, `GESTOR`, `LIMPEZA`, etc.) sem que a recarga com F5 contamine ou sobrescreva a sessão ativa.
+  - ✅ **Resiliência a Concorrência e Alta Carga:** Pool com 40 conexões (`maxIdle: 20`, keep-alive ativo) e cache em memória (`_userAuthCache` com TTL 30s) absorvem disparos simultâneos sem sobrecarga no banco nem travamento de tabelas ou da Agenda.
+  - ✅ **Saneamento Visual do Dashboard (OPERADOR):** Botão "Nova Solicitação" e atalho de compras omitidos e desarmados para perfis sem a permissão `compras.criar`.
+  - ✅ **Sub-recursos Desacoplados:** Módulos de Limpeza, Comunicação, Equipamentos, Documentos, Agenda e Insumos utilizam tratamento defensivo (`Promise.allSettled` e `.catch(() => [])`), prevenindo interrupções por 403 ou indisponibilidade de sub-recursos.
   - ✅ **Roteamento Inteligente:** Perfis restritos são direcionados automaticamente para suas respectivas páginas iniciais sem falsos alarmes de acesso restrito.
   - ✅ **Conformidade UI:** Todos os `alert()` e `confirm()` nativos foram eliminados em favor de modais e toasts padronizados.
 

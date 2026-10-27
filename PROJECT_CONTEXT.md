@@ -33,13 +33,15 @@ A plataforma centraliza e orquestra 11 áreas operacionais cruciais:
 ### Backend
 - **Ambiente de Execução:** Node.js (CommonJS, `require` / `module.exports`).
 - **Framework Web:** Express.js 5.x.
-- **Banco de Dados:** TiDB Cloud (compatível com MySQL 8.0), via driver `mysql2/promise` com pool de conexões.
-- **Autenticação:** JSON Web Token (`jsonwebtoken`) com Bearer Token e expiração configurável (padrão: 8h).
+- **Banco de Dados:** TiDB Cloud (compatível com MySQL 8.0), via driver `mysql2/promise` com pool de conexões escalado para alta concorrência (40 conexões, `maxIdle: 20`, keep-alive ativo).
+- **Autenticação:** JSON Web Token (`jsonwebtoken`) com Bearer Token e expiração configurável (padrão: 8h), com cache em memória (TTL 30s) para validação ultra-rápida sem sobrecarga no banco.
 - **Segurança & Criptografia:** `bcryptjs` (salt 12 para hashing de senhas), CORS configurado com whitelist.
 - **Uploads:** `multer` (com armazenamento em disco `diskStorage` em `uploads/` e limite de 20MB a 25MB).
 
 ### Frontend
 - **Arquitetura:** Single Page Application (SPA) em **Vanilla JavaScript puro** modular.
+- **Gerenciamento de Sessão:** Isolamento por aba com prioridade em `sessionStorage` (fallback em `localStorage`), permitindo testes e operação simultânea de múltiplas contas sem sobrescrita de sessão no F5.
+- **Resiliência a Concorrência:** Carregamento assíncrono com `Promise.allSettled` e fallbacks defensivos para sub-recursos.
 - **Roteamento:** Hash Routing (`#dashboard`, `#documentos`, `#insumos`, `#compras`, `#agenda`, `#ocorrencias`, `#comunicacao`, `#indicadores`, `#limpeza`, `#equipamentos`, `#auditoria`).
 - **Estilização:** Tailwind CSS (via CDN) com paleta de tokens personalizada `hub-*` e CSS customizado para glassmorphism e animações.
 - **Modo Escuro / Claro:** Alternância via classe `.dark` no elemento `<html>`, controlada pelo `assets/js/tema.js` com persistência em `localStorage`.
@@ -96,7 +98,8 @@ Senai-porto/
     │   ├── seed.js                   # Seed idempotente de permissões, perfis, setores e admin
     │   ├── migrate.js                # Executor da migração do schema.sql
     │   ├── migrate-foto-ocorrencias.js # Migração incremental para coluna foto_url
-    │   └── migrate-auditoria-ocorrencias.js # Migração incremental para status PENDENTE e anexos
+    │   ├── migrate-auditoria-ocorrencias.js # Migração incremental para status PENDENTE e anexos
+    │   └── migrate-remove-compras-operador.js # Migração para revogação de compras do perfil OPERADOR
     └── routes/                       # Controladores / Routers Express montados sob /api/v1/
         ├── auth.js                   # Login, logout, /me, heartbeat, solicitar-cadastro
         ├── usuarios.js               # CRUD de usuários, alteração de status e senha
@@ -160,6 +163,10 @@ Senai-porto/
      });
      ```
    - O helper `registrarAuditoria` é resiliente: se falhar, ele apenas loga no console e **não derruba** a requisição do usuário.
+7. **Pool de Alta Concorrência e Keep-Alive:**
+   - O pool MySQL2 (`src/config/database.js`) é dimensionado com `connectionLimit: 40`, `maxIdle: 20`, `idleTimeout: 60000`, `enableKeepAlive: true` e `keepAliveInitialDelay: 10000`. Isso previne saturação e encerramento prematuro de conexões TCP com o TiDB Cloud mesmo durante picos com múltiplas contas e abas ativas simultaneamente.
+8. **Cache em Memória de Autenticação (`_userAuthCache`):**
+   - No middleware de autenticação (`src/middleware/auth.js`), os dados do usuário e perfil validados via JWT são armazenados em um cache em memória com TTL de 30 segundos. Isso elimina consultas redundantes de `SELECT ... FROM usuarios` a cada micro-requisição e disparo de heartbeat, acelerando a resposta da API e protegendo o banco contra sobrecargas. A função exportada `clearUserAuthCache(userId)` invalida imediatamente o cache quando o status ou perfil do usuário é modificado.
 
 ### 4.2 Padrão Frontend (Vanilla JS SPA)
 1. **Estrutura de Módulo:** Todo módulo em `assets/js/modules/` deve ser registrado no objeto global `window` com o sufixo `Module` (ex.: `window.DocumentosModule`, `window.InsumosModule`, `window.AuditoriaModule`).
@@ -183,6 +190,12 @@ Senai-porto/
    - NUNCA salve status de leitura de avisos, badges ou notificações em chaves globais estáticas no `localStorage`.
    - Utilize sempre `window.Auth.getUserStorageKey(prefix)` para gerar chaves com escopo do perfil e do usuário logado: `${prefix}_${perfil}_${id}`.
    - Isso garante que a alternância entre contas e perfis diferentes em uma mesma máquina preserve o status de "não lido" e as notificações para cada perfil autorizado.
+7. **Isolamento de Sessão por Aba (`sessionStorage` > `localStorage`):**
+   - As camadas `assets/js/api.js` e `assets/js/auth.js` priorizam `sessionStorage` na recuperação do token e dos dados do usuário, com fallback para `localStorage`.
+   - Ao fazer login, a sessão é gravada em ambos os storages.
+   - Isso garante que abas distintas abertas simultaneamente no mesmo navegador possam manter sessões ativas com contas diferentes (ex: Aba 1 = `ADMIN`, Aba 2 = `GESTOR`, Aba 3 = `LIMPEZA`) sem que a última conta sobrescreva as demais ao recarregar com F5.
+8. **Resiliência a Concorrência com `Promise.allSettled`:**
+   - Em módulos que agregam múltiplos recursos ou sub-recursos auxiliares (ex: `assets/js/modules/agenda.js`, `assets/js/modules/insumos.js`, `assets/js/modules/auditoria.js`), utilize `Promise.allSettled` com fallbacks padrão (`[]` ou valores default). Isso assegura que a indisponibilidade ou latência de um recurso secundário não paralise a exibição da tela principal nem bloqueie modais operacionais.
 
 ---
 
@@ -194,7 +207,7 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 | :--- | :--- | :--- |
 | **ADMIN / ADMINISTRADOR** | Acesso irrestrito a todas as rotas e ao módulo exclusivo de **Auditoria & Governança**. | Bypass total: tem todas as permissões. |
 | **GESTOR** | Gestão operacional de compras, ocorrências, limpeza, insumos, documentos, agenda e setores. | Possui conjunto amplo de permissões operacionais e de aprovação. |
-| **OPERADOR** | Visualização e movimentações rotineiras, abertura de ocorrências, solicitações e agendamento de eventos na **Agenda Inteligente** (`eventos.criar`). | Acesso padrão a módulos básicos de execução e criação de eventos. |
+| **OPERADOR** | Visualização e movimentações rotineiras de insumos, abertura de ocorrências e agendamento de eventos na **Agenda Inteligente** (`eventos.criar`). **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas no banco). No **Dashboard**, o botão "Nova Solicitação" e o atalho de compras permanecem estritamente ocultos e desarmados. | Acesso padrão a módulos operacionais e de eventos; compras e dashboard executivo desarmados. |
 | **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra, baixa de insumos e pré-cadastro de novos colaboradores (sem atribuição de setor/cargo). | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS` (inclui `usuarios.pre_cadastrar`). |
 | **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
 | **VISITANTE** | Perfil de prioridade **baixíssima**, destinado a visitantes ou convidados temporários do espaço. | Acesso estritamente restrito a `comunicados.visualizar` e `eventos.visualizar`. Sem permissão de escrita em nenhum módulo. |

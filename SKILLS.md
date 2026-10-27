@@ -103,6 +103,17 @@ Criar ou modificar telas e módulos da aplicação SPA em `assets/js/modules/` r
      ```
 4. **Incluir a Tag `<script>` em `index.html`:**
    - Adicione o script na seção de módulos antes de `assets/js/app.js`.
+5. **Resiliência a Concorrência com `Promise.allSettled` e Modais Defensivos:**
+   - Quando carregar recursos principais e sub-recursos agregados (ex: itens + setores + usuários), use `Promise.allSettled`:
+     ```javascript
+     const [resPrincipal, resSetores] = await Promise.allSettled([
+       window.API.getItens(),
+       window.API.getSetores()
+     ]);
+     this.items = resPrincipal.status === 'fulfilled' ? (resPrincipal.value || []) : [];
+     this.setores = resSetores.status === 'fulfilled' ? (resSetores.value || []) : [];
+     ```
+   - Em operações de envio de formulários e modais (ex: criação de agendamento, ajuste de estoque), envolva sempre a chamada à API em bloco `try/catch` defensivo, restaurando o estado do botão/spinner e emitindo toast de erro amigável em caso de exceção.
 
 ---
 
@@ -292,6 +303,9 @@ Garantir o ciclo de vida completo de acesso e segurança dos usuários.
    - **Consumo de APIs:** Visitantes consomem exclusivamente as rotas públicas (`/api/v1/publico/comunicados` e `/api/v1/publico/eventos`) sem token.
    - **Prevenção de Loop 401:** Se o visitante receber resposta HTTP 401, o `api.js` não executa `forcarLogout()`.
    - **Acesso à Autenticação:** A topbar exibe o botão **"Fazer Login"** para quem desejar se autenticar, e o modal de login conta com a opção **"Continuar como Visitante"**.
+8. **Isolamento de Sessão por Aba (`sessionStorage`) e Cache de Autenticação:**
+   - **Multi-Aba com F5:** O token JWT e os dados do usuário são recuperados prioritariamente de `sessionStorage` (com fallback para `localStorage`), gravados simultaneamente no login. Isso garante que testes ou operações com múltiplas abas abertas no mesmo navegador mantenham contas diferentes isoladas sem sobrescrita ao atualizar a tela com F5.
+   - **Invalidação de Cache de Auth:** O middleware `auth.js` armazena o usuário autenticado em `_userAuthCache` por 30s. Ao alterar o perfil, status ou permissões de um usuário em rotas administrativas, invoque `clearUserAuthCache(userId)` para invalidar imediatamente o cache em memória.
 
 ---
 
