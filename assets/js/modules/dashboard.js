@@ -424,7 +424,7 @@ window.DashboardModule = {
       this._initCharts(setores, compras, ocorrencias, documentos);
 
       // Evento de exportar relatório rápido
-      container.querySelector('#btn-export-kpis').addEventListener('click', () => {
+      container.querySelector('#btn-export-kpis')?.addEventListener('click', () => {
         window.UI.toast({
           title: 'Relatório Executivo',
           message: 'O relatório consolidado de indicadores foi gerado com sucesso.',

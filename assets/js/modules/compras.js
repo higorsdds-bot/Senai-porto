@@ -416,12 +416,24 @@ window.ComprasModule = {
       maxWidth: 'max-w-sm',
       onSave: async () => {
         const checked = document.querySelector('input[name="quick_status"]:checked');
-        if (!checked) return;
-        // TODO: conectar endpoint PUT /compras/:id
-        await window.API.updateStatusCompra(id, checked.value);
-        window.UI.toast({ title: 'Status Atualizado', message: `Pedido agora está ${checked.value}.` });
-        await this.render(container);
-        return true;
+        if (!checked) {
+          window.UI.toast({ title: 'Atenção', message: 'Selecione um status para continuar.', type: 'warning' });
+          return false;
+        }
+        try {
+          await window.API.updateStatusCompra(id, checked.value);
+          window.UI.toast({ title: 'Status Atualizado', message: `Pedido #${id} agora está com status "${checked.value}".`, type: 'success' });
+          await this.render(container);
+          return true;
+        } catch (err) {
+          console.error('Erro ao atualizar status da compra:', err);
+          window.UI.toast({
+            title: 'Erro ao Atualizar',
+            message: err.message || 'Não foi possível alterar o status da compra.',
+            type: 'error'
+          });
+          return false;
+        }
       }
     });
   },
