@@ -295,14 +295,14 @@ Garantir o ciclo de vida completo de acesso e segurança dos usuários.
    - Quando um perfil abre as notificações, a marcação de leitura é salva estritamente para aquele usuário/perfil. Ao alternar para outro usuário, o novo colaborador visualiza todas as notificações pendentes dele.
    - Notificações e avisos urgentes só são processados para perfis autorizados (`comunicados.visualizar` ou `isAdmin()`).
    - Múltiplos comunicados de alta prioridade são exibidos conjuntamente via `window.UI.visualizarComunicadosAlta()`, removendo o banner apenas para o perfil que interagiu.
-7. **Modo Visitante e Perfil VISITANTE (Bloqueio Rígido e Acesso Público):**
-   - **Identificação Unificada:** `window.Auth.isVisitante()` reconhece tanto usuários anônimos sem login (`!this.estaLogado()`) quanto colaboradores autenticados cujo perfil seja `VISITANTE`.
+7. **Modo Visitante Público (Acesso Livre sem Cadastro):**
+   - **Identificação Unificada:** `window.Auth.isVisitante()` reconhece qualquer usuário que acesse a aplicação sem login (`!this.estaLogado()`). O cadastro de usuários com perfil `VISITANTE` foi formalmente dispensado no sistema, visto que visitantes não possuem permissões restritas e já acessam a plataforma livremente sem precisar de conta.
    - **Rotas Permitidas:** Apenas **Central de Comunicação** (`#comunicacao`) e **Agenda Inteligente** (`#agenda`).
    - **Bloqueio no Roteador:** O roteador `AppRouter` executa `this.atualizarVisibilidadeRotas()` na inicialização (`init()`) e em cada transição. No início de `handleRoute()`, qualquer tentativa de acessar outra rota dispara um aviso de acesso restrito e redireciona imediatamente para `#comunicacao`.
    - **Ocultação de Menus:** Links para os outros 9 módulos e grupos vazios da navegação recebem a classe `.hidden`.
    - **Consumo de APIs:** Visitantes consomem exclusivamente as rotas públicas (`/api/v1/publico/comunicados` e `/api/v1/publico/eventos`) sem token.
    - **Prevenção de Loop 401:** Se o visitante receber resposta HTTP 401, o `api.js` não executa `forcarLogout()`.
-   - **Acesso à Autenticação:** A topbar exibe o botão **"Fazer Login"** para quem desejar se autenticar, e o modal de login conta com a opção **"Continuar como Visitante"**.
+   - **Acesso à Autenticação:** A topbar exibe o botão **"Fazer Login"** para colaboradores que desejam se autenticar, e o modal de login conta com a opção **"Continuar como Visitante"**.
 8. **Isolamento de Sessão por Aba (`sessionStorage`) e Cache de Autenticação:**
    - **Multi-Aba com F5:** O token JWT e os dados do usuário são recuperados prioritariamente de `sessionStorage` (com fallback para `localStorage`), gravados simultaneamente no login. Isso garante que testes ou operações com múltiplas abas abertas no mesmo navegador mantenham contas diferentes isoladas sem sobrescrita ao atualizar a tela com F5.
    - **Invalidação de Cache de Auth:** O middleware `auth.js` armazena o usuário autenticado em `_userAuthCache` por 30s. Ao alterar o perfil, status ou permissões de um usuário em rotas administrativas, invoque `clearUserAuthCache(userId)` para invalidar imediatamente o cache em memória.

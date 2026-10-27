@@ -197,7 +197,6 @@ const AuditoriaModule = {
                   <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
                   <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
                   <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
-                  <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
                   <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
                 </select>
               </div>
@@ -275,7 +274,6 @@ const AuditoriaModule = {
                   <option value="GESTOR">GESTOR (Gestão Operacional)</option>
                   <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
                   <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-                  <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
                   <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
                 </select>
               </div>
@@ -356,7 +354,6 @@ const AuditoriaModule = {
                   <option value="GESTOR">GESTOR (Gestão Operacional)</option>
                   <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
                   <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-                  <option value="VISITANTE">VISITANTE (Consulta Pública / Baixíssima Prioridade)</option>
                   <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
                 </select>
               </div>

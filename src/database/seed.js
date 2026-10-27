@@ -112,10 +112,6 @@ const PERFIL_PERMISSOES = {
     'comunicados.visualizar',
     'limpeza.visualizar', 'limpeza.editar',
     'compras.visualizar_proprias', 'compras.criar'
-  ],
-  VISITANTE: [
-    'comunicados.visualizar',
-    'eventos.visualizar'
   ]
 };
 

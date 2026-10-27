@@ -309,6 +309,9 @@ if (req.user?.perfil === 'ADMIN') {
 12. `assets/js/modules/dashboard.js`, `src/database/seed.js` e `src/database/migrate-remove-compras-operador.js`
    * **Alteração:** Revogação das permissões `compras.visualizar` e `compras.criar` do perfil `OPERADOR`, ocultação condicional do botão "Nova Solicitação" no Dashboard e desarme visual do card de compras.
    * **Objetivo:** Impedir abertura indevida de compras pelo operador e manter a interface visualmente higienizada e aderente ao RBAC.
+13. `assets/js/modules/auditoria.js`, `usuarios.js`, `src/routes/auditoria.js`, `usuarios.js` e `seed.js`
+   * **Alteração:** Remoção do perfil `VISITANTE` dos modais de aprovação, cadastro direto e edição de usuários, exclusão da validação de perfis na API e criação do script `migrate-dispensar-cadastro-visitante.js`.
+   * **Objetivo:** Dispensar a criação de contas de visitantes no banco de dados, visto que visitantes acessam a Agenda e os Comunicados livremente pelo modo público sem necessidade de cadastro.
 
 ---
 
@@ -322,7 +325,8 @@ if (req.user?.perfil === 'ADMIN') {
     - `LIMPEZA`: consultas a compras e materiais são restritas no backend às suas próprias solicitações (`WHERE c.solicitante_id = req.usuario.id`).
     - `ADMINISTRACAO`: visualiza apenas pedidos aprovados/entregues para dar entrada no estoque.
     - `OPERADOR`: não tem acesso à gestão de usuários, senhas, compras ou trilha de auditoria.
-    - `VISITANTE`: restrito estritamente a comunicados públicos e agenda de eventos públicos.
+    - `VISITANTE (Modo Público)`: restrito estritamente a comunicados públicos e agenda de eventos públicos, sem necessidade nem suporte a cadastro de conta no banco de dados.
+  - ✅ **Dispensa de Cadastro de Visitante:** O perfil `VISITANTE` foi removido dos fluxos de criação e aprovação de contas; qualquer visitante acessa a Agenda e os Avisos livremente pela rota pública sem precisar de credenciais.
   - ✅ **Isolamento de Sessão por Aba (Multi-Aba com F5):** Priorização de `sessionStorage` garante que o navegador execute abas simultâneas com contas distintas (`ADMIN`, `GESTOR`, `LIMPEZA`, etc.) sem que a recarga com F5 contamine ou sobrescreva a sessão ativa.
   - ✅ **Resiliência a Concorrência e Alta Carga:** Pool com 40 conexões (`maxIdle: 20`, keep-alive ativo) e cache em memória (`_userAuthCache` com TTL 30s) absorvem disparos simultâneos sem sobrecarga no banco nem travamento de tabelas ou da Agenda.
   - ✅ **Saneamento Visual do Dashboard (OPERADOR):** Botão "Nova Solicitação" e atalho de compras omitidos e desarmados para perfis sem a permissão `compras.criar`.

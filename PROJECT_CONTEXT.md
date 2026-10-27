@@ -99,7 +99,8 @@ Senai-porto/
     │   ├── migrate.js                # Executor da migração do schema.sql
     │   ├── migrate-foto-ocorrencias.js # Migração incremental para coluna foto_url
     │   ├── migrate-auditoria-ocorrencias.js # Migração incremental para status PENDENTE e anexos
-    │   └── migrate-remove-compras-operador.js # Migração para revogação de compras do perfil OPERADOR
+    │   ├── migrate-remove-compras-operador.js # Migração para revogação de compras do perfil OPERADOR
+    │   └── migrate-dispensar-cadastro-visitante.js # Migração para dispensar cadastro de perfil VISITANTE
     └── routes/                       # Controladores / Routers Express montados sob /api/v1/
         ├── auth.js                   # Login, logout, /me, heartbeat, solicitar-cadastro
         ├── usuarios.js               # CRUD de usuários, alteração de status e senha
@@ -210,12 +211,12 @@ O sistema possui controle de acesso por perfis, armazenado nas tabelas `permisso
 | **OPERADOR** | Visualização e movimentações rotineiras de insumos, abertura de ocorrências e agendamento de eventos na **Agenda Inteligente** (`eventos.criar`). **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas no banco). No **Dashboard**, o botão "Nova Solicitação" e o atalho de compras permanecem estritamente ocultos e desarmados. | Acesso padrão a módulos operacionais e de eventos; compras e dashboard executivo desarmados. |
 | **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra, baixa de insumos e pré-cadastro de novos colaboradores (sem atribuição de setor/cargo). | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS` (inclui `usuarios.pre_cadastrar`). |
 | **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
-| **VISITANTE** | Perfil de prioridade **baixíssima**, destinado a visitantes ou convidados temporários do espaço. | Acesso estritamente restrito a `comunicados.visualizar` e `eventos.visualizar`. Sem permissão de escrita em nenhum módulo. |
+| **VISITANTE (Modo Público)** | Modo de acesso público sem necessidade de cadastro ou conta no banco de dados. Qualquer pessoa acessa livremente a Agenda e os Comunicados sem login. **Cadastro Dispensado:** A opção de cadastrar usuários com o perfil `VISITANTE` foi formalmente descontinuada no sistema, já que o visitante não tem permissões restritas e a plataforma já disponibiliza as informações essenciais livremente sem cadastro. | Acesso livre exclusivamente a `#comunicacao` e `#agenda`. Não requer login nem criação de conta. |
 
-### Regras do Perfil VISITANTE e Modo Público
-- **Quem é considerado Visitante:** Usuários acessando o SPA sem efetuar login (modo público) OU usuários autenticados cujo perfil no banco de dados seja `VISITANTE`.
-- **Módulos Permitidos:** Estritamente **Central de Comunicação** (`#comunicacao`) e **Agenda Inteligente** (`#agenda`).
-- **Bloqueio Rígido no Roteador:** O `handleRoute()` em `assets/js/app.js` intercepta imediatamente qualquer tentativa de navegação para as outras 9 rotas (`#dashboard`, `#compras`, `#documentos`, etc.), emitindo um toast explicativo e redirecionando para `#comunicacao`.
+### Regras do Modo Público / Visitante
+- **Quem é considerado Visitante:** Qualquer pessoa acessando o SPA sem efetuar login (`!estaLogado()`). O cadastro de usuários com o perfil `VISITANTE` foi formalmente dispensado no sistema, eliminando a criação de contas desnecessárias no banco de dados.
+- **Módulos Permitidos:** Estritamente **Central de Comunicação** (`#comunicacao`) e **Agenda Inteligente** (`#agenda`), consumindo rotas públicas em `/api/v1/publico/*`.
+- **Bloqueio Rígido no Roteador:** O `handleRoute()` em `assets/js/app.js` intercepta imediatamente qualquer tentativa de navegação anônima para as outras 9 rotas (`#dashboard`, `#compras`, `#documentos`, etc.), emitindo um toast explicativo e redirecionando para `#comunicacao`.
 - **Visibilidade de Menus:** A sidebar e o menu mobile ocultam automaticamente todos os links para os quais o visitante não possui permissão, exibindo apenas Comunicação e Agenda.
 
 ### Fluxo de Cadastro, E-mails e Ativação de Contas

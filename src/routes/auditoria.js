@@ -211,7 +211,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
-    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA', 'VISITANTE'];
+    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
     const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : 'OPERADOR';
 
     const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
@@ -335,7 +335,7 @@ router.put('/solicitacoes/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Solicitação não encontrada.' });
     }
 
-    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA', 'VISITANTE'];
+    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
     const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : user[0].perfil;
 
     const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')

@@ -526,7 +526,6 @@ window.UsuariosModule = {
               <option value="GESTOR">GESTOR (Gestão Operacional)</option>
               <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
               <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-              <option value="VISITANTE">VISITANTE (Consulta Pública)</option>
               <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
             </select>
           </div>

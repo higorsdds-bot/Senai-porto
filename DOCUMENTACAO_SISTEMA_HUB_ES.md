@@ -164,7 +164,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 3. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário, agenda salas/laboratórios na Agenda Inteligente e visualiza comunicados. **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas) e o botão "Nova Solicitação" no Dashboard permanece oculto para este perfil.
 4. **ADMINISTRACAO (Setor Administrativo):** Responsável direto pelo almoxarifado, entradas/baixas de insumos, cotação de compras e gestão patrimonial de equipamentos.
 5. **LIMPEZA (Equipe de Higienização):** Focado exclusivamente na visualização e execução de checklists de limpeza, registro de higienização de ambientes e baixa de insumos de limpeza.
-6. **VISITANTE (Consulta Pública):** Perfil de leitura externa para consultar eventos da agenda pública e comunicados institucionais liberados para a comunidade.
+6. **VISITANTE (Modo Público / Consulta Aberta):** Modo de acesso livre destinado à comunidade e visitantes do espaço. Permite consultar livremente os eventos da agenda pública e comunicados institucionais sem necessidade de login ou criação de conta no banco de dados. A funcionalidade de cadastrar novos usuários com o perfil `VISITANTE` foi formalmente dispensada do sistema.
 
 ---
 
