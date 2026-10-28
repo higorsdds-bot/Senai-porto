@@ -360,8 +360,80 @@ textarea:focus {
   }
 }
 
-/* Efeito de destaque no item ativo da Sidebar */
-.nav-link.active-route {
+/* ==========================================================================
+   TOP NAVBAR (PADRÃO DESKTOP & MOBILE COM DESTAQUE INFERIOR VERMELHO)
+   ========================================================================== */
+.hub-top-navbar {
+  background-color: #0a192f;
+  border-bottom: 2.5px solid #dc2626; /* Linha de destaque vermelha marcante */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Links de Navegação Desktop (Estilo Pílula Horizontal) */
+.desktop-nav-link {
+  color: #cbd5e1;
+  background: transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.desktop-nav-link:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-nav-link.active-route {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+/* Links de Navegação no Menu Lateral Hambúrguer (Mobile) */
+.drawer-nav-link {
+  color: #475569;
+  transition: all 0.18s ease;
+}
+
+.drawer-nav-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.drawer-nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25) !important;
+}
+
+.dark .drawer-nav-link {
+  color: #94a3b8;
+}
+
+.dark .drawer-nav-link:hover {
+  background-color: rgba(30, 41, 59, 0.6);
+  color: #f8fafc;
+}
+
+.dark .drawer-nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3) !important;
+}
+
+/* Ocultar barra de rolagem horizontal mantendo fluidez de scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Efeito de destaque legado para rotas ativas */
+.nav-link:not(.desktop-nav-link).active-route {
   background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(0, 102, 204, 0.28) !important;
@@ -377,3 +449,4 @@ textarea:focus {
 .dark .hub-table-row:hover {
   background-color: rgba(30, 41, 59, 0.5);
 }
+

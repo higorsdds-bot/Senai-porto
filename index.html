@@ -62,39 +62,268 @@
 </head>
 
 <body
-  class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+  class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
 
-  <div id="app-conteudo" class="flex-1 flex overflow-hidden">
+  <div id="app-conteudo" class="flex-1 flex flex-col min-h-screen">
     <!-- ================================================================= -->
-    <!-- SIDEBAR FIXA (DESKTOP) -->
+    <!-- TOP NAVBAR (PADRÃO DESKTOP & MOBILE COM DESTAQUE INFERIOR VERMELHO) -->
     <!-- ================================================================= -->
-    <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200/90 shrink-0 z-30 select-none">
-      <!-- Marca HUB ES+ -->
-      <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
-        <div
-          class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-sky-500 text-white flex items-center justify-center font-extrabold text-base shadow-md shadow-blue-600/20">
-          ES+
+    <header class="hub-top-navbar sticky top-0 z-30 select-none shadow-md shadow-slate-950/20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        
+        <!-- Bloco Esquerdo: Hambúrguer Mobile + Marca HUB ES+ -->
+        <div class="flex items-center gap-3 shrink-0">
+          <!-- Botão Hambúrguer Lateral (Exclusivo Celular / Tablet) -->
+          <button id="btn-open-mobile-menu"
+            class="lg:hidden p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            aria-label="Abrir Menu Lateral" title="Abrir Menu Lateral">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+
+          <!-- Marca Corporativa HUB ES+ -->
+          <a href="#dashboard" class="flex items-center gap-2.5 group cursor-pointer focus:outline-none">
+            <div
+              class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center font-black text-xs shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              ES+
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm font-black text-white tracking-tight leading-none group-hover:text-sky-300 transition-colors">
+                HUB <span class="text-sky-400">ES+</span>
+              </span>
+              <span class="text-[9px] text-slate-400 font-semibold tracking-wider uppercase leading-tight mt-0.5">
+                Gestão Administrativa
+              </span>
+            </div>
+          </a>
         </div>
-        <div>
-          <span class="text-sm font-extrabold text-slate-900 tracking-tight block">HUB ES+</span>
-          <span class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase block">Gestão
-            Administrativa</span>
+
+        <!-- Bloco Central: Links de Navegação em Pílulas Horizontais (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <a href="#dashboard" data-nav-id="nav-dashboard"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Início</span>
+          </a>
+          <a href="#compras" data-nav-id="nav-compras"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span data-module-label="compras">Compras</span>
+          </a>
+          <a href="#insumos" data-nav-id="nav-insumos"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span data-module-label="insumos">Insumos</span>
+          </a>
+          <a href="#ocorrencias" data-nav-id="nav-ocorrencias"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Ocorrências</span>
+          </a>
+          <a href="#agenda" data-nav-id="nav-agenda"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Agenda</span>
+          </a>
+          <a href="#limpeza" data-nav-id="nav-limpeza"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Limpeza</span>
+          </a>
+          <a href="#documentos" data-nav-id="nav-documentos"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Documentos</span>
+          </a>
+          <a href="#equipamentos" data-nav-id="nav-equipamentos"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Equipamentos</span>
+          </a>
+          <a href="#comunicacao" data-nav-id="nav-comunicacao"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Comunicação</span>
+          </a>
+          <a href="#indicadores" data-nav-id="nav-indicadores"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span>Indicadores</span>
+          </a>
+          <a href="#usuarios" data-nav-id="nav-usuarios"
+            class="nav-link desktop-nav-link px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
+            <span data-module-label="usuarios">Colaboradores</span>
+          </a>
+          <a href="#auditoria" data-nav-id="nav-auditoria" data-admin-only="true"
+            class="nav-link desktop-nav-link admin-only px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-purple-300 hover:text-white flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>Auditoria</span>
+          </a>
+        </nav>
+
+        <!-- Bloco Direito: Busca, Notificações, Tema e Perfil do Usuário com Dropdown (Higor ⌵) -->
+        <div class="flex items-center gap-2 sm:gap-3 topbar-right shrink-0">
+          <!-- Busca Global Rápida (Desktop) -->
+          <div class="relative hidden xl:block w-48 2xl:w-60">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="input-global-search" type="text" placeholder="Buscar no HUB..."
+              class="w-full pl-8 pr-3 py-1.5 text-xs rounded-full bg-white/10 text-white placeholder:text-slate-400 border border-white/10 focus:border-sky-400 focus:bg-white/15 focus:outline-none transition-all" />
+          </div>
+
+          <!-- Botão de Notificações / Comunicados -->
+          <button id="btn-topbar-notifications"
+            class="relative p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer"
+            aria-label="Comunicados & Avisos" title="Comunicados & Avisos">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span id="badge-topbar-notifications"
+              class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-[#0a192f] status-ping hidden"></span>
+          </button>
+
+          <!-- Botão de Tema (Claro / Escuro) -->
+          <button id="btn-tema" type="button"
+            class="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer"
+            title="Alternar tema claro/escuro" aria-label="Alternar tema">
+            <i data-lucide="moon" class="w-4 h-4 icone-lua"></i>
+            <i data-lucide="sun" class="w-4 h-4 icone-sol hidden"></i>
+          </button>
+
+          <!-- Perfil do Usuário com Dropdown no Formato: Nome ⌵ -->
+          <div class="relative" id="user-menu-container">
+            <button id="btn-user-dropdown" type="button"
+              class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-white/10 text-white transition-all focus:outline-none cursor-pointer">
+              <div
+                class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white/20 shrink-0"
+                data-usuario-iniciais>
+                HB
+              </div>
+              <span data-usuario-primeiro-nome class="text-xs font-semibold text-white tracking-tight hidden sm:inline-block">
+                Higor
+              </span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-300 transition-transform duration-200" id="user-chevron"></i>
+            </button>
+
+            <!-- Dropdown Menu do Usuário -->
+            <div id="user-dropdown-menu"
+              class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-slate-800 py-2 z-50 transition-all select-none">
+              
+              <!-- Cabeçalho do Dropdown -->
+              <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                  <div
+                    class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center shrink-0"
+                    data-usuario-iniciais>
+                    HB
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate leading-tight" data-usuario-nome>
+                      Higor Silva
+                    </p>
+                    <p class="text-[11px] text-slate-400 font-medium truncate mt-0.5" data-usuario-email>
+                      higor@secult.es.gov.br
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-2.5">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60"
+                    data-usuario-perfil>
+                    Administrador Geral
+                  </span>
+                </div>
+              </div>
+
+              <!-- Links rápidos no Dropdown -->
+              <div class="py-1 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <a href="#comunicacao" class="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                  <i data-lucide="megaphone" class="w-4 h-4 text-slate-400"></i>
+                  <span>Central de Comunicados</span>
+                </a>
+                <a href="#agenda" class="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                  <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                  <span>Minha Agenda</span>
+                </a>
+                <button id="btn-dropdown-tema" type="button"
+                  class="w-full flex items-center justify-between px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer">
+                  <span class="flex items-center gap-2.5">
+                    <i data-lucide="moon" class="w-4 h-4 text-slate-400"></i>
+                    <span>Modo Noturno</span>
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase" id="label-tema-status">Claro</span>
+                </button>
+              </div>
+
+              <!-- Logout -->
+              <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+                <button id="btn-logout" onclick="Auth.logout()"
+                  class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-left cursor-pointer">
+                  <i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i>
+                  <span>Sair da Plataforma</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ================================================================= -->
+    <!-- DRAWER LATERAL (HAMBÚRGUER MOBILE / TABLET) -->
+    <!-- ================================================================= -->
+    <div id="mobile-backdrop"
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden transition-opacity duration-300 lg:hidden"></div>
+    
+    <div id="mobile-drawer"
+      class="fixed inset-y-0 left-0 w-72 sm:w-80 bg-white dark:bg-[#0b1320] shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col border-r border-slate-200 dark:border-slate-800 select-none">
+      
+      <!-- Topo do Drawer com Marca e Fechar -->
+      <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center font-extrabold text-xs shadow-md shadow-blue-500/20">
+            ES+
+          </div>
+          <div>
+            <span class="font-black text-sm text-slate-900 dark:text-slate-100">HUB ES+</span>
+            <span class="text-[9px] text-slate-400 font-semibold block uppercase">Gestão Administrativa</span>
+          </div>
+        </div>
+        <button id="btn-close-mobile-menu"
+          class="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+          aria-label="Fechar Menu">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Card do Usuário Logado no Drawer -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800/60 bg-gradient-to-b from-slate-50/40 to-transparent dark:from-slate-900/30">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-sm flex items-center justify-center shadow-sm"
+            data-usuario-iniciais>
+            HB
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="block text-xs font-bold text-slate-900 dark:text-slate-100 truncate" data-usuario-nome>
+              Usuário
+            </span>
+            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60"
+              data-usuario-perfil>
+              Perfil
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- Links de Navegação -->
-      <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-6 text-xs font-semibold">
+      <!-- Busca Rápida Mobile -->
+      <div class="p-4 pb-2">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input id="input-drawer-search" type="text" placeholder="Buscar módulo ou termo..."
+            class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-400" />
+        </div>
+      </div>
+
+      <!-- Links de Navegação Agrupados no Drawer -->
+      <nav class="flex-1 overflow-y-auto px-4 py-2 space-y-5 text-xs font-semibold">
         <!-- Grupo 1: Geral -->
         <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Visão Executiva</span>
-          <div class="mt-2 space-y-1">
+          <div class="mt-1.5 space-y-1">
             <a href="#dashboard" data-nav-id="nav-dashboard"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
               <span>Dashboard Executivo</span>
             </a>
             <a href="#indicadores" data-nav-id="nav-indicadores"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
               <span>Indicadores & BI</span>
             </a>
@@ -104,24 +333,24 @@
         <!-- Grupo 2: Operações e Demandas -->
         <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Operações & Demandas</span>
-          <div class="mt-2 space-y-1">
+          <div class="mt-1.5 space-y-1">
             <a href="#compras" data-nav-id="nav-compras"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="shopping-bag" class="w-4 h-4"></i>
               <span data-module-label="compras">Compras</span>
             </a>
             <a href="#insumos" data-nav-id="nav-insumos"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="boxes" class="w-4 h-4"></i>
               <span data-module-label="insumos">Controle de Insumos</span>
             </a>
             <a href="#ocorrencias" data-nav-id="nav-ocorrencias"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="alert-circle" class="w-4 h-4"></i>
               <span>Ocorrências Técnicas</span>
             </a>
             <a href="#limpeza" data-nav-id="nav-limpeza"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="sparkles" class="w-4 h-4"></i>
               <span>Controle de Limpeza</span>
             </a>
@@ -131,34 +360,34 @@
         <!-- Grupo 3: Infraestrutura e Governança -->
         <div data-nav-group>
           <span class="px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Infra & Governança</span>
-          <div class="mt-2 space-y-1">
+          <div class="mt-1.5 space-y-1">
             <a href="#documentos" data-nav-id="nav-documentos"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="folder-git-2" class="w-4 h-4"></i>
               <span>Gestão Documental</span>
             </a>
             <a href="#agenda" data-nav-id="nav-agenda"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="calendar" class="w-4 h-4"></i>
               <span>Agenda Inteligente</span>
             </a>
             <a href="#equipamentos" data-nav-id="nav-equipamentos"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="monitor" class="w-4 h-4"></i>
               <span>Equipamentos (Patrimônio)</span>
             </a>
             <a href="#comunicacao" data-nav-id="nav-comunicacao"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="megaphone" class="w-4 h-4"></i>
               <span>Central de Comunicação</span>
             </a>
             <a href="#usuarios" data-nav-id="nav-usuarios"
-              class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
+              class="nav-link drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all">
               <i data-lucide="user-plus" class="w-4 h-4"></i>
               <span data-module-label="usuarios">Cadastrar Colaborador</span>
             </a>
             <a href="#auditoria" data-nav-id="nav-auditoria" data-admin-only="true"
-              class="nav-link admin-only flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-purple-700 bg-purple-50/50 hover:bg-purple-100 hover:text-purple-900 border border-purple-200/60 dark:text-purple-300 dark:bg-purple-950/30 dark:border-purple-800/40 dark:hover:bg-purple-900/40">
+              class="nav-link drawer-nav-link admin-only flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-purple-700 bg-purple-50/50 hover:bg-purple-100 hover:text-purple-900 border border-purple-200/60 dark:text-purple-300 dark:bg-purple-950/30 dark:border-purple-800/40 dark:hover:bg-purple-900/40">
               <i data-lucide="shield-check" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
               <span>Auditoria (Admin)</span>
             </a>
@@ -166,162 +395,30 @@
         </div>
       </nav>
 
-      <!-- Rodapé da Sidebar: Conexão com API e Versão -->
-      <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+      <!-- Rodapé do Drawer -->
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/40">
         <div class="flex items-center justify-between text-[11px] text-slate-500 mb-2">
           <span class="flex items-center gap-1.5 font-medium">
             <span class="w-2 h-2 rounded-full bg-emerald-500 status-ping"></span>
             API REST v1
           </span>
-          <button id="btn-toggle-mock"
-            class="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer">Info</button>
+          <span class="text-[10px] text-slate-400 font-mono">Build 2026.5</span>
         </div>
-        <p class="text-[10px] text-slate-400 font-mono">Build 2026.5 • HUB ES+</p>
-      </div>
-    </aside>
-
-    <!-- ================================================================= -->
-    <!-- DRAWER LATERAL (MOBILE / TABLET) -->
-    <!-- ================================================================= -->
-    <div id="mobile-backdrop"
-      class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden transition-opacity lg:hidden"></div>
-    <div id="mobile-drawer"
-      class="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col">
-      <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">ES+
-          </div>
-          <span class="font-extrabold text-sm text-slate-900">HUB ES+</span>
-        </div>
-        <button id="btn-close-mobile-menu" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
+        <button onclick="Auth.logout()"
+          class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Sair da Plataforma</span>
         </button>
       </div>
-
-      <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-xs font-semibold">
-        <a href="#dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
-            data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard Executivo</a>
-        <a href="#compras" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="shopping-bag"
-            class="w-4 h-4"></i> <span data-module-label="compras">Compras</span></a>
-        <a href="#documentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="folder"
-            class="w-4 h-4"></i> Gestão Documental</a>
-        <a href="#insumos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="boxes"
-            class="w-4 h-4"></i> <span data-module-label="insumos">Controle de Insumos</span></a>
-        <a href="#ocorrencias" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
-            data-lucide="alert-circle" class="w-4 h-4"></i> Ocorrências Técnicas</a>
-        <a href="#agenda" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="calendar"
-            class="w-4 h-4"></i> Agenda Inteligente</a>
-        <a href="#limpeza" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="sparkles"
-            class="w-4 h-4"></i> Controle de Limpeza</a>
-        <a href="#equipamentos" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="monitor"
-            class="w-4 h-4"></i> Equipamentos</a>
-        <a href="#comunicacao" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
-            data-lucide="megaphone" class="w-4 h-4"></i> Central de Comunicação</a>
-        <a href="#indicadores" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i
-            data-lucide="bar-chart-3" class="w-4 h-4"></i> Indicadores</a>
-        <a href="#usuarios" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl"><i data-lucide="user-plus"
-            class="w-4 h-4"></i> <span data-module-label="usuarios">Cadastrar Colaborador</span></a>
-        <a href="#auditoria"
-          class="nav-link admin-only flex items-center gap-3 px-3 py-2.5 rounded-xl text-purple-700 bg-purple-50/50 border border-purple-200/60"><i
-            data-lucide="shield-check" class="w-4 h-4 text-purple-600"></i> Auditoria (Admin)</a>
-      </nav>
     </div>
 
     <!-- ================================================================= -->
-    <!-- ÁREA PRINCIPAL COM TOPBAR E CONTEÚDO DINÂMICO -->
+    <!-- CONTEÚDO DINÂMICO DOS MÓDULOS (SPA) -->
     <!-- ================================================================= -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-      <!-- TOPBAR -->
-      <header
-        class="h-16 glass-header border-b border-slate-200/80 sticky top-0 z-20 px-4 sm:px-8 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <button id="btn-open-mobile-menu"
-            class="lg:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl"
-            aria-label="Abrir Menu">
-            <i data-lucide="menu" class="w-5 h-5"></i>
-          </button>
-
-          <!-- Busca Global Rápida -->
-          <div class="relative hidden sm:block w-72 md:w-96">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input id="input-global-search" type="text" placeholder="Busca rápida no HUB ES+ (Pressione Enter)..."
-              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-100/75 border border-transparent focus:border-slate-300 focus:bg-white focus:outline-none transition-all" />
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3 sm:gap-4 topbar-right">
-          <!-- Botão de Notificações / Comunicados -->
-          <button id="btn-topbar-notifications"
-            class="relative p-2.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl transition-all"
-            aria-label="Comunicados & Avisos" title="Comunicados & Avisos">
-            <i data-lucide="bell" class="w-4 h-4"></i>
-            <span id="badge-topbar-notifications" class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900 status-ping"></span>
-          </button>
-
-          <!-- Botão de tema -->
-          <button id="btn-tema" type="button" title="Alternar tema claro/escuro" aria-label="Alternar tema">
-            <i data-lucide="moon" class="w-4 h-4 icone-lua"></i>
-            <i data-lucide="sun" class="w-4 h-4 icone-sol hidden"></i>
-          </button>
-
-          <!-- Perfil do Usuário Logado -->
-          <div class="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
-            <div
-              class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-500 text-white font-bold text-xs flex items-center justify-center shadow-sm ring-2 ring-white dark:ring-slate-800">
-              AB
-            </div>
-            <div class="hidden md:block text-left">
-              <span data-usuario-nome class="block text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">Usuário</span>
-              <span data-usuario-perfil class="block text-[10px] text-slate-400 font-medium"></span>
-            </div>
-
-            <!-- BOTÃO SAIR -->
-            <button id="btn-logout" onclick="Auth.logout()"
-              class="ml-1 p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-              title="Sair da Plataforma">
-              <i data-lucide="log-out" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- CONTEÚDO DINÂMICO DOS MÓDULOS -->
-      <main id="main-content" class="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
-        <!-- Renderizado dinamicamente pelo AppRouter -->
-      </main>
-    </div>
+    <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-8">
+      <!-- Renderizado dinamicamente pelo AppRouter -->
+    </main>
   </div>
-
-  <!-- ================================================================= -->
-  <!-- BOTTOM NAV (MOBILE ONLY) -->
-  <!-- ================================================================= -->
-  <nav
-    class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 flex items-center justify-around py-2 px-2 text-[10px] font-medium text-slate-500">
-    <a href="#dashboard" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-      <span>Início</span>
-    </a>
-    <a href="#compras" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-      <span>Compras</span>
-    </a>
-    <a href="#ocorrencias" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="alert-circle" class="w-4 h-4"></i>
-      <span>Ocorrências</span>
-    </a>
-    <a href="#agenda" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="calendar" class="w-4 h-4"></i>
-      <span>Agenda</span>
-    </a>
-    <a href="#comunicacao" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="megaphone" class="w-4 h-4"></i>
-      <span>Avisos</span>
-    </a>
-    <a href="#documentos" class="flex flex-col items-center gap-1 p-1 hover:text-blue-600">
-      <i data-lucide="folder" class="w-4 h-4"></i>
-      <span>Docs</span>
-    </a>
-  </nav>
 
   <!-- ================================================================= -->
   <!-- SCRIPTS DA APLICAÇÃO (EM ORDEM DE DEPENDÊNCIA) -->

@@ -45,10 +45,15 @@ html.dark [class*="bg-slate-100/"] {
 }
 
 /* Header & Sidebar no Modo Escuro */
-html.dark header,
+html.dark header:not(.hub-top-navbar),
 html.dark aside {
   background-color: #0b1320 !important;
   border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+html.dark .hub-top-navbar {
+  background-color: #071529 !important;
+  border-bottom: 2.5px solid #dc2626 !important;
 }
 
 html.dark #mobile-drawer {

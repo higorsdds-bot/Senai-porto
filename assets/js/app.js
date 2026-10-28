@@ -288,15 +288,29 @@ class AppRouter {
   }
 
   _updateActiveNav(activeNavId) {
+    // Reseta todos os links de navegação
     document.querySelectorAll('.nav-link').forEach(link => {
-      link.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active-route');
-      link.classList.add('text-slate-600', 'hover:bg-slate-100/80', 'hover:text-slate-900');
+      link.classList.remove('active-route');
+      if (link.classList.contains('desktop-nav-link')) {
+        link.classList.remove('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
+        link.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
+      } else {
+        link.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
+        link.classList.add('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');
+      }
     });
 
+    // Ativa os links correspondentes à rota atual
     const activeLinks = document.querySelectorAll(`[data-nav-id="${activeNavId}"]`);
     activeLinks.forEach(link => {
-      link.classList.remove('text-slate-600', 'hover:bg-slate-100/80', 'hover:text-slate-900');
-      link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active-route');
+      link.classList.add('active-route');
+      if (link.classList.contains('desktop-nav-link')) {
+        link.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
+        link.classList.add('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
+      } else {
+        link.classList.remove('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');
+        link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
+      }
     });
   }
 
@@ -315,11 +329,12 @@ class AppRouter {
     if (drawer && backdrop) {
       drawer.classList.remove('-translate-x-full');
       backdrop.classList.remove('hidden');
+      if (window.lucide) window.lucide.createIcons();
     }
   }
 
   _setupGlobalEvents() {
-    // Menu Hambúrguer (Mobile)
+    // Menu Hambúrguer Lateral (Mobile)
     const btnOpenMenu = document.getElementById('btn-open-mobile-menu');
     const btnCloseMenu = document.getElementById('btn-close-mobile-menu');
     const backdrop = document.getElementById('mobile-backdrop');
@@ -328,16 +343,56 @@ class AppRouter {
     if (btnCloseMenu) btnCloseMenu.addEventListener('click', () => this._closeMobileMenu());
     if (backdrop) backdrop.addEventListener('click', () => this._closeMobileMenu());
 
-    // Botão de alternar Mock/API no rodapé da Sidebar
-    const btnToggleMock = document.getElementById('btn-toggle-mock');
-    if (btnToggleMock) {
-      btnToggleMock.addEventListener('click', () => {
-        window.UI.toast({
-          title: 'Configuração de API',
-          message: `Endpoint base configurado: ${window.CONFIG.API_BASE_URL} (Modo Mock: ${window.CONFIG.USE_MOCK ? 'Ativo' : 'Desativado'})`,
-          type: 'info'
-        });
+    // Fechar menu mobile ao clicar em qualquer link de navegação do drawer
+    document.querySelectorAll('#mobile-drawer a').forEach(link => {
+      link.addEventListener('click', () => this._closeMobileMenu());
+    });
+
+    // Tecla Escape fecha drawer e dropdown do usuário
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this._closeMobileMenu();
+        const userDropdownMenu = document.getElementById('user-dropdown-menu');
+        const userChevron = document.getElementById('user-chevron');
+        if (userDropdownMenu) {
+          userDropdownMenu.classList.add('hidden');
+          if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+        }
+      }
+    });
+
+    // Dropdown do Usuário (Higor ⌵)
+    const btnUserDropdown = document.getElementById('btn-user-dropdown');
+    const userDropdownMenu = document.getElementById('user-dropdown-menu');
+    const userChevron = document.getElementById('user-chevron');
+
+    if (btnUserDropdown && userDropdownMenu) {
+      btnUserDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = userDropdownMenu.classList.contains('hidden');
+        userDropdownMenu.classList.toggle('hidden', !isHidden);
+        if (userChevron) {
+          userChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
       });
+
+      document.addEventListener('click', (e) => {
+        if (!userDropdownMenu.contains(e.target) && !btnUserDropdown.contains(e.target)) {
+          userDropdownMenu.classList.add('hidden');
+          if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+        }
+      });
+    }
+
+    // Alternar tema pelo dropdown do usuário
+    const btnDropdownTema = document.getElementById('btn-dropdown-tema');
+    if (btnDropdownTema) {
+      btnDropdownTema.addEventListener('click', () => {
+        const btnTema = document.getElementById('btn-tema');
+        if (btnTema) btnTema.click();
+        this._atualizarLabelTemaDropdown();
+      });
+      this._atualizarLabelTemaDropdown();
     }
 
     // Botão de Notificações / Comunicados na Topbar
@@ -348,43 +403,70 @@ class AppRouter {
       });
     }
 
-    // Busca Global no Header
+    // Busca Global no Header Desktop
     const inputGlobalSearch = document.getElementById('input-global-search');
     if (inputGlobalSearch) {
       inputGlobalSearch.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const query = inputGlobalSearch.value.trim().toLowerCase();
           if (!query) return;
-
-          // Redireciona de acordo com o termo buscado
-          if (query.includes('comunicad') || query.includes('aviso') || query.includes('mural') || query.includes('noticia') || query.includes('informe')) {
-            window.location.hash = '#comunicacao';
-          } else if (query.includes('compra') || query.includes('pedido')) {
-            window.location.hash = '#compras';
-          } else if (query.includes('doc') || query.includes('termo') || query.includes('pdf')) {
-            window.location.hash = '#documentos';
-          } else if (query.includes('ocorr') || query.includes('suporte')) {
-            window.location.hash = '#ocorrencias';
-          } else if (query.includes('audit') || query.includes('govern')) {
-            window.location.hash = '#auditoria';
-          } else if (query.includes('evento')) {
-            window.location.hash = '#agenda';
-          } else if (query.includes('equip') || query.includes('patrimonio')) {
-            window.location.hash = '#equipamentos';
-          } else if (query.includes('limp')) {
-            window.location.hash = '#limpeza';
-          } else if (query.includes('insum') || query.includes('estoque')) {
-            window.location.hash = '#insumos';
-          } else {
-            window.location.hash = '#documentos';
-          }
-
-          window.UI.toast({
-            title: 'Busca Global',
-            message: `Navegando para o módulo correspondente ao termo "${query}"`,
-            type: 'info'
-          });
+          this._executarBuscaGlobal(query);
         }
+      });
+    }
+
+    // Busca Rápida no Drawer Mobile
+    const inputDrawerSearch = document.getElementById('input-drawer-search');
+    if (inputDrawerSearch) {
+      inputDrawerSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const query = inputDrawerSearch.value.trim().toLowerCase();
+          if (!query) return;
+          this._executarBuscaGlobal(query);
+          this._closeMobileMenu();
+        }
+      });
+    }
+  }
+
+  _atualizarLabelTemaDropdown() {
+    const label = document.getElementById('label-tema-status');
+    if (label) {
+      const isDark = document.documentElement.classList.contains('dark');
+      label.textContent = isDark ? 'Escuro' : 'Claro';
+    }
+  }
+
+  _executarBuscaGlobal(query) {
+    if (query.includes('comunicad') || query.includes('aviso') || query.includes('mural') || query.includes('noticia') || query.includes('informe')) {
+      window.location.hash = '#comunicacao';
+    } else if (query.includes('compra') || query.includes('pedido')) {
+      window.location.hash = '#compras';
+    } else if (query.includes('doc') || query.includes('termo') || query.includes('pdf')) {
+      window.location.hash = '#documentos';
+    } else if (query.includes('ocorr') || query.includes('suporte')) {
+      window.location.hash = '#ocorrencias';
+    } else if (query.includes('audit') || query.includes('govern')) {
+      window.location.hash = '#auditoria';
+    } else if (query.includes('evento')) {
+      window.location.hash = '#agenda';
+    } else if (query.includes('equip') || query.includes('patrimonio')) {
+      window.location.hash = '#equipamentos';
+    } else if (query.includes('limp')) {
+      window.location.hash = '#limpeza';
+    } else if (query.includes('insum') || query.includes('estoque')) {
+      window.location.hash = '#insumos';
+    } else if (query.includes('colab') || query.includes('usuario')) {
+      window.location.hash = '#usuarios';
+    } else {
+      window.location.hash = '#documentos';
+    }
+
+    if (window.UI?.toast) {
+      window.UI.toast({
+        title: 'Busca Global',
+        message: `Navegando para o módulo correspondente ao termo "${query}"`,
+        type: 'info'
       });
     }
   }

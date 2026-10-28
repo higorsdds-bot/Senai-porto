@@ -125,6 +125,8 @@ class AuthManager {
 
         // Atualiza info do usuário na topbar para mostrar "Visitante"
         document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = 'Visitante');
+        document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = 'Visitante');
+        document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = 'V');
         document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
 
@@ -318,6 +320,16 @@ class AuthManager {
         if (!u) return;
         document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = u.nome);
         document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = u.email);
+        
+        const partes = (u.nome || '').trim().split(/\s+/);
+        const primeiroNome = partes[0] || 'Usuário';
+        document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = primeiroNome);
+        
+        const iniciais = partes.length >= 2
+            ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+            : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
+        document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
+
         const nomesPerfil = {
             ADMIN: 'Administrador Geral',
             ADMINISTRADOR: 'Administrador Geral',
