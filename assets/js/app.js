@@ -307,7 +307,12 @@ class AppRouter {
       if (link.classList.contains('desktop-nav-link')) {
         link.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
         link.classList.add('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
-        link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        const desktopNav = document.getElementById('desktop-top-nav');
+        if (desktopNav && desktopNav.scrollWidth > desktopNav.clientWidth) {
+          link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        } else if (desktopNav) {
+          desktopNav.scrollLeft = 0;
+        }
       } else {
         link.classList.remove('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');
         link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
