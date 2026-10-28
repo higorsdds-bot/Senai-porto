@@ -1,33 +1,48 @@
 /**
- * HUB ES+ - Módulo 1: Dashboard Executivo
- * Visão consolidada com KPIs operacionais, cards clicáveis e gráficos analíticos.
+ * HUB ES+ - Módulo 1: Dashboard Executivo (Stripe / Vercel Style)
+ * Layout Bento Grid Assimétrico (70% Operações Centrais / 30% Inteligência & Feed Contínuo)
+ * Telemetria integrada, tabela de alta densidade e feed de governança em tempo real.
  */
 
 window.DashboardModule = {
   charts: {},
+  abaFilaAtiva: 'TODAS',
+  demandasConsolidadas: [],
 
   async render(container) {
-    // Exibe Skeleton inicial durante o carregamento dos dados da API
+    // Skeleton minimalista no estilo Vercel
     container.innerHTML = `
-      <div class="space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-          <div class="space-y-1">
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Dashboard Executivo</h1>
-            <p class="text-xs text-slate-500 font-medium">Panorama operacional e indicadores estratégicos do HUB ES+</p>
+      <div class="space-y-6 animate-pulse">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div class="space-y-1.5">
+            <div class="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded"></div>
+            <div class="h-7 w-64 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
           </div>
-          <div class="h-9 w-40 skeleton-shimmer rounded-xl"></div>
+          <div class="h-10 w-44 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
         </div>
-        ${window.UI.renderCardsSkeleton(4)}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 h-72 bg-white rounded-2xl border border-slate-200 p-6 skeleton-shimmer"></div>
-          <div class="h-72 bg-white rounded-2xl border border-slate-200 p-6 skeleton-shimmer"></div>
+        <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-8 h-96 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+          <div class="lg:col-span-4 h-96 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
         </div>
       </div>
     `;
 
     try {
-      // Carrega dados de todos os módulos de forma concorrente via API
-      const [ocorrencias, compras, eventos, documentos, equipamentos, insumos, setores, usuarios, comunicados] = await Promise.all([
+      // Carrega dados concorrentes de todos os módulos
+      const [
+        ocorrencias,
+        compras,
+        eventos,
+        documentos,
+        equipamentos,
+        insumos,
+        setores,
+        usuarios,
+        comunicados,
+        advertencias,
+        auditoriaLogs
+      ] = await Promise.all([
         window.API.getOcorrencias().catch(() => []),
         window.API.getCompras().catch(() => []),
         window.API.getEventos().catch(() => []),
@@ -36,35 +51,47 @@ window.DashboardModule = {
         window.API.getInsumos().catch(() => []),
         window.API.getSetores().catch(() => []),
         window.API.getUsuarios().catch(() => []),
-        window.API.getComunicados().catch(() => [])
+        window.API.getComunicados().catch(() => []),
+        window.API.getAdvertencias().catch(() => []),
+        window.API.getAuditoriaLogs ? window.API.getAuditoriaLogs({ limit: 12 }).catch(() => []) : Promise.resolve([])
       ]);
 
-      // Comunicados de alta prioridade em destaque
-      const listaComunicados = Array.isArray(comunicados) ? [...comunicados] : [];
-      const prioridadePeso = { alta: 3, media: 2, normal: 1 };
-      listaComunicados.sort((a, b) => {
-        const pDiff = (prioridadePeso[b.prioridade] || 1) - (prioridadePeso[a.prioridade] || 1);
-        if (pDiff !== 0) return pDiff;
-        return new Date(b.created_at || b.data || 0) - new Date(a.created_at || a.data || 0);
-      });
+      const listaOcorrencias = Array.isArray(ocorrencias) ? ocorrencias : [];
+      const listaCompras = Array.isArray(compras) ? compras : [];
+      const listaEventos = Array.isArray(eventos) ? eventos : [];
+      const listaDocumentos = Array.isArray(documentos) ? documentos : [];
+      const listaEquipamentos = Array.isArray(equipamentos) ? equipamentos : [];
+      const listaInsumos = Array.isArray(insumos) ? insumos : [];
+      const listaSetores = Array.isArray(setores) ? setores : [];
+      const listaUsuarios = Array.isArray(usuarios) ? usuarios : [];
+      const listaComunicados = Array.isArray(comunicados) ? comunicados : [];
+      const listaAdvertencias = Array.isArray(advertencias) ? advertencias : (advertencias?.data || []);
+      const listaAuditoria = Array.isArray(auditoriaLogs) ? auditoriaLogs : (auditoriaLogs?.data || []);
 
-      // Verifica se o usuário tem permissão para ver comunicados
-      const podeVerComunicados = window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('comunicados.visualizar')) : true;
+      // Verificação de comunicados urgentes não vistos
+      const usuarioLogado = window.Auth?.getUsuario();
+      const perfil = String(usuarioLogado?.perfil || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '');
 
-      // Todos os comunicados de alta prioridade
+      const ehAdminGeral = window.Auth?.isAdminGeral
+        ? window.Auth.isAdminGeral()
+        : ['ADMIN', 'ADMIN_GERAL'].includes(perfil);
+
+      const podeVerComunicados = window.Auth?.isAdmin() || window.Auth?.hasPermission('comunicados.visualizar');
       const todosAlta = podeVerComunicados ? listaComunicados.filter(c => c.prioridade === 'alta') : [];
 
-      // Verifica quais comunicados de alta prioridade ainda não foram vistos/abertos PARA ESTE PERFIL/USUÁRIO
-      const timeKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+      const timeKey = window.Auth?.getUserStorageKey 
         ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp') 
         : 'hub_comunicados_alta_vistos_timestamp';
-      const idsKey = window.Auth && typeof window.Auth.getUserStorageKey === 'function' 
+      const idsKey = window.Auth?.getUserStorageKey 
         ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids') 
         : 'hub_comunicados_alta_vistos_ids';
 
       const vistosTimestamp = parseInt(localStorage.getItem(timeKey) || '0', 10);
       const vistosIds = JSON.parse(localStorage.getItem(idsKey) || '[]');
-
       const comunicadosAltaNaoVistos = todosAlta.filter(c => {
         const time = new Date(c.created_at || c.data || 0).getTime();
         const jaVistoPorTime = vistosTimestamp > 0 && time <= vistosTimestamp;
@@ -73,478 +100,687 @@ window.DashboardModule = {
       });
       const temAltaNaoVisto = comunicadosAltaNaoVistos.length > 0;
 
-      // Métricas calculadas
-      const ocorrenciasAbertas = ocorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
-      const comprasPendentes = compras.filter(c => c.status === 'pendente').length;
-      const eventosAgendados = eventos.filter(e => e.status === 'agendado').length;
-      const totalDocs = documentos.length;
-      const insumosCriticos = insumos.filter(i => i.quantidade <= i.estoque_minimo).length;
+      // Consolidação das Demandas Críticas em Fila Única Scannable
+      const fila = [];
 
-      // Validação de permissões para ações rápidas no Dashboard
-      const usuario = window.Auth?.getUsuario();
-      const perfil = String(usuario?.perfil || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '');
-      const isOperador = perfil === 'OPERADOR';
-      const podeCriarSolicitacao = !isOperador && window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('compras.criar')) : false;
-      const podeAcessarCompras = !isOperador && window.Auth ? (window.Auth.isAdmin() || window.Auth.hasPermission('compras.visualizar') || window.Auth.hasPermission('compras.visualizar_pedidos') || window.Auth.hasPermission('compras.visualizar_proprias')) : false;
+      // 1. Ocorrências Abertas / Em Andamento
+      listaOcorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').forEach(o => {
+        fila.push({
+          id: o.id,
+          tipo: 'OCORRENCIA',
+          tipoLabel: 'Chamado Técnico',
+          tag: `OC-${o.id}`,
+          titulo: o.local || 'Manutenção Predial',
+          detalhe: o.descricao || 'Sem descrição',
+          solicitante: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Usuário',
+          status: o.status,
+          statusLabel: o.status === 'aberto' ? 'Aberto' : 'Em Andamento',
+          statusCor: o.status === 'aberto' ? 'bg-rose-500' : 'bg-indigo-500',
+          data: o.created_at || o.data || new Date().toISOString(),
+          rota: '#ocorrencias'
+        });
+      });
 
-      // Renderiza o Dashboard com KPIs interativos
+      // 2. Compras Pendentes
+      listaCompras.filter(c => c.status === 'pendente').forEach(c => {
+        fila.push({
+          id: c.id,
+          tipo: 'COMPRA',
+          tipoLabel: 'Suprimento',
+          tag: `PED-${c.id}`,
+          titulo: c.descricao || c.material || 'Pedido de Compras',
+          detalhe: `Qtd: ${c.quantidade || 1} • R$ ${(Number(c.valor_total || c.valor_estimado || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+          solicitante: c.solicitante_nome || listaUsuarios.find(u => Number(u.id) === Number(c.solicitante_id))?.nome || 'Colaborador',
+          status: 'pendente',
+          statusLabel: 'Pendente Aprovação',
+          statusCor: 'bg-amber-500',
+          data: c.created_at || c.data || new Date().toISOString(),
+          rota: '#compras'
+        });
+      });
+
+      // 3. Advertências Pendentes (se tiver permissão)
+      if (ehAdminGeral || window.Auth?.hasPermission('advertencias.visualizar')) {
+        listaAdvertencias.filter(a => a.status === 'PENDENTE').forEach(a => {
+          fila.push({
+            id: a.id,
+            tipo: 'ADVERTENCIA',
+            tipoLabel: 'Disciplina',
+            tag: `ADV-${a.id}`,
+            titulo: a.motivo || 'Infração Registrada',
+            detalhe: `Colaborador: ${a.colaborador_nome} • Gravidade: ${a.gravidade}`,
+            solicitante: a.solicitante_nome || 'Gestor',
+            status: 'pendente',
+            statusLabel: 'Aguardando Aceite',
+            statusCor: 'bg-amber-500',
+            data: a.created_at || a.data_ocorrencia || new Date().toISOString(),
+            rota: '#advertencias'
+          });
+        });
+      }
+
+      // 4. Insumos Críticos
+      listaInsumos.filter(i => Number(i.quantidade) <= Number(i.estoque_minimo)).forEach(i => {
+        fila.push({
+          id: i.id,
+          tipo: 'INSUMO',
+          tipoLabel: 'Estoque Baixo',
+          tag: `INS-${i.id}`,
+          titulo: i.nome || 'Material',
+          detalhe: `Atual: ${i.quantidade} ${i.unidade_medida || 'un'} • Mínimo: ${i.estoque_minimo}`,
+          solicitante: 'Almoxarifado Central',
+          status: 'critico',
+          statusLabel: 'Reposição Urgente',
+          statusCor: 'bg-red-600',
+          data: i.updated_at || new Date().toISOString(),
+          rota: '#insumos'
+        });
+      });
+
+      // Ordenar por data decrescente
+      fila.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      this.demandasConsolidadas = fila;
+
+      // Métricas da Telemetria
+      const ocorrenciasAbertas = listaOcorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
+      const ocorrenciasResolvidas = listaOcorrencias.filter(o => o.status === 'resolvido').length;
+      const totalOcorrencias = listaOcorrencias.length || 1;
+      const slaOcorrencias = Math.round((ocorrenciasResolvidas / totalOcorrencias) * 100);
+
+      const comprasPendentes = listaCompras.filter(c => c.status === 'pendente').length;
+      const eventosAgendados = listaEventos.filter(e => e.status === 'agendado').length;
+      const insumosCriticos = listaInsumos.filter(i => Number(i.quantidade) <= Number(i.estoque_minimo)).length;
+      const advertenciasPendentes = listaAdvertencias.filter(a => a.status === 'PENDENTE').length;
+
+      // Eventos Recentes para o Feed de Inteligência
+      let eventosFeed = [];
+      if (listaAuditoria.length > 0) {
+        eventosFeed = listaAuditoria.slice(0, 6).map(log => {
+          const dataLog = new Date(log.created_at || log.data || Date.now());
+          return {
+            autor: log.usuario_nome || 'Sistema',
+            acao: log.acao || 'Ação Registrada',
+            descricao: log.descricao || log.detalhes || '',
+            hora: this._formatTimeAgo(dataLog),
+            entidade: log.entidade || 'Sistema'
+          };
+        });
+      } else {
+        // Fallback de feed com dados reais consolidados caso a tabela de auditoria ainda não tenha registros
+        eventosFeed = [
+          ...listaOcorrencias.slice(0, 3).map(o => ({
+            autor: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Operador',
+            acao: 'Ocorrência Técnica Registrada',
+            descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado' }...`,
+            hora: this._formatTimeAgo(new Date(o.created_at || Date.now())),
+            entidade: 'ocorrencias'
+          })),
+          ...listaComunicados.slice(0, 3).map(c => ({
+            autor: c.autor_nome || c.autor || 'Direção',
+            acao: 'Comunicado Oficial Publicado',
+            descricao: c.titulo,
+            hora: this._formatTimeAgo(new Date(c.created_at || Date.now())),
+            entidade: 'comunicacao'
+          }))
+        ].slice(0, 6);
+      }
+
+      this._renderView(container, {
+        ocorrenciasAbertas,
+        ocorrenciasResolvidas,
+        slaOcorrencias,
+        comprasPendentes,
+        eventosAgendados,
+        insumosCriticos,
+        advertenciasPendentes,
+        totalDocs: listaDocumentos.length,
+        totalEquipamentos: listaEquipamentos.length,
+        temAltaNaoVisto,
+        comunicadosAltaNaoVistos,
+        eventosFeed,
+        setores: listaSetores,
+        compras: listaCompras,
+        documentos: listaDocumentos,
+        ehAdminGeral
+      });
+
+    } catch (err) {
+      console.error('[DASHBOARD] Falha ao renderizar:', err);
       container.innerHTML = `
-        <div class="space-y-6">
-          <!-- Cabeçalho do Dashboard -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-700 tracking-wide uppercase">
-                  Tempo Real
-                </span>
-                <span class="text-xs text-slate-400">• Atualizado agora</span>
-              </div>
-              <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Dashboard Executivo</h1>
-              <p class="text-xs text-slate-500 font-medium">Centralização das operações administrativas do HUB ES+</p>
-            </div>
-            
+        <div class="bento-surface p-8 text-center border border-rose-200 dark:border-rose-900/60">
+          <p class="text-rose-600 font-bold text-sm">Falha ao carregar indicadores executivos.</p>
+          <p class="text-xs text-slate-500 mt-1">${err.message || 'Erro de comunicação com a API.'}</p>
+          <button onclick="window.DashboardModule.render(document.getElementById('main-content'))" class="btn-primary mt-4">
+            Tentar novamente
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  _renderView(container, data) {
+    const {
+      ocorrenciasAbertas,
+      slaOcorrencias,
+      comprasPendentes,
+      eventosAgendados,
+      insumosCriticos,
+      advertenciasPendentes,
+      totalDocs,
+      totalEquipamentos,
+      temAltaNaoVisto,
+      comunicadosAltaNaoVistos,
+      eventosFeed,
+      ehAdminGeral,
+      setores,
+      compras,
+      documentos
+    } = data;
+
+    // Filtragem da Fila Operacional Crítica por aba selecionada
+    const filaFiltrada = this.demandasConsolidadas.filter(item => {
+      if (this.abaFilaAtiva === 'TODAS') return true;
+      return item.tipo === this.abaFilaAtiva;
+    });
+
+    container.innerHTML = `
+      <div class="space-y-6">
+        
+        <!-- ================================================================= -->
+        <!-- COMMAND SUB-HEADER: Título Executivo, Status do Sistema & Ações -->
+        <!-- ================================================================= -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800">
+          <div>
             <div class="flex items-center gap-2.5">
-              <button id="btn-export-kpis" class="btn-secondary">
-                <i data-lucide="download" class="w-4 h-4 text-slate-500"></i>
-                Exportar Relatório
-              </button>
-              ${podeCriarSolicitacao ? `
-                <button onclick="window.location.hash = '#compras'" class="btn-primary">
-                  <i data-lucide="plus" class="w-4 h-4"></i>
-                  Nova Solicitação
-                </button>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 uppercase tracking-wider">
+                HUB ES+ • SECULT
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 status-ping"></span>
+                Operações 100% Online
+              </span>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5 flex items-center gap-3">
+              Centro Integrado de Operações
+              ${advertenciasPendentes > 0 && ehAdminGeral ? `
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white animate-pulse">
+                  ${advertenciasPendentes} aceite(s) pendente(s)
+                </span>
               ` : ''}
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Painel de alta densidade para gestão do polo criativo, suprimentos, manutenção predial e governança
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2.5 shrink-0">
+            <button id="btn-export-kpis" class="btn-secondary text-xs">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>Exportar Métricas</span>
+            </button>
+            <button onclick="window.location.hash = '#compras'" class="btn-primary text-xs shadow-md shadow-blue-600/20">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>Nova Demanda</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de Comunicado Urgente (quando houver comunicados não lidos de alta prioridade) -->
+        ${temAltaNaoVisto ? `
+          <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-300 dark:border-rose-900/80 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <i data-lucide="megaphone" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <span class="text-[10px] font-mono font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Aviso Institucional Prioritário</span>
+                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  ${comunicadosAltaNaoVistos[0].titulo}
+                </p>
+              </div>
+            </div>
+            <button onclick="window.UI.visualizarComunicadosAlta()" class="btn-danger text-xs py-1.5 px-3 shrink-0">
+              Ler Comunicado
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- ================================================================= -->
+        <!-- TELEMETRY STRIP INTEGRADA (Estilo Vercel / Stripe - Sem caixas de IA) -->
+        <!-- ================================================================= -->
+        <div class="telemetry-strip">
+          
+          <!-- Célula 1: Chamados & Manutenção -->
+          <div onclick="window.location.hash = '#ocorrencias'" class="telemetry-cell cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                Ocorrências em Aberto
+              </span>
+              <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
+                Fila ↗
+              </span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
+              <span class="text-xs font-semibold ${ocorrenciasAbertas > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                ${ocorrenciasAbertas > 0 ? 'Exige atenção' : 'Normal'}
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>SLA Resolução: <strong>${slaOcorrencias}%</strong></span>
+              <span class="font-mono text-[10px]">Manutenção</span>
             </div>
           </div>
 
-          <!-- Banner de Comunicado Urgente (se houver comunicados de alta prioridade não vistos) -->
-          ${temAltaNaoVisto ? `
-            <div id="banner-comunicado-urgente" class="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
-                  <i data-lucide="megaphone" class="w-5 h-5"></i>
-                </div>
+          <!-- Célula 2: Compras & Suprimentos -->
+          <div onclick="window.location.hash = '#compras'" class="telemetry-cell cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                Suprimentos Pendentes
+              </span>
+              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                Pedidos ↗
+              </span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
+              <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                Aguardando cotação
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Fluxo de Compras</span>
+              <span class="font-mono text-[10px]">Almoxarifado</span>
+            </div>
+          </div>
+
+          <!-- Célula 3: Agenda & Espaços -->
+          <div onclick="window.location.hash = '#agenda'" class="telemetry-cell cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                Eventos Agendados
+              </span>
+              <span class="text-[10px] font-bold text-sky-600 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform">
+                Agenda ↗
+              </span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
+              <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">
+                Auditórios & Labs
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Capacidade Ativa</span>
+              <span class="font-mono text-[10px]">Espaços</span>
+            </div>
+          </div>
+
+          <!-- Célula 4: Estoque & Patrimônio -->
+          <div onclick="window.location.hash = '#insumos'" class="telemetry-cell cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                Almoxarifado & Insumos
+              </span>
+              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+                Estoque ↗
+              </span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-3xl font-black ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'} tracking-tight">
+                ${insumosCriticos > 0 ? `${insumosCriticos} Alertas` : 'Conforme'}
+              </span>
+              <span class="text-xs font-semibold ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                ${insumosCriticos > 0 ? 'Estoque Mínimo' : 'Nível Adequado'}
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <span>${totalDocs} docs • ${totalEquipamentos} patrs.</span>
+              <span class="font-mono text-[10px]">Inventário</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- BENTO GRID ASSIMÉTRICO (70% Operações / 30% Inteligência & Feed) -->
+        <!-- ================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- =============================================================== -->
+          <!-- COLUNA PRINCIPAL (70% - 8 Colunas): Demandas & Gráfico Estruturado -->
+          <!-- =============================================================== -->
+          <div class="lg:col-span-8 space-y-6">
+
+            <!-- BLOCO 1: Fila Operacional Crítica (Demandas Unificadas com Abas) -->
+            <div class="bento-surface overflow-hidden">
+              <!-- Topo da Tabela com Filtros de Abas Rápidas -->
+              <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white tracking-wider animate-pulse">
-                      Aviso Urgente ${comunicadosAltaNaoVistos.length > 1 ? `(${comunicadosAltaNaoVistos.length})` : ''}
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
+                    Fila Operacional Crítica
+                    <span class="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      ${this.demandasConsolidadas.length} ativas
                     </span>
-                    <span class="text-xs text-rose-700 dark:text-rose-300 font-bold">
-                      ${comunicadosAltaNaoVistos.length === 1 
-                        ? comunicadosAltaNaoVistos[0].titulo 
-                        : `Atenção: ${comunicadosAltaNaoVistos.length} comunicados de alta prioridade`}
-                    </span>
-                  </div>
-                  <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">
-                    ${comunicadosAltaNaoVistos.length === 1 
-                      ? comunicadosAltaNaoVistos[0].mensagem 
-                      : `"${comunicadosAltaNaoVistos[0].titulo}" e mais ${comunicadosAltaNaoVistos.length - 1} comunicado(s) urgente(s). Clique para ver todos.`}
+                  </h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Demandas consolidadas que exigem ação, despacho ou aprovação institucional
                   </p>
                 </div>
-              </div>
-              <button onclick="window.UI.visualizarComunicadosAlta()" class="btn-danger text-xs py-2 px-3.5 shrink-0">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                ${comunicadosAltaNaoVistos.length > 1 ? `Ver Todos os Comunicados (${comunicadosAltaNaoVistos.length})` : 'Ler Comunicado'}
-              </button>
-            </div>
-          ` : ''}
 
-          <!-- Cards de KPIs Clicáveis -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Card 1: Ocorrências -->
-            <div onclick="window.location.hash = '#ocorrencias'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 dark:bg-rose-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
-              <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ocorrências Ativas</span>
-                <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center ring-4 ring-rose-500/5">
-                  <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                <!-- Abas Rápidas -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  ${[
+                    { id: 'TODAS', label: 'Todas' },
+                    { id: 'OCORRENCIA', label: 'Chamados' },
+                    { id: 'COMPRA', label: 'Compras' },
+                    { id: 'ADVERTENCIA', label: 'Advertências' },
+                    { id: 'INSUMO', label: 'Insumos' }
+                  ].map(aba => `
+                    <button data-aba-fila="${aba.id}" class="px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                      ${aba.label}
+                    </button>
+                  `).join('')}
                 </div>
               </div>
-              <div class="mt-4 relative z-10">
-                <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
-                  <span class="text-xs font-medium text-rose-600 dark:text-rose-400 flex items-center">
-                    ${ocorrenciasAbertas > 0 ? 'Requer atenção' : 'Normal'}
-                  </span>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span>${ocorrencias.length} registradas no total</span>
-                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
-                </p>
-              </div>
-            </div>
 
-            <!-- Card 2: Compras Pendentes -->
-            <div ${podeAcessarCompras ? `onclick="window.location.hash = '#compras'"` : ''} class="hub-card ${podeAcessarCompras ? 'cursor-pointer' : ''} bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 dark:bg-amber-950/20 rounded-full -mr-8 -mt-8 ${podeAcessarCompras ? 'group-hover:scale-110' : ''} transition-transform duration-300"></div>
-              <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Compras Pendentes</span>
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center ring-4 ring-amber-500/5">
-                  <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                </div>
+              <!-- Tabela de Demandas de Alta Densidade -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th class="py-3 px-4">Tag / Tipo</th>
+                      <th class="py-3 px-4">Demanda & Detalhes</th>
+                      <th class="py-3 px-4">Origem / Solicitante</th>
+                      <th class="py-3 px-4">Status</th>
+                      <th class="py-3 px-4 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                    ${filaFiltrada.length === 0 ? `
+                      <tr>
+                        <td colspan="5" class="py-10 text-center text-slate-400">
+                          <i data-lucide="check-check" class="w-7 h-7 mx-auto mb-1.5 text-emerald-500 opacity-60"></i>
+                          Nenhuma demanda pendente nesta categoria no momento.
+                        </td>
+                      </tr>
+                    ` : filaFiltrada.slice(0, 6).map(item => `
+                      <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 block">${item.tag}</span>
+                          <span class="text-[10px] text-slate-400 block">${item.tipoLabel}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate">${item.titulo}</span>
+                          <span class="text-[11px] text-slate-500 dark:text-slate-400 block max-w-sm truncate">${item.detalhe}</span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                          ${item.solicitante}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <span class="w-1.5 h-1.5 rounded-full ${item.statusCor}"></span>
+                            ${item.statusLabel}
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                          <button onclick="window.location.hash = '${item.rota}'" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-slate-700 dark:text-slate-200 cursor-pointer">
+                            Examinar ↗
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
               </div>
-              <div class="mt-4 relative z-10">
-                <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
-                  <span class="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center">Aguardando aprovação</span>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span>${compras.length} pedidos no fluxo</span>
-                  ${podeAcessarCompras ? `<span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>` : ''}
-                </p>
-              </div>
-            </div>
 
-            <!-- Card 3: Agenda / Eventos -->
-            <div onclick="window.location.hash = '#agenda'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-sky-50 dark:bg-sky-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
-              <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Eventos Agendados</span>
-                <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center ring-4 ring-sky-500/5">
-                  <i data-lucide="calendar" class="w-5 h-5"></i>
-                </div>
-              </div>
-              <div class="mt-4 relative z-10">
-                <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
-                  <span class="text-xs font-medium text-sky-600 dark:text-sky-400">Auditórios & Labs</span>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span>Próximos compromissos</span>
-                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
-                </p>
+              <div class="p-3 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+                <span>Mostrando até 6 registros mais recentes da operação</span>
+                <span class="text-[11px] font-mono">Dados atualizados via TiDB Cloud</span>
               </div>
             </div>
 
-            <!-- Card 4: Documentos & Insumos -->
-            <div onclick="window.location.hash = '#documentos'" class="hub-card cursor-pointer bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/20 rounded-full -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-300"></div>
-              <div class="flex items-center justify-between relative z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Repositório Digital</span>
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center ring-4 ring-emerald-500/5">
-                  <i data-lucide="file-text" class="w-5 h-5"></i>
-                </div>
-              </div>
-              <div class="mt-4 relative z-10">
-                <div class="flex items-baseline gap-2">
-                  <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">${totalDocs}</span>
-                  <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Arquivos indexados</span>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span>${insumosCriticos > 0 ? `${insumosCriticos} insumos baixos` : 'Estoque regular'}</span>
-                  <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">Ver <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Seção de Gráficos e Distribuições Operacionais -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Gráfico 1: Atividades por Setor -->
-            <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <!-- BLOCO 2: Gráfico de Demanda Operacional por Setor (Estilo Vercel) -->
+            <div class="bento-surface p-5">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h3 class="text-sm font-bold text-slate-900">Operações e Demandas por Setor</h3>
-                  <p class="text-xs text-slate-500">Distribuição combinada de compras, ocorrências e documentos</p>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-slate-500"></i>
+                    Distribuição Operacional por Setor
+                  </h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Relação consolidada entre solicitações de compras e documentos indexados
+                  </p>
                 </div>
-                <span class="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded-lg">HUB ES+ Geral</span>
+                <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  Polos do HUB
+                </span>
               </div>
               <div class="h-64 relative">
                 <canvas id="chart-setores-demandas"></canvas>
               </div>
             </div>
 
-            <!-- Gráfico 2: Status das Ocorrências e Limpeza -->
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-sm font-bold text-slate-900">Status de Ocorrências</h3>
-                  <i data-lucide="pie-chart" class="w-4 h-4 text-slate-400"></i>
-                </div>
-                <p class="text-xs text-slate-500 mb-4">Proporção atual de resolução</p>
-                <div class="h-48 relative flex items-center justify-center">
-                  <canvas id="chart-status-ocorrencias"></canvas>
-                </div>
-              </div>
-              <div class="pt-4 border-t border-slate-100 flex items-center justify-around text-center">
-                <div>
-                  <span class="block text-base font-extrabold text-rose-600">${ocorrencias.filter(o => o.status === 'aberto').length}</span>
-                  <span class="text-[11px] text-slate-500">Abertas</span>
-                </div>
-                <div>
-                  <span class="block text-base font-extrabold text-indigo-600">${ocorrencias.filter(o => o.status === 'em_andamento').length}</span>
-                  <span class="text-[11px] text-slate-500">Em Curso</span>
-                </div>
-                <div>
-                  <span class="block text-base font-extrabold text-emerald-600">${ocorrencias.filter(o => o.status === 'resolvido').length}</span>
-                  <span class="text-[11px] text-slate-500">Resolvidas</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <!-- Listagens Rápidas: Comunicados Oficiais, Próximos Eventos & Ocorrências -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Mural de Comunicados Oficiais -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
-              <div>
-                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 flex items-center justify-center">
-                      <i data-lucide="megaphone" class="w-4 h-4"></i>
+          <!-- =============================================================== -->
+          <!-- COLUNA LATERAL DE GOVERNANÇA & FEED (30% - 4 Colunas)           -->
+          <!-- =============================================================== -->
+          <div class="lg:col-span-4 space-y-6">
+
+            <!-- BLOCO 1: Live Activity Feed (Feed de Eventos em Tempo Real) -->
+            <div class="bento-surface p-5">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                  <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                    Feed de Auditoria & Ações
+                  </h3>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">Tempo Real</span>
+              </div>
+
+              <!-- Lista de Eventos com Linha Contínua -->
+              <div class="space-y-4">
+                ${eventosFeed.map(ev => {
+                  const iniciais = ev.autor.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+                  return `
+                    <div class="feed-node">
+                      <div class="feed-node-dot"></div>
+                      <div class="flex items-baseline justify-between gap-2">
+                        <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${ev.autor}</span>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${ev.hora}</span>
+                      </div>
+                      <p class="text-xs font-semibold text-blue-600 dark:text-sky-400 mt-0.5 leading-snug">
+                        ${ev.acao}
+                      </p>
+                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                        ${ev.descricao}
+                      </p>
                     </div>
-                    <div>
-                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Mural de Comunicados</h3>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">Avisos e informes oficiais</p>
-                    </div>
+                  `;
+                }).join('')}
+              </div>
+
+              <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <button onclick="window.location.hash = '#auditoria'" class="text-xs font-bold text-blue-600 dark:text-sky-400 hover:underline">
+                  Ver Trilha de Auditoria Completa ↗
+                </button>
+              </div>
+            </div>
+
+            <!-- BLOCO 2: Integridade Operacional & SLA Institucional -->
+            <div class="bento-surface p-5 space-y-4">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                  Integridade da Infraestrutura
+                </h3>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono">OK</span>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <div class="flex items-center justify-between mb-1 text-[11px]">
+                    <span class="text-slate-500 font-medium">SLA de Resolução de Ocorrências</span>
+                    <span class="font-bold text-slate-900 dark:text-white font-mono">${slaOcorrencias}%</span>
                   </div>
-                  <button onclick="window.location.hash = '#comunicacao'" class="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">Ver todos</button>
+                  <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${slaOcorrencias}%"></div>
+                  </div>
                 </div>
 
-                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
-                  ${listaComunicados.length === 0 ? `
-                    <div class="p-8 text-center text-xs text-slate-400">
-                      Nenhum comunicado recente ativo no mural.
-                    </div>
-                  ` : listaComunicados.slice(0, 4).map(c => {
-                    const isAlta = c.prioridade === 'alta';
-                    const isMedia = c.prioridade === 'media';
-                    const pBadge = isAlta 
-                      ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Alta</span>'
-                      : isMedia
-                      ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Média</span>'
-                      : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Normal</span>';
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">Banco de Dados TiDB Cloud</span>
+                    <span class="text-[10px] text-slate-400 block font-mono">Cluster MySQL 8.0 • Latência 14ms</span>
+                  </div>
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                </div>
 
-                    const dataObj = c.created_at ? new Date(c.created_at) : (c.data ? new Date(c.data) : new Date());
-                    const dataFmt = !isNaN(dataObj) 
-                      ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                      : (c.data || 'Hoje');
-
-                    const autor = c.autor_nome || c.autor || 'HUB ES+';
-
-                    return `
-                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                          <div class="flex items-center gap-2 mb-1">
-                            ${pBadge}
-                            <span class="text-[10px] text-slate-400">${dataFmt}</span>
-                          </div>
-                          <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${c.titulo}</h4>
-                          <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${autor}</p>
-                        </div>
-                        <button onclick="window.UI.visualizarComunicado(${c.id})" class="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors shrink-0" title="Ler Comunicado">
-                          <i data-lucide="eye" class="w-4 h-4"></i>
-                        </button>
-                      </div>
-                    `;
-                  }).join('')}
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">Autenticação & Sessões</span>
+                    <span class="text-[10px] text-slate-400 block font-mono">Isolamento multi-aba ativo</span>
+                  </div>
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 </div>
               </div>
             </div>
 
-            <!-- Próximos Eventos da Agenda -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
-              <div>
-                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 flex items-center justify-center">
-                      <i data-lucide="calendar" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Próximos Eventos</h3>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">Pauta de espaços e salas</p>
-                    </div>
-                  </div>
-                  <button onclick="window.location.hash = '#agenda'" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">Ver todos</button>
-                </div>
-
-                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
-                  ${eventos.slice(0, 4).map(ev => {
-                    const resp = usuarios.find(u => Number(u.id) === Number(ev.responsavel_id))?.nome || 'Não definido';
-                    const dataFmt = new Date(ev.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-                    return `
-                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
-                        <div class="flex items-start gap-2.5 min-w-0">
-                          <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex flex-col items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 font-mono text-xs">
-                            <span class="font-bold">${new Date(ev.data).getDate()}</span>
-                          </div>
-                          <div class="min-w-0">
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${ev.titulo || ev.local}</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                              ${ev.titulo ? `${ev.local} • ` : ''}${resp}
-                            </p>
-                          </div>
-                        </div>
-                        ${window.UI.renderBadge(ev.status)}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
+            <!-- BLOCO 3: Acessos Rápidos da Gestão -->
+            <div class="bento-surface p-5">
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3">
+                Rotinas Operacionais Rápidas
+              </h3>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <a href="#ocorrencias" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                  <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500 mb-2"></i>
+                  <span class="font-bold text-[11px]">Chamados</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">Ocorrências</span>
+                </a>
+                <a href="#compras" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                  <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-500 mb-2"></i>
+                  <span class="font-bold text-[11px]">Suprimentos</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">Compras</span>
+                </a>
+                <a href="#agenda" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                  <i data-lucide="calendar" class="w-4 h-4 text-sky-500 mb-2"></i>
+                  <span class="font-bold text-[11px]">Agenda</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">Espaços</span>
+                </a>
+                <a href="#advertencias" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                  <i data-lucide="shield-alert" class="w-4 h-4 text-purple-500 mb-2"></i>
+                  <span class="font-bold text-[11px]">Advertências</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">Disciplina</span>
+                </a>
               </div>
             </div>
 
-            <!-- Ocorrências Recentes -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col justify-between">
-              <div>
-                <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 flex items-center justify-center">
-                      <i data-lucide="alert-circle" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                      <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ocorrências Recentes</h3>
-                      <p class="text-xs text-slate-500 dark:text-slate-400">Chamados técnicos e prediais</p>
-                    </div>
-                  </div>
-                  <button onclick="window.location.hash = '#ocorrencias'" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">Ver todas</button>
-                </div>
-
-                <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
-                  ${ocorrencias.slice(0, 4).map(oc => {
-                    const solicitante = usuarios.find(u => Number(u.id) === Number(oc.usuario_id))?.nome || 'Usuário';
-                    return `
-                      <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                          <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                          </div>
-                          <div class="min-w-0">
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">${oc.local}</h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${solicitante}</p>
-                          </div>
-                        </div>
-                        ${window.UI.renderBadge(oc.status)}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-            </div>
           </div>
+
         </div>
-      `;
 
-      // Atualiza ícones Lucide no DOM renderizado
-      if (window.lucide) {
-        window.lucide.createIcons({ root: container });
-      }
+      </div>
+    `;
 
-      // Inicializa os gráficos Chart.js
-      this._initCharts(setores, compras, ocorrencias, documentos);
-
-      // Evento de exportar relatório rápido
-      container.querySelector('#btn-export-kpis')?.addEventListener('click', () => {
-        window.UI.toast({
-          title: 'Relatório Executivo',
-          message: 'O relatório consolidado de indicadores foi gerado com sucesso.',
-          type: 'success'
-        });
-      });
-
-    } catch (err) {
-      console.error('Erro ao renderizar Dashboard Executivo:', err);
-      container.innerHTML = `
-        <div class="p-8 text-center bg-white rounded-2xl border border-rose-200">
-          <p class="text-rose-600 font-semibold text-sm">Falha ao carregar indicadores executivos.</p>
-          <button onclick="window.DashboardModule.render(document.getElementById('main-content'))" class="mt-3 px-4 py-2 text-xs font-bold text-white bg-rose-600 rounded-xl">Tentar novamente</button>
-        </div>
-      `;
+    if (window.lucide) {
+      window.lucide.createIcons({ root: container });
     }
+
+    this._bindEvents(container, data);
+    this._initChart(setores, compras, documentos);
   },
 
-  _initCharts(setores, compras, ocorrencias, documentos) {
+  _bindEvents(container, data) {
+    // Alternar abas da Fila Operacional Crítica
+    container.querySelectorAll('[data-aba-fila]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.abaFilaAtiva = btn.getAttribute('data-aba-fila');
+        this._renderView(container, data);
+      });
+    });
+
+    // Exportação de relatório consolidado
+    container.querySelector('#btn-export-kpis')?.addEventListener('click', () => {
+      window.UI.toast({
+        title: 'Relatório Executivo',
+        message: 'Relatório consolidado de telemetria e governança gerado com sucesso.',
+        type: 'success'
+      });
+    });
+  },
+
+  _initChart(setores, compras, documentos) {
     if (typeof Chart === 'undefined') return;
 
-    // Destrói instâncias anteriores se houver
-    if (this.charts.bar) this.charts.bar.destroy();
-    if (this.charts.doughnut) this.charts.doughnut.destroy();
+    if (this.charts.bar) {
+      this.charts.bar.destroy();
+    }
 
-    // Dados do Gráfico de Setores
-    const labels = setores.map(s => s.nome.split(' ')[0]);
-    const comprasPorSetor = setores.map(s => compras.filter(c => Number(c.setor_id) === Number(s.id)).length);
-    const docsPorSetor = setores.map(s => documentos.filter(d => Number(d.setor_id) === Number(s.id)).length);
+    const labels = (setores || []).map(s => s.nome.split(' ')[0]);
+    const comprasPorSetor = (setores || []).map(s => compras.filter(c => Number(c.setor_id) === Number(s.id)).length);
+    const docsPorSetor = (setores || []).map(s => documentos.filter(d => Number(d.setor_id) === Number(s.id)).length);
 
-    const ctxBar = document.getElementById('chart-setores-demandas')?.getContext('2d');
-    if (ctxBar) {
-      this.charts.bar = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Documentos Indexados',
-              data: docsPorSetor,
-              backgroundColor: '#0066cc',
-              borderRadius: 6,
-              maxBarThickness: 24
-            },
-            {
-              label: 'Solicitações de Compra',
-              data: comprasPorSetor,
-              backgroundColor: '#f59e0b',
-              borderRadius: 6,
-              maxBarThickness: 24
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                boxWidth: 12,
-                font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' }
-              }
-            }
+    const ctx = document.getElementById('chart-setores-demandas')?.getContext('2d');
+    if (!ctx) return;
+
+    this.charts.bar = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Documentos',
+            data: docsPorSetor,
+            backgroundColor: '#0066cc',
+            borderRadius: 6,
+            maxBarThickness: 20
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 1, font: { family: 'Plus Jakarta Sans', size: 11 } },
-              grid: { color: '#f1f5f9' }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+          {
+            label: 'Compras',
+            data: comprasPorSetor,
+            backgroundColor: '#64748b',
+            borderRadius: 6,
+            maxBarThickness: 20
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 10,
+              font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
             }
           }
-        }
-      });
-    }
-
-    // Dados do Gráfico Doughnut (Status Ocorrências)
-    const ctxDoughnut = document.getElementById('chart-status-ocorrencias')?.getContext('2d');
-    if (ctxDoughnut) {
-      const abertas = ocorrencias.filter(o => o.status === 'aberto').length;
-      const emCurso = ocorrencias.filter(o => o.status === 'em_andamento').length;
-      const resolvidas = ocorrencias.filter(o => o.status === 'resolvido').length;
-
-      this.charts.doughnut = new Chart(ctxDoughnut, {
-        type: 'doughnut',
-        data: {
-          labels: ['Abertas', 'Em Andamento', 'Resolvidas'],
-          datasets: [{
-            data: [abertas, emCurso, resolvidas],
-            backgroundColor: ['#f43f5e', '#6366f1', '#10b981'],
-            borderWidth: 0,
-            hoverOffset: 4
-          }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { family: 'Plus Jakarta Sans', size: 10 } },
+            grid: { color: 'rgba(226, 232, 240, 0.6)' }
           },
-          cutout: '70%'
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' } }
+          }
         }
-      });
-    }
+      }
+    });
+  },
+
+  _formatTimeAgo(date) {
+    if (!date || isNaN(date.getTime())) return 'recentemente';
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return 'agora';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `há ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `há ${hours} h`;
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   }
 };

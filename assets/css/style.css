@@ -516,4 +516,171 @@ html:not(.dark) table tbody tr:hover {
   background-color: rgba(30, 41, 59, 0.5);
 }
 
+/* ==========================================================================
+   STRIPE / VERCEL STYLE - BENTO GRID & TELEMETRY SYSTEM
+   ========================================================================== */
+.bento-surface {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .bento-surface {
+  background-color: #0b1320;
+  border-color: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.bento-surface-subtle {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+}
+
+.dark .bento-surface-subtle {
+  background-color: rgba(15, 23, 42, 0.6);
+  border-color: rgba(30, 41, 59, 0.6);
+}
+
+.telemetry-strip {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 640px) {
+  .telemetry-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .telemetry-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dark .telemetry-strip {
+  background-color: #0b1320;
+  border-color: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.telemetry-cell {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.telemetry-cell .label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.375rem;
+}
+
+.dark .telemetry-cell .label {
+  color: #94a3b8;
+}
+
+.telemetry-cell .value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.telemetry-cell .subtext {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  margin-top: 0.375rem;
+  font-weight: 500;
+}
+
+.dark .telemetry-cell .subtext {
+  color: #64748b;
+}
+
+@media (min-width: 640px) {
+  .telemetry-cell {
+    border-bottom: none;
+    border-right: 1px solid #f1f5f9;
+  }
+  .telemetry-cell:nth-child(2n) {
+    border-right: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .telemetry-cell {
+    border-right: 1px solid #f1f5f9;
+  }
+  .telemetry-cell:last-child {
+    border-right: none;
+  }
+}
+
+.dark .telemetry-cell {
+  border-color: rgba(30, 41, 59, 0.8);
+}
+
+.telemetry-cell:hover {
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+.dark .telemetry-cell:hover {
+  background-color: rgba(30, 41, 59, 0.35);
+}
+
+/* Timeline e Feed de Atividades Vercel Style */
+.feed-node {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.feed-node::before {
+  content: '';
+  position: absolute;
+  left: 0.375rem;
+  top: 1.25rem;
+  bottom: -0.75rem;
+  width: 1.5px;
+  background-color: #e2e8f0;
+}
+
+.dark .feed-node::before {
+  background-color: rgba(51, 65, 85, 0.8);
+}
+
+.feed-node:last-child::before {
+  display: none;
+}
+
+.feed-node-dot {
+  position: absolute;
+  left: 0;
+  top: 0.375rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  border: 2px solid #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+.dark .feed-node-dot {
+  background-color: #0b1320;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+
 

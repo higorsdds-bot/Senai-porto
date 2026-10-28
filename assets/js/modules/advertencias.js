@@ -78,270 +78,302 @@ window.AdvertenciasModule = {
 
     container.innerHTML = `
       <div class="space-y-6">
-        <!-- Cabeçalho -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <!-- Sub-header de Governança & Disciplina -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
             <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 tracking-wide uppercase">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 tracking-wider uppercase">
                 Governança & Disciplina
               </span>
-              <span class="text-xs text-slate-400">• Homologação pelo Administrador Geral</span>
+              <span class="text-xs text-slate-400 font-medium">• Competência Exclusiva do Administrador Geral</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Gestão de Advertências</h1>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Homologação de Advertências</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
               ${ehAdminGeral 
-                ? 'Painel de Homologação: Avalie, aceite ou rejeite advertências disciplinares solicitadas para os colaboradores' 
-                : 'Registro e acompanhamento formal de medidas disciplinares sob apreciação do Administrador Geral'}
+                ? 'Painel Executivo: Avaliação, chancela e homologação de medidas disciplinares com validade jurídica.' 
+                : 'Acompanhamento formal e instrução de advertências sob apreciação da Direção Geral.'}
             </p>
           </div>
-          <button id="btn-nova-advertencia" class="btn-primary bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20">
-            <i data-lucide="shield-alert" class="w-4 h-4"></i>
-            Registrar Advertência
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="btn-nova-advertencia" class="btn-primary bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20">
+              <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              Nova Advertência
+            </button>
+          </div>
         </div>
 
-        <!-- Banner de Destaque da Fila de Aceite para o Administrador Geral -->
+        <!-- TELEMETRY STRIP INTEGRADA (Sem aspecto de cards genéricos) -->
+        <div class="telemetry-strip grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800">
+          <div class="telemetry-cell">
+            <div class="label">Total Geral</div>
+            <div class="value text-slate-900 dark:text-white font-mono">${total}</div>
+            <div class="subtext">Registros no sistema</div>
+          </div>
+          <div id="card-kpi-pendentes" class="telemetry-cell cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-colors ${pendentes > 0 ? 'bg-amber-50/30 dark:bg-amber-950/10' : ''}">
+            <div class="label text-amber-600 dark:text-amber-400 flex items-center justify-between">
+              <span>Aguardando Aceite</span>
+              ${pendentes > 0 ? '<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>' : ''}
+            </div>
+            <div class="value text-amber-600 dark:text-amber-400 font-mono">${pendentes}</div>
+            <div class="subtext">${ehAdminGeral ? 'Clique para homologar' : 'Aguardando Admin Geral'}</div>
+          </div>
+          <div class="telemetry-cell">
+            <div class="label text-emerald-600 dark:text-emerald-400">Aceitas / Aplicadas</div>
+            <div class="value text-emerald-600 dark:text-emerald-400 font-mono">${aplicadas}</div>
+            <div class="subtext">Homologadas pelo Admin</div>
+          </div>
+          <div class="telemetry-cell">
+            <div class="label">Rejeitadas</div>
+            <div class="value text-slate-600 dark:text-slate-400 font-mono">${rejeitadas}</div>
+            <div class="subtext">Não aprovadas</div>
+          </div>
+          <div class="telemetry-cell">
+            <div class="label">Revogadas</div>
+            <div class="value text-slate-500 dark:text-slate-400 font-mono">${revogadas}</div>
+            <div class="subtext">Anuladas formalmente</div>
+          </div>
+        </div>
+
+        <!-- BANNER DE HOMOLOGAÇÃO DO ADMINISTRADOR GERAL (QUANDO HOUVER PENDÊNCIAS) -->
         ${ehAdminGeral && pendentes > 0 ? `
-          <div class="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-400 dark:border-amber-600/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-400/80 dark:border-amber-500/40 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-              <div class="p-3 bg-amber-500 text-white rounded-xl shadow-md shadow-amber-500/30 shrink-0">
-                <i data-lucide="scale" class="w-6 h-6"></i>
+              <div class="p-2.5 bg-amber-500 text-white rounded-lg shadow-sm shrink-0">
+                <i data-lucide="scale" class="w-5 h-5"></i>
               </div>
               <div>
                 <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                    Fila de Aceite do Administrador Geral
+                  <h3 class="text-xs font-mono font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Pendência de Homologação Institucional
                   </h3>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-black bg-amber-500 text-white animate-pulse">
-                    ${pendentes} aguardando seu aceite
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500 text-white animate-pulse">
+                    ${pendentes} aguardando aceite
                   </span>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                  Existem advertências disciplinares pendentes que dependem exclusivamente do seu <strong>aceite formal</strong> para entrar em vigência oficial.
+                <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  Como Administrador Geral, seu aceite formal é obrigatório para validação jurídica destas medidas no HUB ES+.
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-2 self-end md:self-auto shrink-0">
-              <button id="btn-ver-pendentes-banner" class="px-4 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2 shadow-sm transition-all cursor-pointer">
-                <i data-lucide="inbox" class="w-4 h-4"></i>
-                Visualizar Fila de Aceite (${pendentes})
-              </button>
-            </div>
+            <button id="btn-ver-pendentes-banner" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2 shadow-sm transition-all cursor-pointer shrink-0">
+              <i data-lucide="inbox" class="w-4 h-4"></i>
+              Filtrar Fila de Aceite (${pendentes})
+            </button>
           </div>
         ` : ''}
 
-        <!-- KPIs Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Geral</span>
-              <div class="p-2 bg-slate-100 dark:bg-slate-700/60 rounded-xl text-slate-600 dark:text-slate-300">
-                <i data-lucide="files" class="w-4 h-4"></i>
+        <!-- BENTO GRID ASSIMÉTRICO (70% Fila Operacional / 30% Governança e Regras) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- COLUNA PRINCIPAL (70% - lg:col-span-8) -->
+          <div class="lg:col-span-8 space-y-4">
+            
+            <!-- Barra de Abas e Pesquisa Integrada -->
+            <div class="bento-surface p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+                <button data-filtro-status="TODOS" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono ${this.filtroStatus === 'TODOS' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                  Todas (${total})
+                </button>
+                <button data-filtro-status="PENDENTE" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 font-mono ${this.filtroStatus === 'PENDENTE' ? 'bg-amber-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                  <span class="w-1.5 h-1.5 rounded-full ${pendentes > 0 ? 'bg-amber-400 animate-pulse' : 'bg-slate-400'}"></span>
+                  Pendentes (${pendentes})
+                </button>
+                <button data-filtro-status="APLICADA" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono ${this.filtroStatus === 'APLICADA' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                  Aceitas (${aplicadas})
+                </button>
+                <button data-filtro-status="REJEITADA" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer font-mono ${this.filtroStatus === 'REJEITADA' ? 'bg-slate-700 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                  Rejeitadas (${rejeitadas})
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <select id="select-filtro-gravidade" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                  <option value="TODOS" ${this.filtroGravidade === 'TODOS' ? 'selected' : ''}>Gravidade: Todas</option>
+                  <option value="LEVE" ${this.filtroGravidade === 'LEVE' ? 'selected' : ''}>Leve</option>
+                  <option value="MEDIA" ${this.filtroGravidade === 'MEDIA' ? 'selected' : ''}>Média</option>
+                  <option value="GRAVE" ${this.filtroGravidade === 'GRAVE' ? 'selected' : ''}>Grave</option>
+                </select>
+
+                <div class="relative w-full sm:w-48">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                  <input 
+                    id="input-busca-advertencias" 
+                    type="text" 
+                    value="${this.filtroBusca}" 
+                    placeholder="Filtrar por nome..." 
+                    class="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  />
+                </div>
               </div>
             </div>
-            <p class="text-2xl font-black text-slate-900 dark:text-white mt-2">${total}</p>
-            <p class="text-[11px] text-slate-400 mt-1">Registros totais</p>
-          </div>
 
-          <div id="card-kpi-pendentes" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border ${pendentes > 0 ? 'border-amber-400 dark:border-amber-600/80 bg-amber-50/30 dark:bg-amber-950/20 ring-2 ring-amber-400/20' : 'border-slate-200 dark:border-slate-700'} shadow-sm cursor-pointer transition-all hover:scale-[1.01]">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                ${ehAdminGeral ? 'Aguardando Seu Aceite' : 'Pendentes'}
-              </span>
-              <div class="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-700 dark:text-amber-300">
-                <i data-lucide="clock" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <p class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-2">${pendentes}</p>
-            <p class="text-[11px] text-slate-400 mt-1">
-              ${ehAdminGeral ? 'Clique para aceitar' : 'Aguardando Admin Geral'}
-            </p>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Aceitas / Aplicadas</span>
-              <div class="p-2 bg-rose-100 dark:bg-rose-900/40 rounded-xl text-rose-700 dark:text-rose-300">
-                <i data-lucide="alert-octagon" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <p class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">${aplicadas}</p>
-            <p class="text-[11px] text-slate-400 mt-1">Homologadas pelo Admin Geral</p>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Rejeitadas</span>
-              <div class="p-2 bg-slate-100 dark:bg-slate-700/60 rounded-xl text-slate-600 dark:text-slate-300">
-                <i data-lucide="x-circle" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <p class="text-2xl font-black text-slate-600 dark:text-slate-300 mt-2">${rejeitadas}</p>
-            <p class="text-[11px] text-slate-400 mt-1">Não aceitas</p>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Revogadas</span>
-              <div class="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl text-emerald-700 dark:text-emerald-300">
-                <i data-lucide="undo-2" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <p class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2">${revogadas}</p>
-            <p class="text-[11px] text-slate-400 mt-1">Anuladas formalmente</p>
-          </div>
-        </div>
-
-        <!-- Filtros e Barra de Pesquisa -->
-        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <button data-filtro-status="TODOS" class="px-3 py-1.5 rounded-xl transition-all cursor-pointer ${this.filtroStatus === 'TODOS' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
-              Todas (${total})
-            </button>
-            <button data-filtro-status="PENDENTE" class="px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${this.filtroStatus === 'PENDENTE' ? 'bg-amber-600 text-white font-bold shadow-sm shadow-amber-600/30' : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
-              <span class="w-2 h-2 rounded-full ${pendentes > 0 ? 'bg-amber-400 animate-pulse' : 'bg-slate-400'}"></span>
-              Aguardando Aceite (${pendentes})
-            </button>
-            <button data-filtro-status="APLICADA" class="px-3 py-1.5 rounded-xl transition-all cursor-pointer ${this.filtroStatus === 'APLICADA' ? 'bg-rose-600 text-white font-bold shadow-sm shadow-rose-600/30' : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
-              Aceitas / Aplicadas (${aplicadas})
-            </button>
-            <button data-filtro-status="REJEITADA" class="px-3 py-1.5 rounded-xl transition-all cursor-pointer ${this.filtroStatus === 'REJEITADA' ? 'bg-slate-700 text-white font-bold' : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
-              Rejeitadas (${rejeitadas})
-            </button>
-            <button data-filtro-status="REVOGADA" class="px-3 py-1.5 rounded-xl transition-all cursor-pointer ${this.filtroStatus === 'REVOGADA' ? 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30' : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
-              Revogadas (${revogadas})
-            </button>
-          </div>
-
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <select id="select-filtro-gravidade" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 cursor-pointer">
-              <option value="TODOS" ${this.filtroGravidade === 'TODOS' ? 'selected' : ''}>Todas as Gravidades</option>
-              <option value="LEVE" ${this.filtroGravidade === 'LEVE' ? 'selected' : ''}>Leve</option>
-              <option value="MEDIA" ${this.filtroGravidade === 'MEDIA' ? 'selected' : ''}>Média</option>
-              <option value="GRAVE" ${this.filtroGravidade === 'GRAVE' ? 'selected' : ''}>Grave</option>
-            </select>
-
-            <div class="relative w-full sm:w-64">
-              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-              <input 
-                id="input-busca-advertencias" 
-                type="text" 
-                value="${this.filtroBusca}" 
-                placeholder="Buscar colaborador ou infração..." 
-                class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabela de Advertências -->
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th class="p-3.5">Colaborador Advertido</th>
-                  <th class="p-3.5">Motivo / Infração</th>
-                  <th class="p-3.5">Gravidade</th>
-                  <th class="p-3.5">Status Formal</th>
-                  <th class="p-3.5">Solicitante</th>
-                  <th class="p-3.5">Data Ocorrência</th>
-                  <th class="p-3.5 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                ${filtradas.length === 0 ? `
-                  <tr>
-                    <td colspan="7" class="p-10 text-center text-slate-400">
-                      <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-                      Nenhum registro de advertência localizado com os filtros selecionados.
-                    </td>
-                  </tr>
-                ` : filtradas.map((item, idx) => {
-                  const dataOcorr = item.data_ocorrencia 
-                    ? new Date(item.data_ocorrencia).toLocaleDateString('pt-BR') 
-                    : '-';
-
-                  const badgeStatus = {
-                    'PENDENTE': 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-700',
-                    'APLICADA': 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-700',
-                    'REJEITADA': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700',
-                    'REVOGADA': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
-                  }[item.status] || 'bg-slate-100 text-slate-700';
-
-                  const badgeGravidade = {
-                    'LEVE': 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-                    'MEDIA': 'bg-orange-50 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-                    'GRAVE': 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800'
-                  }[item.gravidade] || 'bg-slate-100 text-slate-700';
-
-                  const statusTexto = {
-                    'PENDENTE': 'Aguardando Aceite',
-                    'APLICADA': 'Aceita / Aplicada',
-                    'REJEITADA': 'Rejeitada',
-                    'REVOGADA': 'Revogada'
-                  }[item.status] || item.status;
-
-                  const nomeEscapado = (item.colaborador_nome || '').replace(/'/g, "\\'");
-                  const ehPendente = item.status === 'PENDENTE';
-                  const linhaDestaque = ehPendente && ehAdminGeral ? 'bg-amber-50/40 dark:bg-amber-950/15' : (idx % 2 === 1 ? 'bg-slate-50/40 dark:bg-slate-850/40' : '');
-
-                  return `
-                    <tr class="${linhaDestaque} hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
-                      <td class="p-3.5">
-                        <div class="font-bold text-slate-900 dark:text-white">${item.colaborador_nome}</div>
-                        <div class="text-[11px] text-slate-400">${item.colaborador_email || item.colaborador_perfil || ''}</div>
-                      </td>
-                      <td class="p-3.5">
-                        <div class="font-semibold text-slate-800 dark:text-slate-200 max-w-xs truncate">${item.motivo}</div>
-                        <div class="text-[11px] text-slate-400 max-w-xs truncate">${item.descricao}</div>
-                      </td>
-                      <td class="p-3.5">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeGravidade}">
-                          ${item.gravidade}
-                        </span>
-                      </td>
-                      <td class="p-3.5">
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeStatus}">
-                          ${statusTexto}
-                        </span>
-                      </td>
-                      <td class="p-3.5 text-slate-600 dark:text-slate-300">
-                        ${item.solicitante_nome}
-                      </td>
-                      <td class="p-3.5 text-slate-500 whitespace-nowrap">
-                        ${dataOcorr}
-                      </td>
-                      <td class="p-3.5 text-right whitespace-nowrap">
-                        <div class="flex items-center justify-end gap-1.5">
-                          ${ehAdminGeral && ehPendente ? `
-                            <button onclick="window.AdvertenciasModule.aceitar(${item.id}, '${nomeEscapado}')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 transition-all cursor-pointer" title="Aceitar Advertência Formalmente">
-                              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
-                              <span>Aceitar</span>
-                            </button>
-                            <button onclick="window.AdvertenciasModule.rejeitar(${item.id}, '${nomeEscapado}')" class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1.5 shadow-sm shadow-rose-600/20 transition-all cursor-pointer" title="Rejeitar Solicitação">
-                              <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-                              <span>Rejeitar</span>
-                            </button>
-                          ` : ''}
-
-                          <button onclick="window.AdvertenciasModule.abrirDetalhes(${item.id})" class="btn-action-table action-primary" title="Visualizar Detalhes">
-                            <i data-lucide="eye" class="w-4 h-4"></i>
-                          </button>
-
-                          ${ehAdminGeral && item.status === 'APLICADA' ? `
-                            <button onclick="window.AdvertenciasModule.revogar(${item.id}, '${nomeEscapado}')" class="btn-action-table text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40" title="Revogar Advertência">
-                              <i data-lucide="undo-2" class="w-4 h-4"></i>
-                            </button>
-                          ` : ''}
-                        </div>
-                      </td>
+            <!-- Tabela de Alta Densidade Scannable -->
+            <div class="bento-surface overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50/80 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 font-mono text-[10px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th class="p-3">Colaborador</th>
+                      <th class="p-3">Infração / Motivo</th>
+                      <th class="p-3">Gravidade</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3">Data</th>
+                      <th class="p-3 text-right">Ações</th>
                     </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-sans">
+                    ${filtradas.length === 0 ? `
+                      <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-400">
+                          <i data-lucide="inbox" class="w-6 h-6 mx-auto mb-2 opacity-40"></i>
+                          Nenhum registro encontrado para os filtros selecionados.
+                        </td>
+                      </tr>
+                    ` : filtradas.map((item, idx) => {
+                      const dataOcorr = item.data_ocorrencia 
+                        ? new Date(item.data_ocorrencia).toLocaleDateString('pt-BR') 
+                        : '-';
+
+                      const badgeStatus = {
+                        'PENDENTE': 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+                        'APLICADA': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
+                        'REJEITADA': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700',
+                        'REVOGADA': 'bg-slate-100 text-slate-600 dark:bg-slate-850 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                      }[item.status] || 'bg-slate-100 text-slate-700';
+
+                      const badgeGravidade = {
+                        'LEVE': 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+                        'MEDIA': 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                        'GRAVE': 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                      }[item.gravidade] || 'bg-slate-100 text-slate-700';
+
+                      const statusTexto = {
+                        'PENDENTE': 'Aguardando Aceite',
+                        'APLICADA': 'Homologada',
+                        'REJEITADA': 'Rejeitada',
+                        'REVOGADA': 'Revogada'
+                      }[item.status] || item.status;
+
+                      const nomeEscapado = (item.colaborador_nome || '').replace(/'/g, "\\'");
+                      const ehPendente = item.status === 'PENDENTE';
+                      const rowClass = ehPendente && ehAdminGeral 
+                        ? 'bg-amber-50/30 dark:bg-amber-950/10' 
+                        : (idx % 2 === 1 ? 'bg-slate-50/30 dark:bg-slate-900/30' : '');
+
+                      return `
+                        <tr class="${rowClass} hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                          <td class="p-3">
+                            <div class="font-bold text-slate-900 dark:text-white">${item.colaborador_nome}</div>
+                            <div class="text-[11px] text-slate-400 font-mono">${item.colaborador_perfil || item.colaborador_email || ''}</div>
+                          </td>
+                          <td class="p-3">
+                            <div class="font-semibold text-slate-800 dark:text-slate-200 max-w-xs truncate">${item.motivo}</div>
+                            <div class="text-[11px] text-slate-400 max-w-xs truncate">${item.descricao}</div>
+                          </td>
+                          <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeGravidade}">
+                              ${item.gravidade}
+                            </span>
+                          </td>
+                          <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeStatus}">
+                              ${statusTexto}
+                            </span>
+                          </td>
+                          <td class="p-3 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                            ${dataOcorr}
+                          </td>
+                          <td class="p-3 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1.5">
+                              ${ehAdminGeral && ehPendente ? `
+                                <button onclick="window.AdvertenciasModule.aceitar(${item.id}, '${nomeEscapado}')" class="px-2.5 py-1 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 shadow-sm transition-all cursor-pointer" title="Aceitar / Homologar Advertência">
+                                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                  <span>Aceitar</span>
+                                </button>
+                                <button onclick="window.AdvertenciasModule.rejeitar(${item.id}, '${nomeEscapado}')" class="px-2 py-1 text-xs font-bold rounded bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1 shadow-sm transition-all cursor-pointer" title="Rejeitar Pedido">
+                                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                  <span>Rejeitar</span>
+                                </button>
+                              ` : ''}
+
+                              <button onclick="window.AdvertenciasModule.abrirDetalhes(${item.id})" class="btn-action-table action-primary" title="Ver Detalhes">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                              </button>
+
+                              ${ehAdminGeral && item.status === 'APLICADA' ? `
+                                <button onclick="window.AdvertenciasModule.revogar(${item.id}, '${nomeEscapado}')" class="btn-action-table text-slate-400 hover:text-amber-500" title="Revogar Medida">
+                                  <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                              ` : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
+
+          <!-- COLUNA LATERAL DE GOVERNANÇA (30% - lg:col-span-4) -->
+          <div class="lg:col-span-4 space-y-4">
+            
+            <!-- Card de Prerrogativa Institucional -->
+            <div class="bento-surface p-4 space-y-3">
+              <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+                <i data-lucide="shield-check" class="w-4 h-4 text-rose-600 dark:text-rose-400"></i>
+                <h3 class="text-xs font-mono font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Marco Institucional HUB ES+
+                </h3>
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                As advertências disciplinares constituem atos de gestão de pessoas sob chancela estrita do <strong>Administrador Geral</strong>.
+              </p>
+              <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-[11px] space-y-2">
+                <div class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0"></span>
+                  <span class="text-slate-700 dark:text-slate-300"><strong>Leve:</strong> Advertência verbal formalizada. Sem bloqueio sistêmico.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1 shrink-0"></span>
+                  <span class="text-slate-700 dark:text-slate-300"><strong>Média:</strong> Advertência formal com suspensão temporária de acessos.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1 shrink-0"></span>
+                  <span class="text-slate-700 dark:text-slate-300"><strong>Grave:</strong> Medida rescisória com bloqueio imediato e apuração.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumo Operacional de Governança -->
+            <div class="bento-surface p-4 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span class="text-xs font-mono font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Conformidade & SLA
+                </span>
+                <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">100% REGISTRADO</span>
+              </div>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                  <span class="text-slate-500">Taxa de Homologação</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-white">
+                    ${total > 0 ? Math.round((aplicadas / total) * 100) : 0}%
+                  </span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                  <span class="text-slate-500">Tempo Médio de Aceite</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-white">&lt; 24h</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                  <span class="text-slate-500">Auditoria TiDB</span>
+                  <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">Ativa & Segura</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
     `;
