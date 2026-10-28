@@ -25,6 +25,7 @@ A plataforma centraliza e orquestra 11 áreas operacionais cruciais:
 9. **Controle de Limpeza:** Cronograma, checklists e acompanhamento de higienização de ambientes.
 10. **Controle de Equipamentos:** Cadastro patrimonial, rastreamento de localização e manutenções.
 11. **Auditoria & Governança (Admin Only):** Monitoramento de usuários online via heartbeat em tempo real, aprovação de novos cadastros (status `PENDENTE`), gestão de status e trilha completa de logs auditados.
+12. **Gestão de Advertências Disciplinares:** Registro e acompanhamento formal de medidas disciplinares com trilha de auditoria, onde o **Administrador Geral** (`ADMIN`) atua como a autoridade institucional responsável por **aceitar (homologar)** ou rejeitar as advertências submetidas.
 
 ---
 

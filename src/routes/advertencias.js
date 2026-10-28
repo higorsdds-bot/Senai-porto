@@ -13,13 +13,13 @@ const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
 
-// Middleware adicional de segurança estrita: apenas ADMIN ou ADMINISTRADOR
+// Middleware adicional de segurança estrita: apenas ADMIN, ADMINISTRADOR ou GESTOR
 function checkAdminOuGestor(req, res, next) {
-  const perfil = req.usuario && req.usuario.perfil ? req.usuario.perfil.toUpperCase() : '';
-  if (!['ADMIN', 'ADMINISTRADOR'].includes(perfil)) {
+  const perfil = req.usuario && req.usuario.perfil ? String(req.usuario.perfil).toUpperCase().trim() : '';
+  if (!['ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR', 'ADMINISTRACAO', 'GESTOR'].includes(perfil)) {
     return res.status(403).json({
       success: false,
-      message: 'Acesso restrito ao Administrador Geral e Administradores.'
+      message: 'Acesso restrito ao Administrador Geral, Administradores e Gestores.'
     });
   }
   next();
@@ -108,10 +108,13 @@ router.get('/:id', requirePermission('advertencias.visualizar'), async (req, res
   }
 });
 
-// POST /api/v1/advertencias - Solicitar ou aplicar advertência
+// POST /api/v1/advertencias - Solicitar ou registrar advertência
+// Regra: É o Administrador Geral que tem a competência de aceitar a advertência.
+// Toda advertência entra como PENDENTE de aceite, a menos que o próprio Admin Geral marque aceite imediato.
 router.post('/', requirePermission('advertencias.solicitar'), async (req, res) => {
-  const { colaborador_id, motivo, descricao, gravidade, data_ocorrencia } = req.body;
-  const ehAdminGeral = req.usuario.perfil === 'ADMIN';
+  const { colaborador_id, motivo, descricao, gravidade, data_ocorrencia, aceitar_imediatamente } = req.body;
+  const perfilUsuario = String(req.usuario.perfil || '').toUpperCase().trim();
+  const ehAdminGeral = perfilUsuario === 'ADMIN' || perfilUsuario === 'ADMIN_GERAL';
 
   const erros = {};
   if (!colaborador_id) erros.colaborador_id = 'Colaborador é obrigatório.';
@@ -139,15 +142,20 @@ router.post('/', requirePermission('advertencias.solicitar'), async (req, res) =
     }
     const nomeColaborador = cols[0].nome;
 
-    // Regra: Admin Geral aplica diretamente (APLICADA). Administrador solicita (PENDENTE).
-    const statusInicial = ehAdminGeral ? 'APLICADA' : 'PENDENTE';
-    const homologadorId = ehAdminGeral ? req.usuario.id : null;
-    const dataDecisao = ehAdminGeral ? new Date() : null;
+    // Regra de Negócio:
+    // O Administrador Geral é quem tem a atribuição de aceitar a advertência.
+    // Qualquer registro entra como PENDENTE para análise e aceite do Admin Geral.
+    // Se o próprio Admin Geral estiver cadastrando e marcou aceitar_imediatamente, homologa no ato.
+    const deveAceitarJa = ehAdminGeral && (aceitar_imediatamente === true || aceitar_imediatamente === '1' || aceitar_imediatamente === 'true');
+    const statusInicial = deveAceitarJa ? 'APLICADA' : 'PENDENTE';
+    const homologadorId = deveAceitarJa ? req.usuario.id : null;
+    const dataDecisao = deveAceitarJa ? new Date() : null;
+    const motivoDecisao = deveAceitarJa ? 'Aceita e aplicada diretamente pelo Administrador Geral.' : null;
 
     const [result] = await pool.query(
       `INSERT INTO advertencias 
-        (colaborador_id, solicitante_id, homologador_id, motivo, descricao, gravidade, status, data_ocorrencia, data_decisao)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (colaborador_id, solicitante_id, homologador_id, motivo, descricao, gravidade, status, data_ocorrencia, motivo_decisao, data_decisao)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         colaborador_id,
         req.usuario.id,
@@ -157,14 +165,15 @@ router.post('/', requirePermission('advertencias.solicitar'), async (req, res) =
         gravidadeNorm,
         statusInicial,
         data_ocorrencia,
+        motivoDecisao,
         dataDecisao
       ]
     );
 
-    const acaoAuditoria = ehAdminGeral ? 'APLICAR_ADVERTENCIA' : 'SOLICITAR_ADVERTENCIA';
-    const descAuditoria = ehAdminGeral
-      ? `Advertência [${gravidadeNorm}] aplicada diretamente ao colaborador ${nomeColaborador} (#${colaborador_id}). Motivo: ${motivo.trim()}`
-      : `Solicitação de advertência [${gravidadeNorm}] enviada para o colaborador ${nomeColaborador} (#${colaborador_id}). Aguardando homologação do Admin Geral.`;
+    const acaoAuditoria = deveAceitarJa ? 'APLICAR_ADVERTENCIA' : 'SOLICITAR_ADVERTENCIA';
+    const descAuditoria = deveAceitarJa
+      ? `Advertência [${gravidadeNorm}] aplicada e aceita diretamente pelo Admin Geral ao colaborador ${nomeColaborador} (#${colaborador_id}). Motivo: ${motivo.trim()}`
+      : `Advertência [${gravidadeNorm}] registrada para o colaborador ${nomeColaborador} (#${colaborador_id}). Enviada para a fila de aceite do Administrador Geral.`;
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,
@@ -178,7 +187,9 @@ router.post('/', requirePermission('advertencias.solicitar'), async (req, res) =
 
     return res.status(201).json({
       success: true,
-      message: ehAdminGeral ? 'Advertência aplicada com sucesso.' : 'Solicitação de advertência enviada para homologação do Administrador Geral.',
+      message: deveAceitarJa
+        ? 'Advertência aplicada com sucesso pelo Administrador Geral.'
+        : 'Advertência registrada com sucesso. Aguardando análise e aceite do Administrador Geral.',
       data: { id: result.insertId, status: statusInicial }
     });
   } catch (err) {
@@ -187,10 +198,14 @@ router.post('/', requirePermission('advertencias.solicitar'), async (req, res) =
   }
 });
 
-// POST /api/v1/advertencias/:id/aprovar - Homologar/Aprovar advertência pendente (Admin Geral)
-router.post('/:id/aprovar', async (req, res) => {
-  if (req.usuario.perfil !== 'ADMIN') {
-    return res.status(403).json({ success: false, message: 'Apenas o Administrador Geral pode homologar advertências.' });
+// POST /api/v1/advertencias/:id/aceitar e /aprovar - Aceitar advertência pendente (Exclusivo Administrador Geral)
+const aceitarAdvertenciaHandler = async (req, res) => {
+  const perfil = String(req.usuario.perfil || '').toUpperCase().trim();
+  if (!['ADMIN', 'ADMIN_GERAL'].includes(perfil)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Apenas o Administrador Geral possui competência para aceitar e homologar advertências disciplinares.'
+    });
   }
 
   const { motivo_decisao } = req.body;
@@ -208,36 +223,44 @@ router.post('/:id/aprovar', async (req, res) => {
 
     const advertencia = rows[0];
     if (advertencia.status !== 'PENDENTE') {
-      return res.status(400).json({ success: false, message: `Não é possível aprovar uma advertência com status ${advertencia.status}.` });
+      return res.status(400).json({ success: false, message: `Não é possível aceitar uma advertência com status ${advertencia.status}.` });
     }
+
+    const parecerFinal = motivo_decisao && motivo_decisao.trim()
+      ? motivo_decisao.trim()
+      : 'Aceita e homologada formalmente pelo Administrador Geral.';
 
     await pool.query(
       `UPDATE advertencias 
        SET status = 'APLICADA', homologador_id = ?, motivo_decisao = ?, data_decisao = NOW()
        WHERE id = ?`,
-      [req.usuario.id, motivo_decisao ? motivo_decisao.trim() : 'Homologada pelo Administrador Geral.', req.params.id]
+      [req.usuario.id, parecerFinal, req.params.id]
     );
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,
-      acao: 'HOMOLOGAR_ADVERTENCIA',
+      acao: 'ACEITAR_ADVERTENCIA',
       entidade: 'advertencias',
       entidade_id: parseInt(req.params.id, 10),
-      descricao: `Advertência #${req.params.id} do colaborador ${advertencia.colaborador_nome} foi homologada e aplicada pelo Admin Geral.`,
+      descricao: `Advertência #${req.params.id} do colaborador ${advertencia.colaborador_nome} foi aceita e homologada pelo Administrador Geral. Parecer: ${parecerFinal}`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
-    return res.json({ success: true, message: 'Advertência homologada e aplicada com sucesso.' });
+    return res.json({ success: true, message: 'Advertência aceita e homologada com sucesso pelo Administrador Geral.' });
   } catch (err) {
-    console.error('[ADVERTENCIAS] APROVAR:', err.message);
-    return res.status(500).json({ success: false, message: 'Erro ao aprovar advertência.' });
+    console.error('[ADVERTENCIAS] ACEITAR:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao aceitar advertência disciplinar.' });
   }
-});
+};
+
+router.post('/:id/aceitar', aceitarAdvertenciaHandler);
+router.post('/:id/aprovar', aceitarAdvertenciaHandler);
 
 // POST /api/v1/advertencias/:id/rejeitar - Rejeitar solicitação de advertência (Admin Geral)
 router.post('/:id/rejeitar', async (req, res) => {
-  if (req.usuario.perfil !== 'ADMIN') {
+  const perfil = String(req.usuario?.perfil || '').toUpperCase().trim();
+  if (!['ADMIN', 'ADMIN_GERAL'].includes(perfil)) {
     return res.status(403).json({ success: false, message: 'Apenas o Administrador Geral pode rejeitar solicitações de advertência.' });
   }
 
@@ -288,7 +311,8 @@ router.post('/:id/rejeitar', async (req, res) => {
 
 // POST /api/v1/advertencias/:id/revogar - Revogar advertência aplicada (Admin Geral)
 router.post('/:id/revogar', async (req, res) => {
-  if (req.usuario.perfil !== 'ADMIN') {
+  const perfil = String(req.usuario?.perfil || '').toUpperCase().trim();
+  if (!['ADMIN', 'ADMIN_GERAL'].includes(perfil)) {
     return res.status(403).json({ success: false, message: 'Apenas o Administrador Geral pode revogar advertências.' });
   }
 

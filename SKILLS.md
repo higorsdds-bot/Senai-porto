@@ -14,6 +14,7 @@ Este documento contém o guia prático de todas as **skills** (habilidades técn
 6. [Skill 6: Uploads e Captura de Fotos (Webcam & Arquivos Anexos)](#skill-6-uploads-e-captura-de-fotos-webcam--arquivos-anexos)
 7. [Skill 7: Design System, Modo Escuro e Componentes de UI](#skill-7-design-system-modo-escuro-e-componentes-de-ui)
 8. [Skill 8: Diagnóstico, Teste e Validação da Aplicação](#skill-8-diagnóstico-teste-e-validação-da-aplicação)
+9. [Skill 9: Fluxo de Advertências Disciplinares e Homologação pelo Administrador Geral](#skill-9-fluxo-de-advertências-disciplinares-e-homologação-pelo-administrador-geral)
 
 ---
 
@@ -431,3 +432,21 @@ Executar checagens de integridade antes e depois de alterações no código.
 3. **Execução Local:**
    - Inicie o servidor via terminal: `npm run dev` ou `node server.js`.
    - Teste a rota principal no navegador: `http://localhost:3001/`.
+
+---
+
+### Skill 9: Fluxo de Advertências Disciplinares e Homologação pelo Administrador Geral
+
+#### Objetivo
+Garantir o fluxo disciplinar institucional correto onde qualquer advertência registrada entra na fila institucional e cabe com exclusividade ao **Administrador Geral** (`ADMIN`) analisar, homologar e **aceitar** (ou rejeitar) formalmente a medida.
+
+#### Procedimento Passo a Passo
+1. **Registro / Solicitação:**
+   - Administradores (`ADMINISTRADOR`) e Gestores (`GESTOR`) registram a ocorrência com colaborador, gravidade, data do fato, motivo e descrição circunstanciada dos fatos.
+   - O status inicial padrão é sempre `PENDENTE`.
+2. **Fila de Aceite e Homologação:**
+   - O Administrador Geral (`ADMIN` / `ADMIN_GERAL`) possui visualização destacada da Fila de Aceite com banner de ação prioritária e botões diretos de **"Aceitar"** e **"Rejeitar"**.
+   - No modal de detalhes, o Administrador Geral pode ler o relato completo dos fatos e registrar seu parecer formal de aceite ou rejeição.
+3. **Auditoria e Efeitos:**
+   - Ao aceitar, o status é atualizado para `APLICADA`, registrando `homologador_id`, `motivo_decisao` e `data_decisao`, com log de auditoria `ACEITAR_ADVERTENCIA`.
+   - Apenas o Administrador Geral tem competência para revogar advertências vigentes (`REVOGAR_ADVERTENCIA`).

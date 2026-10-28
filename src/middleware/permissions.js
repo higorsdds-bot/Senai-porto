@@ -56,7 +56,9 @@ const FIXED_PROFILE_PERMISSIONS = {
     'indicadores.visualizar',
     'limpeza.visualizar',
     'equipamentos.visualizar',
-    'usuarios.visualizar'
+    'usuarios.visualizar',
+    'advertencias.visualizar',
+    'advertencias.solicitar'
   ],
   ADMINISTRACAO: [
     'comunicados.visualizar',

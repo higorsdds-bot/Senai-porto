@@ -543,11 +543,15 @@ class ApiService {
     });
   }
 
-  async aprovarAdvertencia(id, motivo_decisao) {
-    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}/aprovar`, {
+  async aceitarAdvertencia(id, motivo_decisao) {
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}/aceitar`, {
       method: 'POST',
       body: JSON.stringify({ motivo_decisao })
     });
+  }
+
+  async aprovarAdvertencia(id, motivo_decisao) {
+    return this.aceitarAdvertencia(id, motivo_decisao);
   }
 
   async rejeitarAdvertencia(id, motivo_decisao) {

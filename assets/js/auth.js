@@ -74,6 +74,14 @@ class AuthManager {
         return p === 'ADMIN' || p === 'ADMINISTRADOR';
     }
 
+    /** Verifica se é o Administrador Geral (autoridade máxima institucional) */
+    isAdminGeral() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return p === 'ADMIN' || p === 'ADMIN_GERAL';
+    }
+
     hasPermission(chave) {
         // Visitante público: só pode ver comunicados e eventos
         if (this.isVisitante()) {
