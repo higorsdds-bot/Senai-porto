@@ -274,15 +274,15 @@ class AppRouter {
       .replace(/[^A-Z0-9]/g, '');
     const isLimpeza = perfil === 'LIMPEZA';
     const isAdministracao = perfil === 'ADMINISTRACAO';
-    document.querySelectorAll('[data-module-label="compras"]').forEach(label => {
+    document.querySelectorAll('#mobile-drawer [data-module-label="compras"]').forEach(label => {
       label.textContent = isLimpeza
         ? 'Solicitação de Materiais'
         : isAdministracao ? 'Entrada em Pedidos' : 'Compras';
     });
-    document.querySelectorAll('[data-module-label="insumos"]').forEach(label => {
+    document.querySelectorAll('#mobile-drawer [data-module-label="insumos"]').forEach(label => {
       label.textContent = isAdministracao ? 'Dar Baixa em Materiais' : 'Controle de Insumos';
     });
-    document.querySelectorAll('[data-module-label="usuarios"]').forEach(label => {
+    document.querySelectorAll('#mobile-drawer [data-module-label="usuarios"]').forEach(label => {
       label.textContent = isAdministracao ? 'Cadastrar Colaborador' : 'Gestão de Usuários';
     });
   }
@@ -307,6 +307,7 @@ class AppRouter {
       if (link.classList.contains('desktop-nav-link')) {
         link.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
         link.classList.add('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
+        link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
       } else {
         link.classList.remove('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');
         link.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
@@ -360,6 +361,18 @@ class AppRouter {
         }
       }
     });
+
+    // Rolagem horizontal suave com a roda do mouse na top navbar desktop
+    const desktopNav = document.getElementById('desktop-top-nav');
+    if (desktopNav) {
+      desktopNav.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          desktopNav.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+    }
+
 
     // Dropdown do Usuário (Higor ⌵)
     const btnUserDropdown = document.getElementById('btn-user-dropdown');
