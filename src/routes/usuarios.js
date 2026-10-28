@@ -16,7 +16,8 @@ const { requirePermission, requireAnyPermission } = require('../middleware/permi
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   notificarNovoCadastroAdmin,
-  buscarEmailsAdministradoresGerais
+  buscarEmailsAdministradoresGerais,
+  enviarEmailCredenciaisCriacaoDireta
 } = require('../services/email');
 
 // Todas as rotas exigem autenticação
@@ -326,10 +327,43 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
       user_agent: req.headers['user-agent']
     });
 
+    // Busca nome do setor para inclusão no e-mail de boas-vindas
+    let setorNome = null;
+    if (setor_id) {
+      try {
+        const [setorRows] = await pool.query('SELECT nome FROM setores WHERE id = ? LIMIT 1', [setor_id]);
+        if (setorRows.length) setorNome = setorRows[0].nome;
+      } catch (_) {}
+    }
+
+    // Dispara envio de e-mail com as credenciais provisórias de acesso
+    let emailStatus = null;
+    try {
+      emailStatus = await enviarEmailCredenciaisCriacaoDireta({
+        usuarioNome: nome.trim(),
+        usuarioEmail: email.toLowerCase().trim(),
+        senhaProvisoria: senha,
+        perfil,
+        setorNome,
+        criadoPorNome: req.usuario?.nome || 'Administrador Geral'
+      });
+    } catch (mailErr) {
+      console.error('[USUARIOS] Erro ao enviar e-mail de boas-vindas com credenciais:', mailErr.message);
+      emailStatus = { success: false, error: mailErr.message };
+    }
+
+    const emailEnviado = Boolean(emailStatus && emailStatus.success);
+
     return res.status(201).json({
       success: true,
-      message: 'Usuário criado com sucesso.',
-      data: { id: result.insertId }
+      message: emailEnviado
+        ? `Usuário criado com sucesso! E-mail com as credenciais institucionais enviado para ${email}.`
+        : `Usuário criado com sucesso. O e-mail automático com a senha provisória foi gerado (Provedor: ${emailStatus?.error || 'Simulação/Console'}).`,
+      data: {
+        id: result.insertId,
+        emailEnviado,
+        emailProvedor: emailStatus?.provedor || null
+      }
     });
   } catch (err) {
     console.error('[USUARIOS] POST:', err.message);

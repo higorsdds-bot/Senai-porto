@@ -280,6 +280,74 @@ router.post('/heartbeat', authMiddleware, async (req, res) => {
   }
 });
 
+// ─── PUT /api/v1/auth/alterar-senha ─────────────────────────────────────────
+// Permite ao usuário logado alterar sua própria senha a qualquer momento
+router.put('/alterar-senha', authMiddleware, async (req, res) => {
+  const { senha_atual, nova_senha } = req.body;
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || null;
+
+  if (!senha_atual) {
+    return res.status(422).json({ success: false, message: 'Informe a senha atual.' });
+  }
+  if (!nova_senha || String(nova_senha).length < 8) {
+    return res.status(422).json({ success: false, message: 'A nova senha precisa ter no mínimo 8 caracteres.' });
+  }
+  if (senha_atual === nova_senha) {
+    return res.status(422).json({ success: false, message: 'A nova senha deve ser diferente da senha atual.' });
+  }
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT id, senha FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [req.usuario.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
+    }
+
+    const senhaCorreta = await bcrypt.compare(String(senha_atual), rows[0].senha);
+    if (!senhaCorreta) {
+      await registrarAuditoria({
+        usuario_id: req.usuario.id,
+        acao: 'ALTERAR_SENHA_FALHOU',
+        entidade: 'usuarios',
+        entidade_id: req.usuario.id,
+        descricao: 'Tentativa de alteração de senha com senha atual incorreta.',
+        ip,
+        user_agent: userAgent
+      });
+      return res.status(401).json({ success: false, message: 'Senha atual incorreta.' });
+    }
+
+    const novoHash = await bcrypt.hash(String(nova_senha), 12);
+    await pool.query(
+      `UPDATE usuarios SET senha = ?, updated_at = NOW() WHERE id = ?`,
+      [novoHash, req.usuario.id]
+    );
+
+    const { clearUserAuthCache } = require('../middleware/auth');
+    clearUserAuthCache(req.usuario.id);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'ALTERAR_SENHA',
+      entidade: 'usuarios',
+      entidade_id: req.usuario.id,
+      descricao: 'Senha alterada com sucesso pelo próprio usuário.',
+      ip,
+      user_agent: userAgent
+    });
+
+    return res.json({ success: true, message: 'Senha alterada com sucesso!' });
+  } catch (err) {
+    console.error('[AUTH] Erro ao alterar senha:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao alterar senha.' });
+  }
+});
+
 // ─── POST /api/v1/auth/solicitar-cadastro ─────────────────────────────────────
 router.post('/solicitar-cadastro', async (req, res) => {
   const ip = getClientIp(req);

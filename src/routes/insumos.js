@@ -38,6 +38,68 @@ router.get('/', requirePermission('insumos.visualizar'), async (req, res) => {
   }
 });
 
+// GET /api/v1/insumos/historico (Rastreabilidade completa de estoque)
+router.get('/historico', requirePermission('insumos.visualizar'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const { tipo, insumo_id, usuario_id, data_inicio, data_fim, q, limit } = req.query;
+
+    let conds = ['1=1'];
+    let params = [];
+
+    if (tipo && tipo !== 'TODOS') {
+      conds.push('em.tipo = ?');
+      params.push(tipo.toUpperCase());
+    }
+
+    if (insumo_id) {
+      conds.push('em.insumo_id = ?');
+      params.push(insumo_id);
+    }
+
+    if (usuario_id) {
+      conds.push('em.usuario_id = ?');
+      params.push(usuario_id);
+    }
+
+    if (data_inicio) {
+      conds.push('DATE(em.created_at) >= ?');
+      params.push(data_inicio);
+    }
+
+    if (data_fim) {
+      conds.push('DATE(em.created_at) <= ?');
+      params.push(data_fim);
+    }
+
+    if (q) {
+      conds.push('(i.nome LIKE ? OR em.observacao LIKE ? OR em.local_origem LIKE ? OR em.local_destino LIKE ? OR u.nome LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    }
+
+    const maxLimit = parseInt(limit, 10) || 200;
+
+    const [rows] = await pool.query(
+      `SELECT em.id, em.insumo_id, em.usuario_id, em.tipo, em.quantidade,
+              em.local_origem, em.local_destino, em.observacao, em.created_at,
+              i.nome AS insumo_nome, i.unidade AS insumo_unidade,
+              u.nome AS usuario_nome, u.email AS usuario_email, u.perfil AS usuario_perfil
+       FROM estoque_movimentacoes em
+       LEFT JOIN insumos i ON i.id = em.insumo_id
+       LEFT JOIN usuarios u ON u.id = em.usuario_id
+       WHERE ${conds.join(' AND ')}
+       ORDER BY em.created_at DESC
+       LIMIT ?`,
+      [...params, maxLimit]
+    );
+
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[INSUMOS/HISTORICO] GET:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao listar histórico de movimentações.' });
+  }
+});
+
 // GET /api/v1/insumos/:id
 router.get('/:id', requirePermission('insumos.visualizar'), async (req, res) => {
   try {
@@ -61,7 +123,7 @@ router.get('/:id/movimentacoes', requirePermission('insumos.visualizar'), async 
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT em.id, em.tipo, em.quantidade, em.observacao, em.created_at,
+      `SELECT em.id, em.tipo, em.quantidade, em.local_origem, em.local_destino, em.observacao, em.created_at,
               em.usuario_id, u.nome AS usuario_nome
        FROM estoque_movimentacoes em
        LEFT JOIN usuarios u ON u.id = em.usuario_id
@@ -123,8 +185,8 @@ router.put('/:id', requirePermission('insumos.editar'), async (req, res) => {
 
 // POST /api/v1/insumos/:id/movimentar
 router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insumos.baixar'), async (req, res) => {
-  const { tipo, quantidade, observacao } = req.body;
-  const tiposValidos = ['ENTRADA', 'SAIDA', 'AJUSTE'];
+  const { tipo, quantidade, local_origem, local_destino, observacao } = req.body;
+  const tiposValidos = ['ENTRADA', 'SAIDA', 'AJUSTE', 'TRANSFERENCIA'];
   const podeMovimentarTudo = await hasPermission(req.usuario, 'insumos.movimentar');
   if (!podeMovimentarTudo && tipo !== 'SAIDA') {
     return res.status(403).json({
@@ -136,6 +198,9 @@ router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insum
   if (!tiposValidos.includes(tipo)) erros.tipo = `Use: ${tiposValidos.join(', ')}`;
   const qtd = Number(quantidade);
   if (!Number.isSafeInteger(qtd) || qtd <= 0) erros.quantidade = 'Quantidade deve ser um inteiro maior que zero.';
+  if (tipo === 'TRANSFERENCIA' && (!local_destino || !local_destino.trim())) {
+    erros.local_destino = 'Informe o Local de Destino para transferências.';
+  }
   if (Object.keys(erros).length > 0) {
     return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
   }
@@ -156,7 +221,7 @@ router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insum
       }
       insumo = insumoRows[0];
 
-      if (tipo === 'SAIDA' && insumo.quantidade < qtd) {
+      if ((tipo === 'SAIDA' || tipo === 'TRANSFERENCIA') && insumo.quantidade < qtd) {
         await conn.rollback();
         return res.status(422).json({
           success: false,
@@ -167,12 +232,21 @@ router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insum
 
       if (tipo === 'ENTRADA') novaQtd = insumo.quantidade + qtd;
       else if (tipo === 'SAIDA') novaQtd = insumo.quantidade - qtd;
+      else if (tipo === 'TRANSFERENCIA') novaQtd = insumo.quantidade; // Estoque global inalterado, deslocamento de localidade
       else novaQtd = qtd;
 
       await conn.query(`UPDATE insumos SET quantidade = ?, updated_at = NOW() WHERE id = ?`, [novaQtd, req.params.id]);
       await conn.query(
-        `INSERT INTO estoque_movimentacoes (insumo_id, usuario_id, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)`,
-        [req.params.id, req.usuario.id, tipo, qtd, observacao?.trim() || null]
+        `INSERT INTO estoque_movimentacoes (insumo_id, usuario_id, tipo, quantidade, local_origem, local_destino, observacao) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          req.params.id,
+          req.usuario.id,
+          tipo,
+          qtd,
+          local_origem?.trim() || null,
+          local_destino?.trim() || null,
+          observacao?.trim() || null
+        ]
       );
       await conn.commit();
     } catch (err) {
@@ -181,12 +255,26 @@ router.post('/:id/movimentar', requireAnyPermission('insumos.movimentar', 'insum
     } finally {
       conn.release();
     }
+
+    const descAuditoria = tipo === 'TRANSFERENCIA'
+      ? `TRANSFERÊNCIA de ${qtd} ${insumo.nome}. Origem: [${local_origem || 'Não especificada'}] → Destino: [${local_destino}].`
+      : `${tipo} de ${qtd} ${insumo.nome}. Estoque: ${insumo.quantidade} → ${novaQtd}. ${local_destino ? `Destino: [${local_destino}].` : ''}`;
+
     await registrarAuditoria({
-      usuario_id: req.usuario.id, acao: 'MOVIMENTAR_ESTOQUE', entidade: 'insumos', entidade_id: parseInt(req.params.id),
-      descricao: `${tipo} de ${qtd} ${insumo.nome}. Estoque: ${insumo.quantidade} → ${novaQtd}.`,
-      ip: getClientIp(req), user_agent: req.headers['user-agent']
+      usuario_id: req.usuario.id,
+      acao: 'MOVIMENTAR_ESTOQUE',
+      entidade: 'insumos',
+      entidade_id: parseInt(req.params.id),
+      descricao: descAuditoria,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
     });
-    return res.json({ success: true, message: `Movimentação de ${tipo.toLowerCase()} registrada.`, data: { nova_quantidade: novaQtd } });
+
+    return res.json({
+      success: true,
+      message: `Movimentação de ${tipo.toLowerCase()} registrada com rastreabilidade completa.`,
+      data: { nova_quantidade: novaQtd }
+    });
   } catch (err) {
     console.error('[INSUMOS] MOVIMENTAR:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao movimentar estoque.' });

@@ -31,7 +31,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+    fieldSize: 20 * 1024 * 1024
+  },
   fileFilter: (req, file, cb) => {
     const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
@@ -42,6 +45,21 @@ const upload = multer({
     }
   }
 });
+
+// Helper para salvar foto enviada em Base64 (webcam direta)
+function salvarBase64Imagem(base64String) {
+  if (!base64String || typeof base64String !== 'string') return null;
+  const match = base64String.match(/^data:image\/([a-zA-Z0-9\+\-]+);base64,(.+)$/);
+  if (!match) return null;
+
+  const ext = match[1] === 'jpeg' ? '.jpg' : `.${match[1]}`;
+  const filename = `equip_cam_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
+  const filePath = path.join(UPLOAD_DIR, filename);
+
+  const buffer = Buffer.from(match[2], 'base64');
+  fs.writeFileSync(filePath, buffer);
+  return `/uploads/equipamentos/${filename}`;
+}
 
 // GET /api/v1/equipamentos
 router.get('/', requirePermission('equipamentos.visualizar'), async (req, res) => {
@@ -87,19 +105,23 @@ router.get('/:id', requirePermission('equipamentos.visualizar'), async (req, res
   }
 });
 
-// POST /api/v1/equipamentos (com upload opcional de imagem)
+// POST /api/v1/equipamentos (com upload opcional de imagem ou foto via webcam)
 router.post('/', requirePermission('equipamentos.criar'), upload.single('imagem'), async (req, res) => {
-  const { nome, patrimonio, descricao, localizacao, estado, responsavel_id } = req.body;
+  const { nome, patrimonio, descricao, localizacao, estado, responsavel_id, imagem_base64 } = req.body;
   const erros = {};
   if (!nome || nome.trim().length < 3) erros.nome = 'Nome inválido (mínimo 3 caracteres).';
   if (!patrimonio || patrimonio.trim().length < 3) erros.patrimonio = 'Número de patrimônio inválido.';
   if (Object.keys(erros).length > 0) {
-    if (req.file) fs.unlinkSync(req.file.path); // Limpa upload em caso de erro
+    if (req.file) fs.unlinkSync(req.file.path);
     return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
   }
   try {
     const pool = getPool();
-    const imagem_url = req.file ? `/uploads/equipamentos/${req.file.filename}` : null;
+    let imagem_url = req.file ? `/uploads/equipamentos/${req.file.filename}` : null;
+    if (!imagem_url && imagem_base64) {
+      imagem_url = salvarBase64Imagem(imagem_base64);
+    }
+
     const [result] = await pool.query(
       `INSERT INTO equipamentos (nome, patrimonio, descricao, localizacao, estado, responsavel_id, imagem_url) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [nome.trim(), patrimonio.trim().toUpperCase(), descricao?.trim() || null, localizacao?.trim() || null, estado || 'bom', responsavel_id || null, imagem_url]
@@ -118,7 +140,7 @@ router.post('/', requirePermission('equipamentos.criar'), upload.single('imagem'
 
 // PUT /api/v1/equipamentos/:id
 router.put('/:id', requirePermission('equipamentos.editar'), upload.single('imagem'), async (req, res) => {
-  const { nome, patrimonio, descricao, localizacao, estado, responsavel_id } = req.body;
+  const { nome, patrimonio, descricao, localizacao, estado, responsavel_id, imagem_base64, remover_imagem } = req.body;
   const erros = {};
   if (!nome || nome.trim().length < 3) erros.nome = 'Nome inválido.';
   if (!patrimonio || patrimonio.trim().length < 3) erros.patrimonio = 'Patrimônio inválido.';
@@ -128,19 +150,30 @@ router.put('/:id', requirePermission('equipamentos.editar'), upload.single('imag
   }
   try {
     const pool = getPool();
-    // Buscar imagem atual para deletar se substituída
+    // Buscar imagem atual para deletar se substituída ou removida
     const [current] = await pool.query(`SELECT imagem_url FROM equipamentos WHERE id = ? LIMIT 1`, [req.params.id]);
-    const novaImagem = req.file ? `/uploads/equipamentos/${req.file.filename}` : current[0]?.imagem_url;
+    const imagemAtual = current[0]?.imagem_url || null;
+
+    let novaImagem = imagemAtual;
+    if (req.file) {
+      novaImagem = `/uploads/equipamentos/${req.file.filename}`;
+    } else if (imagem_base64) {
+      novaImagem = salvarBase64Imagem(imagem_base64);
+    } else if (remover_imagem === 'true' || remover_imagem === true) {
+      novaImagem = null;
+    }
 
     await pool.query(
       `UPDATE equipamentos SET nome = ?, patrimonio = ?, descricao = ?, localizacao = ?, estado = ?, responsavel_id = ?, imagem_url = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
       [nome.trim(), patrimonio.trim().toUpperCase(), descricao?.trim() || null, localizacao?.trim() || null, estado || 'bom', responsavel_id || null, novaImagem, req.params.id]
     );
 
-    // Remover imagem antiga se substituída
-    if (req.file && current[0]?.imagem_url) {
-      const oldPath = path.join(process.cwd(), current[0].imagem_url.replace(/^\//, ''));
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    // Remover imagem antiga do disco se substituída ou apagada
+    if (imagemAtual && novaImagem !== imagemAtual) {
+      const oldPath = path.join(process.cwd(), imagemAtual.replace(/^\//, ''));
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (_) {}
+      }
     }
 
     await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'EDITAR_EQUIPAMENTO', entidade: 'equipamentos', entidade_id: parseInt(req.params.id), descricao: `Equipamento #${req.params.id} atualizado.`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });

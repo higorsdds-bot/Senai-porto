@@ -738,6 +738,123 @@ async function buscarEmailsAdministradoresGerais(pool) {
   return externalEmails.length > 0 ? externalEmails : distinct;
 }
 
+/**
+ * Envia e-mail de boas-vindas com credenciais geradas pelo Administrador Geral
+ */
+async function enviarEmailCredenciaisCriacaoDireta({
+  usuarioNome,
+  usuarioEmail,
+  senhaProvisoria,
+  perfil,
+  setorNome,
+  criadoPorNome
+}) {
+  const dest = (usuarioEmail || '').trim();
+  if (!dest || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest)) {
+    return { success: false, error: 'E-mail de destinatário inválido.' };
+  }
+
+  const loginUrl = `${APP_URL}/`;
+  const dataFormatada = new Date().toLocaleString('pt-BR');
+
+  const assunto = `[HUB ES+] Acesso Liberado — Suas Credenciais de Entrada`;
+
+  const texto = `Olá, ${usuarioNome}!\n\n` +
+    `Sua conta no HUB ES+ (SECULT / SENAI) foi criada diretamente pela administração (${criadoPorNome || 'Administrador Geral'}).\n\n` +
+    `Seguem as suas credenciais de acesso institucional:\n` +
+    `- E-mail: ${dest}\n` +
+    `- Senha Provisória: ${senhaProvisoria}\n` +
+    `- Perfil / Cargo: ${perfil || 'OPERADOR'}\n` +
+    (setorNome ? `- Setor: ${setorNome}\n` : '') +
+    `\nAcesse a plataforma no link abaixo e efetue o seu primeiro login:\n` +
+    `${loginUrl}\n\n` +
+    `Por motivos de segurança corporativa, você pode alterar sua senha no primeiro acesso utilizando a opção 'Alterar Minha Senha' disponível no menu do seu perfil.\n\n` +
+    `Atenciosamente,\nEquipe de Gestão e Tecnologia HUB ES+`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8">
+      <title>Credenciais de Acesso HUB ES+</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; padding: 24px; margin: 0;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;">
+        <tr>
+          <td style="background: linear-gradient(135deg, #0a192f 0%, #004d99 100%); padding: 32px 28px; text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.15); display: inline-block; padding: 6px 14px; border-radius: 100px; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">
+              Plataforma Integrada
+            </div>
+            <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+              HUB ES+ • SECULT & SENAI
+            </h1>
+            <p style="color: #93c5fd; font-size: 13px; margin: 6px 0 0;">
+              Bem-vindo(a) à plataforma corporativa!
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 32px 28px;">
+            <p style="font-size: 14px; color: #1e293b; margin: 0 0 16px;">
+              Olá, <strong>${usuarioNome}</strong>!
+            </p>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px;">
+              A sua conta foi cadastrada diretamente pela administração (<strong>${criadoPorNome || 'Administrador Geral'}</strong>). Abaixo estão suas credenciais institucionais para acesso:
+            </p>
+
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; margin-bottom: 24px;">
+              <tr>
+                <td style="padding: 16px;">
+                  <div style="margin-bottom: 10px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">E-mail de Login</span>
+                    <strong style="font-size: 13px; color: #0f172a; font-family: monospace;">${dest}</strong>
+                  </div>
+                  <div style="margin-bottom: 10px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Senha Provisória</span>
+                    <strong style="font-size: 15px; color: #0284c7; font-family: monospace; letter-spacing: 1px;">${senhaProvisoria}</strong>
+                  </div>
+                  <div style="margin-bottom: 6px;">
+                    <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; display: block;">Cargo / Perfil</span>
+                    <span style="font-size: 12px; color: #1e293b; font-weight: 700;">${perfil || 'OPERADOR'}</span>
+                    ${setorNome ? `<span style="font-size: 12px; color: #64748b;"> • Setor: ${setorNome}</span>` : ''}
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${loginUrl}" target="_blank" style="background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 12px; font-weight: 700; font-size: 13px; display: inline-block; box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3);">
+                Acessar Plataforma &rarr;
+              </a>
+            </div>
+
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 0 10px 10px 0; margin-top: 20px;">
+              <p style="font-size: 12px; color: #1e40af; margin: 0; line-height: 1.5;">
+                🔒 <strong>Segurança recomendada:</strong> Por política de conformidade, altere sua senha no primeiro acesso através do menu superior com seu nome clicando em <em>Alterar Minha Senha</em>.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 28px; text-align: center;">
+            <p style="font-size: 11px; color: #94a3b8; margin: 0;">
+              Mensagem automática enviada pelo sistema HUB ES+ em ${dataFormatada}.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  return await enviarEmail({
+    para: dest,
+    assunto,
+    texto,
+    html
+  });
+}
+
 module.exports = {
   enviarEmail,
   getProvedorEmail,
@@ -747,6 +864,8 @@ module.exports = {
   notificarNovoCadastroAdmin,
   enviarEmailAtivacaoConta,
   enviarEmailRejeicaoCadastro,
+  enviarEmailCredenciaisCriacaoDireta,
   buscarEmailsAdministradoresGerais,
   ACTIVATION_TOKEN_EXPIRES_HOURS
 };
+

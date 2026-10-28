@@ -29,10 +29,35 @@ const MODULE_PERMISSIONS = {
   limpeza: ['limpeza.visualizar'],
   equipamentos: ['equipamentos.visualizar'],
   auditoria: ['auditoria.visualizar'],
+  advertencias: ['advertencias.visualizar'],
   usuarios: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
 };
 
 const FIXED_PROFILE_PERMISSIONS = {
+  GESTOR: [
+    'dashboard.visualizar',
+    'compras.visualizar',
+    'compras.visualizar_pedidos',
+    'compras.criar',
+    'compras.aprovar',
+    'insumos.visualizar',
+    'insumos.baixar',
+    'eventos.visualizar',
+    'eventos.criar',
+    'eventos.editar',
+    'documentos.visualizar',
+    'documentos.criar',
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.status',
+    'comunicados.visualizar',
+    'comunicados.criar',
+    'indicadores.visualizar',
+    'limpeza.visualizar',
+    'equipamentos.visualizar',
+    'usuarios.visualizar'
+  ],
   ADMINISTRACAO: [
     'comunicados.visualizar',
     'compras.visualizar_pedidos',
@@ -40,7 +65,12 @@ const FIXED_PROFILE_PERMISSIONS = {
     'eventos.visualizar',
     'insumos.visualizar',
     'insumos.baixar',
-    'usuarios.pre_cadastrar'
+    'usuarios.pre_cadastrar',
+    'limpeza.visualizar',
+    'limpeza.criar',
+    'limpeza.editar',
+    'advertencias.visualizar',
+    'advertencias.solicitar'
   ],
   LIMPEZA: [
     'comunicados.visualizar',

@@ -12,12 +12,12 @@ router.get('/comunicados', async (req, res) => {
   try {
     const pool = getPool();
     const { prioridade, q } = req.query;
-    let conds = ['c.deleted_at IS NULL'];
+    let conds = ['c.deleted_at IS NULL', "(c.destinatario_perfil = 'TODOS' OR c.destinatario_perfil IS NULL)"];
     let params = [];
     if (prioridade) { conds.push('c.prioridade = ?'); params.push(prioridade); }
     if (q) { conds.push('(c.titulo LIKE ? OR c.mensagem LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
     const [rows] = await pool.query(
-      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.created_at, c.updated_at,
+      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.destinatario_perfil, c.created_at, c.updated_at,
               c.autor_id, u.nome AS autor_nome
        FROM comunicados c
        LEFT JOIN usuarios u ON u.id = c.autor_id

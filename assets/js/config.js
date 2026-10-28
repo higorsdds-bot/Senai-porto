@@ -27,6 +27,7 @@ const CONFIG = {
     EVENTOS: '/eventos',
     INSUMOS: '/insumos',
     COMUNICADOS: '/comunicados',
+    ADVERTENCIAS: '/advertencias',
     AUDITORIA: '/auditoria',
     DASHBOARD: '/dashboard'
   },

@@ -482,14 +482,38 @@ textarea:focus {
   box-shadow: 0 4px 14px rgba(0, 102, 204, 0.28) !important;
 }
 
-/* Estilo de tabela refinada */
+/* Estilo de tabela refinada com alto contraste no Tema Claro */
 .hub-table-row {
   transition: background-color 0.15s ease;
 }
-.hub-table-row:hover {
-  background-color: rgba(241, 245, 249, 0.7);
+
+/* Tabelas no Tema Claro: Linhas divisórias em cinza claro e efeito zebrado intercalado */
+html:not(.dark) table thead tr {
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
 }
+
+html:not(.dark) table thead th {
+  color: #334155 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em;
+}
+
+html:not(.dark) table tbody tr {
+  border-bottom: 1px solid #e2e8f0 !important;
+  transition: background-color 0.12s ease;
+}
+
+html:not(.dark) table tbody tr:nth-child(even) {
+  background-color: rgba(248, 250, 252, 0.75);
+}
+
+html:not(.dark) table tbody tr:hover {
+  background-color: #f1f5f9 !important;
+}
+
 .dark .hub-table-row:hover {
   background-color: rgba(30, 41, 59, 0.5);
 }
+
 

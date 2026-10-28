@@ -11,9 +11,24 @@ class ApiService {
   }
 
   getToken() {
-    return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(window.CONFIG.STORAGE_TOKEN))
-      || (typeof localStorage !== 'undefined' && localStorage.getItem(window.CONFIG.STORAGE_TOKEN))
-      || null;
+    const key = window.CONFIG?.STORAGE_TOKEN || 'hub_es_plus_token';
+    let token = null;
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        token = sessionStorage.getItem(key);
+      }
+      if (!token && typeof localStorage !== 'undefined') {
+        token = localStorage.getItem(key);
+        // Sincroniza imediatamente com sessionStorage para manter abas protegidas
+        if (token && typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem(key, token);
+        }
+      }
+      if (!token && window.Auth?.token) {
+        token = window.Auth.token;
+      }
+    } catch (_) {}
+    return token;
   }
 
   /**
@@ -63,12 +78,15 @@ class ApiService {
       const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
       if (response.status === 401) {
-        // Sessão expirada/inválida: limpa e volta pro login (se não for visitante)
-        if (!window.Auth?.isVisitante()) {
+        const errBody = await response.json().catch(() => ({}));
+        const msg = errBody.message || 'Sessão expirada. Faça login novamente.';
+
+        // Só força logout se o erro for inequivocamente expiração real de token ou conta inexistente/bloqueada
+        const isFatalAuth = msg.includes('expirada') || msg.includes('Token inválido') || msg.includes('não encontrado');
+        if (isFatalAuth && !window.Auth?.isVisitante()) {
           window.Auth?.forcarLogout();
         }
-        const errBody = await response.json().catch(() => ({}));
-        throw new Error(errBody.message || 'Sessão expirada. Faça login novamente.');
+        throw new Error(msg);
       }
 
       if (!response.ok) {
@@ -267,13 +285,19 @@ class ApiService {
   }
 
   async createEquipamento(data) {
-    return this.request(CONFIG.ENDPOINTS.EQUIPAMENTOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('equipamentos', data));
+    const isFormData = (typeof FormData !== 'undefined') && (data instanceof FormData);
+    return this.request(CONFIG.ENDPOINTS.EQUIPAMENTOS, {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data)
+    }, () => window.MockDB.create('equipamentos', data));
   }
 
   async updateEquipamento(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('equipamentos', id, data));
+    const isFormData = (typeof FormData !== 'undefined') && (data instanceof FormData);
+    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}`, {
+      method: 'PUT',
+      body: isFormData ? data : JSON.stringify(data)
+    }, () => window.MockDB.update('equipamentos', id, data));
   }
 
   async deleteEquipamento(id) {
@@ -439,6 +463,18 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'GET' }, () => window.MockDB.getAll('insumos'));
   }
 
+  async getHistoricoInsumos(filtros = {}) {
+    const params = new URLSearchParams();
+    if (filtros.tipo) params.set('tipo', filtros.tipo);
+    if (filtros.insumo_id) params.set('insumo_id', filtros.insumo_id);
+    if (filtros.data_inicio) params.set('data_inicio', filtros.data_inicio);
+    if (filtros.data_fim) params.set('data_fim', filtros.data_fim);
+    if (filtros.q) params.set('q', filtros.q);
+    if (filtros.limit) params.set('limit', filtros.limit);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/historico${qs}`, { method: 'GET' });
+  }
+
   async movimentarInsumo(id, data) {
     return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}/movimentar`, {
       method: 'POST',
@@ -481,6 +517,51 @@ class ApiService {
   async deleteComunicado(id) {
     return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('comunicados', id));
+  }
+
+  // =========================================================================
+  // ADVERTÊNCIAS DISCIPLINARES (Restrito a ADMIN e ADMINISTRADOR)
+  // =========================================================================
+  async getAdvertencias(filtros = {}) {
+    const params = new URLSearchParams();
+    if (filtros.status) params.set('status', filtros.status);
+    if (filtros.gravidade) params.set('gravidade', filtros.gravidade);
+    if (filtros.colaborador_id) params.set('colaborador_id', filtros.colaborador_id);
+    if (filtros.q) params.set('q', filtros.q);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}${qs}`, { method: 'GET' });
+  }
+
+  async getAdvertencia(id) {
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}`, { method: 'GET' });
+  }
+
+  async createAdvertencia(data) {
+    return this.request(CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async aprovarAdvertencia(id, motivo_decisao) {
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}/aprovar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo_decisao })
+    });
+  }
+
+  async rejeitarAdvertencia(id, motivo_decisao) {
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}/rejeitar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo_decisao })
+    });
+  }
+
+  async revogarAdvertencia(id, motivo_decisao) {
+    return this.request(`${CONFIG.ENDPOINTS.ADVERTENCIAS || '/advertencias'}/${id}/revogar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo_decisao })
+    });
   }
 
 

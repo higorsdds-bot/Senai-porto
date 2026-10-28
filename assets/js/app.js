@@ -89,6 +89,14 @@ class AppRouter {
         moduleKey: 'usuarios',
         permissions: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
       },
+      'advertencias': {
+        title: 'Gestão de Advertências',
+        module: window.AdvertenciasModule || (window.Modules && window.Modules.advertencias),
+        navId: 'nav-advertencias',
+        moduleKey: 'advertencias',
+        adminOnly: true,
+        permissions: ['advertencias.visualizar']
+      },
       'auditoria': {
         title: 'Auditoria & Governança',
         module: window.AuditoriaModule || (window.Modules && window.Modules.auditoria),
@@ -424,11 +432,25 @@ class AppRouter {
     const btnDropdownTema = document.getElementById('btn-dropdown-tema');
     if (btnDropdownTema) {
       btnDropdownTema.addEventListener('click', () => {
-        const btnTema = document.getElementById('btn-tema');
-        if (btnTema) btnTema.click();
+        if (window.Tema) {
+          window.Tema.alternar();
+        } else {
+          const isDark = document.documentElement.classList.toggle('dark');
+          localStorage.setItem('hub_es_tema', isDark ? 'escuro' : 'claro');
+        }
         this._atualizarLabelTemaDropdown();
       });
       this._atualizarLabelTemaDropdown();
+    }
+
+    // Botão de Alterar Senha no Dropdown do Usuário
+    const btnDropdownAlterarSenha = document.getElementById('btn-dropdown-alterar-senha');
+    if (btnDropdownAlterarSenha) {
+      btnDropdownAlterarSenha.addEventListener('click', () => {
+        const userMenu = document.getElementById('user-dropdown-menu');
+        if (userMenu) userMenu.classList.add('hidden');
+        this.abrirModalAlterarSenha();
+      });
     }
 
     // Botão de Notificações / Comunicados na Topbar
@@ -690,6 +712,91 @@ class AppRouter {
       console.error('Erro ao abrir comunicados:', err);
       window.UI.toast({ title: 'Avisos', message: 'Falha ao carregar comunicados.', type: 'error' });
     }
+  }
+
+  abrirModalAlterarSenha() {
+    const contentHtml = `
+      <form id="form-alterar-minha-senha" class="space-y-4 text-xs" novalidate>
+        <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-xl p-3 text-blue-800 dark:text-blue-300">
+          <p class="font-bold flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i>
+            Segurança da Conta
+          </p>
+          <p class="mt-1 text-[11px] leading-relaxed text-blue-700 dark:text-blue-400">
+            A sua nova senha precisa conter no mínimo <strong>8 caracteres</strong>. Recomendamos uma combinação de letras, números e símbolos.
+          </p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1">Senha Atual *</label>
+          <input type="password" id="input-senha-atual" required placeholder="Digite sua senha atual"
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 font-mono">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1">Nova Senha *</label>
+          <input type="password" id="input-nova-senha" required minlength="8" placeholder="Mínimo de 8 caracteres"
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 font-mono">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1">Confirmar Nova Senha *</label>
+          <input type="password" id="input-confirmar-nova-senha" required minlength="8" placeholder="Repita a nova senha"
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 font-mono">
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Alterar Minha Senha',
+      subtitle: 'Defina uma nova senha de acesso à plataforma corporativa',
+      contentHtml,
+      saveLabel: 'Salvar Nova Senha',
+      cancelLabel: 'Cancelar',
+      onSave: async () => {
+        const senhaAtual = document.getElementById('input-senha-atual')?.value;
+        const novaSenha = document.getElementById('input-nova-senha')?.value;
+        const confirmar = document.getElementById('input-confirmar-nova-senha')?.value;
+
+        if (!senhaAtual) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe a sua senha atual.', type: 'warning' });
+          return false;
+        }
+        if (!novaSenha || novaSenha.length < 8) {
+          window.UI.toast({ title: 'Atenção', message: 'A nova senha precisa ter no mínimo 8 caracteres.', type: 'warning' });
+          return false;
+        }
+        if (novaSenha !== confirmar) {
+          window.UI.toast({ title: 'Atenção', message: 'A confirmação de senha não confere.', type: 'warning' });
+          return false;
+        }
+        if (novaSenha === senhaAtual) {
+          window.UI.toast({ title: 'Atenção', message: 'A nova senha deve ser diferente da senha atual.', type: 'warning' });
+          return false;
+        }
+
+        try {
+          const res = await window.API.alterarMinhaSenha({
+            senha_atual: senhaAtual,
+            nova_senha: novaSenha
+          });
+
+          window.UI.toast({
+            title: 'Senha Atualizada',
+            message: res?.message || 'Sua senha foi alterada com sucesso!',
+            type: 'success'
+          });
+          return true;
+        } catch (err) {
+          window.UI.toast({
+            title: 'Erro ao Alterar Senha',
+            message: err.message || 'Não foi possível alterar a senha. Verifique a senha atual.',
+            type: 'error'
+          });
+          return false;
+        }
+      }
+    });
   }
 }
 

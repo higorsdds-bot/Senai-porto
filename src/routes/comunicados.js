@@ -14,14 +14,43 @@ router.use(authMiddleware);
 router.get('/', requirePermission('comunicados.visualizar'), async (req, res) => {
   try {
     const pool = getPool();
-    const { prioridade, q } = req.query;
+    const { prioridade, destinatario_perfil, q } = req.query;
+    const perfilUsuario = req.usuario.perfil;
+    const ehAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(perfilUsuario);
+
     let conds = ['c.deleted_at IS NULL'];
     let params = [];
-    if (prioridade) { conds.push('c.prioridade = ?'); params.push(prioridade); }
-    if (q) { conds.push('(c.titulo LIKE ? OR c.mensagem LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+
+    // RBAC: Usuários não-admin só visualizam comunicados direcionados a 'TODOS', ao seu próprio perfil ou criados por eles
+    if (!ehAdmin) {
+      conds.push("(c.destinatario_perfil = 'TODOS' OR c.destinatario_perfil IS NULL OR c.destinatario_perfil = ? OR c.autor_id = ?)");
+      params.push(perfilUsuario, req.usuario.id);
+    }
+
+    // Filtro por destinatario_perfil
+    if (destinatario_perfil && destinatario_perfil !== 'TODOS_FILTRO') {
+      if (ehAdmin) {
+        conds.push('c.destinatario_perfil = ?');
+        params.push(destinatario_perfil);
+      } else if (destinatario_perfil === 'TODOS' || destinatario_perfil === perfilUsuario) {
+        conds.push('c.destinatario_perfil = ?');
+        params.push(destinatario_perfil);
+      }
+    }
+
+    if (prioridade) {
+      conds.push('c.prioridade = ?');
+      params.push(prioridade);
+    }
+
+    if (q) {
+      conds.push('(c.titulo LIKE ? OR c.mensagem LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
     const [rows] = await pool.query(
-      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.created_at, c.updated_at,
-              c.autor_id, u.nome AS autor_nome
+      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.destinatario_perfil, c.created_at, c.updated_at,
+              c.autor_id, u.nome AS autor_nome, u.perfil AS autor_perfil
        FROM comunicados c
        LEFT JOIN usuarios u ON u.id = c.autor_id
        WHERE ${conds.join(' AND ')}
@@ -40,7 +69,7 @@ router.get('/:id', requirePermission('comunicados.visualizar'), async (req, res)
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.created_at, c.autor_id, u.nome AS autor_nome
+      `SELECT c.id, c.titulo, c.mensagem, c.prioridade, c.destinatario_perfil, c.created_at, c.autor_id, u.nome AS autor_nome
        FROM comunicados c LEFT JOIN usuarios u ON u.id = c.autor_id
        WHERE c.id = ? AND c.deleted_at IS NULL LIMIT 1`,
       [req.params.id]
@@ -54,26 +83,43 @@ router.get('/:id', requirePermission('comunicados.visualizar'), async (req, res)
 
 // POST /api/v1/comunicados
 router.post('/', requirePermission('comunicados.criar'), async (req, res) => {
-  const { titulo, mensagem, prioridade } = req.body;
+  const { titulo, mensagem, prioridade, destinatario_perfil } = req.body;
   const erros = {};
   if (!titulo || titulo.trim().length < 3) erros.titulo = 'Título deve ter ao menos 3 caracteres.';
   if (!mensagem || mensagem.trim().length < 3) erros.mensagem = 'Mensagem deve ter ao menos 3 caracteres.';
+  
   const prioridadeNorm = String(prioridade || 'normal').toLowerCase();
   const prioridades = ['alta', 'media', 'normal'];
   if (prioridadeNorm && !prioridades.includes(prioridadeNorm)) erros.prioridade = `Prioridade deve ser: ${prioridades.join(', ')}`;
+
+  const perfisValidos = ['TODOS', 'ADMIN', 'ADMINISTRADOR', 'GESTOR', 'LIMPEZA', 'OPERADOR'];
+  const perfilDest = (destinatario_perfil && perfisValidos.includes(destinatario_perfil.toUpperCase()))
+    ? destinatario_perfil.toUpperCase()
+    : 'TODOS';
+
   if (Object.keys(erros).length > 0) {
     const detalhe = Object.values(erros).join(' ');
     return res.status(422).json({ success: false, message: detalhe || 'Dados inválidos.', errors: erros });
   }
+
   try {
     const pool = getPool();
     const [result] = await pool.query(
-      `INSERT INTO comunicados (titulo, mensagem, prioridade, autor_id) VALUES (?, ?, ?, ?)`,
-      [titulo.trim(), mensagem.trim(), prioridade || 'normal', req.usuario.id]
+      `INSERT INTO comunicados (titulo, mensagem, prioridade, destinatario_perfil, autor_id) VALUES (?, ?, ?, ?, ?)`,
+      [titulo.trim(), mensagem.trim(), prioridade || 'normal', perfilDest, req.usuario.id]
     );
-    await registrarAuditoria({ usuario_id: req.usuario.id, acao: 'CRIAR_COMUNICADO', entidade: 'comunicados', entidade_id: result.insertId, descricao: `Comunicado "${titulo.trim()}" publicado.`, ip: getClientIp(req), user_agent: req.headers['user-agent'] });
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'CRIAR_COMUNICADO',
+      entidade: 'comunicados',
+      entidade_id: result.insertId,
+      descricao: `Comunicado "${titulo.trim()}" publicado para [${perfilDest}].`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
     return res.status(201).json({ success: true, message: 'Comunicado publicado.', data: { id: result.insertId } });
   } catch (err) {
+    console.error('[COMUNICADOS] POST:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao publicar comunicado.' });
   }
 });

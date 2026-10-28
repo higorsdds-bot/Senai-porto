@@ -78,7 +78,57 @@ async function initSchemaExtensions() {
       console.warn('[DATABASE] Aviso ao criar tabela tokens_ativacao:', err.message);
     });
 
-    console.log('[DATABASE] ✅ Estrutura de tokens de ativação e status verificada com sucesso.');
+    // 3. Garantir coluna destinatario_perfil em comunicados
+    await p.query(`
+      ALTER TABLE comunicados 
+      ADD COLUMN destinatario_perfil VARCHAR(50) NOT NULL DEFAULT 'TODOS'
+    `).catch(() => {});
+
+    // 4. Garantir tabela advertencias
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS advertencias (
+        id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+        colaborador_id    BIGINT NOT NULL,
+        solicitante_id    BIGINT NOT NULL,
+        homologador_id    BIGINT NULL,
+        motivo            VARCHAR(255) NOT NULL,
+        descricao         TEXT NOT NULL,
+        gravidade         ENUM('LEVE','MEDIA','GRAVE') NOT NULL DEFAULT 'LEVE',
+        status            ENUM('PENDENTE','APLICADA','REJEITADA','REVOGADA') NOT NULL DEFAULT 'PENDENTE',
+        data_ocorrencia   DATE NOT NULL,
+        motivo_decisao    TEXT NULL,
+        data_decisao      DATETIME NULL,
+        deleted_at        DATETIME NULL,
+        created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_colaborador (colaborador_id),
+        INDEX idx_solicitante (solicitante_id),
+        INDEX idx_status (status),
+        FOREIGN KEY (colaborador_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+        FOREIGN KEY (solicitante_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+        FOREIGN KEY (homologador_id) REFERENCES usuarios(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `).catch(err => {
+      console.warn('[DATABASE] Aviso ao criar tabela advertencias:', err.message);
+    });
+
+    // 5. Garantir campos local_origem, local_destino e ENUM estendido em estoque_movimentacoes
+    await p.query(`
+      ALTER TABLE estoque_movimentacoes
+      MODIFY COLUMN tipo ENUM('ENTRADA','SAIDA','AJUSTE','TRANSFERENCIA') NOT NULL
+    `).catch(() => {});
+
+    await p.query(`
+      ALTER TABLE estoque_movimentacoes
+      ADD COLUMN local_origem VARCHAR(255) NULL
+    `).catch(() => {});
+
+    await p.query(`
+      ALTER TABLE estoque_movimentacoes
+      ADD COLUMN local_destino VARCHAR(255) NULL
+    `).catch(() => {});
+
+    console.log('[DATABASE] ✅ Estrutura de extensões de schema verificada com sucesso.');
   } catch (err) {
     console.warn('[DATABASE] Aviso na inicialização de extensões de schema:', err.message);
   }

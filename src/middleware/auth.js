@@ -26,15 +26,25 @@ function clearUserAuthCache(userId = null) {
  * Em caso de sucesso, popula req.usuario com os dados completos do banco (com cache em memória de 30s).
  */
 async function authMiddleware(req, res, next) {
+  let token = null;
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && typeof authHeader === 'string') {
+    const parts = authHeader.trim().split(/\s+/);
+    if (parts.length >= 2 && parts[0].toLowerCase() === 'bearer') {
+      token = parts.slice(1).join(' ').trim();
+    }
+  }
+  if (!token && req.query && req.query.token) {
+    token = String(req.query.token).trim();
+  }
+
+  if (!token) {
     return res.status(401).json({
       success: false,
       message: 'Token de autenticação ausente ou inválido. Faça login novamente.'
     });
   }
 
-  const token = authHeader.split(' ')[1];
   let payload;
   try {
     payload = jwt.verify(token, JWT_SECRET);

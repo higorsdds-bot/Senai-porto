@@ -200,13 +200,15 @@ CREATE TABLE IF NOT EXISTS insumos (
 -- TABELA: estoque_movimentacoes
 -- ============================================================
 CREATE TABLE IF NOT EXISTS estoque_movimentacoes (
-  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-  insumo_id   BIGINT NULL,
-  usuario_id  BIGINT NULL,
-  tipo        ENUM('ENTRADA','SAIDA','AJUSTE') NOT NULL,
-  quantidade  INT NOT NULL,
-  observacao  TEXT NULL,
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+  insumo_id     BIGINT NULL,
+  usuario_id    BIGINT NULL,
+  tipo          ENUM('ENTRADA','SAIDA','AJUSTE','TRANSFERENCIA') NOT NULL,
+  quantidade    INT NOT NULL,
+  local_origem  VARCHAR(255) NULL,
+  local_destino VARCHAR(255) NULL,
+  observacao    TEXT NULL,
+  created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (insumo_id) REFERENCES insumos(id) ON DELETE SET NULL,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -215,15 +217,42 @@ CREATE TABLE IF NOT EXISTS estoque_movimentacoes (
 -- TABELA: comunicados
 -- ============================================================
 CREATE TABLE IF NOT EXISTS comunicados (
-  id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-  titulo     VARCHAR(500) NOT NULL,
-  mensagem   TEXT NOT NULL,
-  autor_id   BIGINT NULL,
-  prioridade ENUM('alta','media','normal') NOT NULL DEFAULT 'normal',
-  deleted_at DATETIME NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+  titulo              VARCHAR(500) NOT NULL,
+  mensagem            TEXT NOT NULL,
+  autor_id            BIGINT NULL,
+  prioridade          ENUM('alta','media','normal') NOT NULL DEFAULT 'normal',
+  destinatario_perfil VARCHAR(50) NOT NULL DEFAULT 'TODOS',
+  deleted_at          DATETIME NULL,
+  created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (autor_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABELA: advertencias
+-- ============================================================
+CREATE TABLE IF NOT EXISTS advertencias (
+  id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+  colaborador_id  BIGINT NOT NULL,
+  solicitante_id  BIGINT NOT NULL,
+  homologador_id  BIGINT NULL,
+  motivo          VARCHAR(255) NOT NULL,
+  descricao       TEXT NOT NULL,
+  gravidade       ENUM('LEVE','MEDIA','GRAVE') NOT NULL DEFAULT 'LEVE',
+  status          ENUM('PENDENTE','APLICADA','REJEITADA','REVOGADA') NOT NULL DEFAULT 'PENDENTE',
+  data_ocorrencia DATE NOT NULL,
+  motivo_decisao  TEXT NULL,
+  data_decisao    DATETIME NULL,
+  deleted_at      DATETIME NULL,
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_colaborador (colaborador_id),
+  INDEX idx_solicitante (solicitante_id),
+  INDEX idx_status (status),
+  FOREIGN KEY (colaborador_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+  FOREIGN KEY (solicitante_id) REFERENCES usuarios(id) ON DELETE RESTRICT,
+  FOREIGN KEY (homologador_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

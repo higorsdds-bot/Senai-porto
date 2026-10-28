@@ -56,6 +56,7 @@ const insumosRouter = require('./src/routes/insumos');
 const comunicadosRouter = require('./src/routes/comunicados');
 const dashboardRouter = require('./src/routes/dashboard');
 const auditoriaRouter = require('./src/routes/auditoria');
+const advertenciasRouter = require('./src/routes/advertencias');
 const publicoRouter = require('./src/routes/publico');
 
 const BASE = '/api/v1';
@@ -72,6 +73,7 @@ app.use(`${BASE}/ocorrencias`, ocorrenciasRouter);
 app.use(`${BASE}/eventos`, eventosRouter);
 app.use(`${BASE}/insumos`, insumosRouter);
 app.use(`${BASE}/comunicados`, comunicadosRouter);
+app.use(`${BASE}/advertencias`, advertenciasRouter);
 app.use(`${BASE}/dashboard`, dashboardRouter);
 app.use(`${BASE}/auditoria`, auditoriaRouter);
 
