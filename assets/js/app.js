@@ -267,6 +267,13 @@ class AppRouter {
       group.classList.toggle('hidden', !hasVisibleLink);
     });
 
+    // Atualiza visibilidade dos grupos dropdown desktop (ex: oculta para visitantes se não houver links acessíveis)
+    document.querySelectorAll('[data-desktop-group]').forEach(group => {
+      const hasVisibleLink = [...group.querySelectorAll('a[href^="#"]')]
+        .some(link => !link.classList.contains('hidden'));
+      group.classList.toggle('hidden', !hasVisibleLink);
+    });
+
     const perfil = String(window.Auth?.getUsuario()?.perfil || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -274,15 +281,15 @@ class AppRouter {
       .replace(/[^A-Z0-9]/g, '');
     const isLimpeza = perfil === 'LIMPEZA';
     const isAdministracao = perfil === 'ADMINISTRACAO';
-    document.querySelectorAll('#mobile-drawer [data-module-label="compras"]').forEach(label => {
+    document.querySelectorAll('[data-module-label="compras"]').forEach(label => {
       label.textContent = isLimpeza
         ? 'Solicitação de Materiais'
         : isAdministracao ? 'Entrada em Pedidos' : 'Compras';
     });
-    document.querySelectorAll('#mobile-drawer [data-module-label="insumos"]').forEach(label => {
+    document.querySelectorAll('[data-module-label="insumos"]').forEach(label => {
       label.textContent = isAdministracao ? 'Dar Baixa em Materiais' : 'Controle de Insumos';
     });
-    document.querySelectorAll('#mobile-drawer [data-module-label="usuarios"]').forEach(label => {
+    document.querySelectorAll('[data-module-label="usuarios"]').forEach(label => {
       label.textContent = isAdministracao ? 'Cadastrar Colaborador' : 'Gestão de Usuários';
     });
   }
@@ -294,24 +301,35 @@ class AppRouter {
       if (link.classList.contains('desktop-nav-link')) {
         link.classList.remove('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
         link.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
+      } else if (link.classList.contains('desktop-subnav-link')) {
+        link.classList.remove('active-route');
       } else {
         link.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20');
         link.classList.add('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');
       }
     });
 
+    // Reseta todos os botões-gatilho de grupos desktop
+    document.querySelectorAll('.desktop-group-trigger').forEach(trigger => {
+      trigger.classList.remove('active-parent');
+    });
+
     // Ativa os links correspondentes à rota atual
     const activeLinks = document.querySelectorAll(`[data-nav-id="${activeNavId}"]`);
     activeLinks.forEach(link => {
       link.classList.add('active-route');
+
       if (link.classList.contains('desktop-nav-link')) {
         link.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-white/10');
         link.classList.add('bg-white/20', 'text-white', 'shadow-sm', 'ring-1', 'ring-white/15');
-        const desktopNav = document.getElementById('desktop-top-nav');
-        if (desktopNav && desktopNav.scrollWidth > desktopNav.clientWidth) {
-          link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-        } else if (desktopNav) {
-          desktopNav.scrollLeft = 0;
+      } else if (link.classList.contains('desktop-subnav-link')) {
+        // Destaca a categoria-pai correspondente no menu superior
+        const groupEl = link.closest('[data-desktop-group]');
+        if (groupEl) {
+          const trigger = groupEl.querySelector('.desktop-group-trigger');
+          if (trigger) {
+            trigger.classList.add('active-parent');
+          }
         }
       } else {
         link.classList.remove('text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-100/80', 'dark:hover:bg-slate-800/60');

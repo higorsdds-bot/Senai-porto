@@ -392,6 +392,48 @@ textarea:focus {
   font-weight: 700 !important;
 }
 
+/* Gatilho de Grupo Desktop (Hover Dropdowns) */
+.desktop-group-trigger {
+  color: #cbd5e1;
+  background: transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.desktop-group-trigger:hover,
+.desktop-group-trigger.active-parent {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+/* Ponte de Hover para evitar fechamento acidental */
+.desktop-flyout-menu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+/* Sub-links dentro do flyout dropdown */
+.desktop-subnav-link {
+  transition: all 0.15s ease;
+}
+
+.desktop-subnav-link.active-route {
+  background-color: rgba(2, 132, 199, 0.08) !important;
+  border-left: 3px solid #0284c7;
+}
+
+.dark .desktop-subnav-link.active-route {
+  background-color: rgba(56, 189, 248, 0.12) !important;
+  border-left: 3px solid #38bdf8;
+}
+
 /* Links de Navegação no Menu Lateral Hambúrguer (Mobile) */
 .drawer-nav-link {
   color: #475569;
