@@ -1,0 +1,9 @@
+name = "hub-es-secult"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "secult_db"
+database_id = "3a5a576c-346d-42fe-a6ca-d23e727e844e"
+migrations_dir = "src/database"

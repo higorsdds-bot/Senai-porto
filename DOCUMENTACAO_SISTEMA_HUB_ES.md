@@ -42,27 +42,27 @@ O sistema integra em uma única interface responsiva a gestão operacional de 11
 
 ## 2. Arquitetura de Software & Tecnologias
 
-A solução adota uma arquitetura em camadas no padrão **Single Page Application (SPA)** no frontend comunicando-se de forma assíncrona com uma **RESTful API** no backend, apoiada por serviços em nuvem de alta disponibilidade.
+A solução adota uma arquitetura híbrida de alta performance no padrão **Single Page Application (SPA)** distribuída na borda global via **Cloudflare Pages**, comunicando-se através do **Cloudflare Edge Reverse Proxy** com a **RESTful API** no backend (Node.js Express), apoiada pelo banco relacional **Cloudflare D1** e **TiDB Cloud**.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Navegador Web)                        │
-│   Vanilla JS Modular (ES6+) • Tailwind CSS • Lucide Icons • Chart.js   │
-│            Hash Routing (#dashboard, #auditoria, #agenda...)           │
+│               DISTRIBUIÇÃO GLOBAL (Cloudflare Pages CDN)               │
+│   Frontend SPA Vanilla JS Modular • Tailwind CSS • Lucide • Chart.js   │
+│                 URL: https://hub-es-secult.pages.dev                   │
 └───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Requisições HTTPS / JSON
-                                    │ Authorization: Bearer <JWT>
+                                    │ Edge Reverse Proxy (/api/* e /uploads/*)
+                                    │ Regras _redirects (Status 200) • WAF • DDoS
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│                        BACKEND (Serviço Render)                        │
+│                        BACKEND (Serviço Node.js)                       │
 │                 Node.js 18+ LTS • Express.js 5.x REST API              │
 │       Middlewares: CORS • JWT Auth • RBAC Permissions • Auditoria      │
 └───┬───────────────────────────────┬────────────────────────────────┬───┘
-    │ Pool de Conexões              │ Chamadas REST HTTPS            │ Gravação em Disco
-    │ MySQL2 / TLS 1.2+             │ Porta 443 / JSON               │ Multipart Form
+    │ Suporte Multi-Engine          │ Chamadas REST HTTPS            │ Gravação em Disco
+    │ D1 SQL / MySQL2 TLS           │ Porta 443 / JSON               │ Multipart Form
 ┌───▼──────────────────────┐   ┌────▼─────────────────────┐    ┌─────▼──────────────┐
-│     TiDB Cloud MySQL     │   │     Brevo API (v3)       │    │ Diretório uploads/ │
-│ Banco Serverless Cloud   │   │  E-mails Transacionais   │    │ Fotos e Evidências │
-│  Tabelas com Soft Delete │   │   Links de Ativação      │    │  de Ocorrências    │
+│  Cloudflare D1 / TiDB    │   │     Brevo API (v3)       │    │ Diretório uploads/ │
+│  Banco Relacional Edge   │   │  E-mails Transacionais   │    │ Fotos e Evidências │
+│  D1 ID: 3a5a576c...      │   │   Links de Ativação      │    │  de Ocorrências    │
 └──────────────────────────┘   └──────────────────────────┘    └────────────────────┘
 ```
 
@@ -145,7 +145,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
                      ▼                                             ▼
           ┌─────────────────────┐                       ┌─────────────────────┐
           │    ADMINISTRADOR    │                       │       GESTOR        │
-          │(Gestão Operac. Geral│                       │(Gestor Multissetor) │
+          │(Gestão Operac. Geral)│                       │(Gestor Multissetor) │
           └──────────┬──────────┘                       └──────────┬──────────┘
                      │                                             │
       ┌──────────────┼──────────────────────────────┐              │
@@ -167,7 +167,7 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
                                                     │              ▼
                                                     ▼       ┌─────────────┐
                                               ┌───────────┐ │  VISITANTE  │
-                                              │(Sem Login)│ │(Modo Público│
+                                              │(Sem Login)│ │(Modo Público)│
                                               └───────────┘ └─────────────┘
 ```
 

@@ -282,6 +282,12 @@ npm run migrate
 # Geração do Manual Executivo Oficial em PDF (PDFKit)
 npm run gerar-manual
 
+# Build e Deploy no Cloudflare Pages (Frontend SPA Edge)
+npm run deploy:pages
+
+# Migração do Banco de Dados no Cloudflare D1 (Serverless Edge SQL)
+npm run d1:migrate
+
 # Inicialização em modo desenvolvimento
 npm run dev
 

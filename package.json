@@ -8,7 +8,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js && node src/database/migrate-auditoria-ocorrencias.js && node src/database/migrate-permissoes-comunicados.js && node src/database/migrate-permissao-operador-eventos.js && node src/database/migrate-fluxo-ativacao-emails.js && node src/database/migrate-remove-compras-operador.js && node src/database/migrate-dispensar-cadastro-visitante.js && node src/database/migrate-hierarquia-e-permissoes.js",
-    "gerar-manual": "node scripts/gerar-pdf-manual-hierarquia.js"
+    "gerar-manual": "node scripts/gerar-pdf-manual-hierarquia.js",
+    "build:pages": "node scripts/build-pages.js",
+    "deploy:pages": "node scripts/build-pages.js && npx wrangler pages deploy dist --project-name=hub-es-secult --branch=main --commit-dirty=true",
+    "d1:migrate": "npx wrangler d1 execute secult_db --file=src/database/schema.d1.sql --remote",
+    "d1:migrate:local": "npx wrangler d1 execute secult_db --file=src/database/schema.d1.sql"
   },
   "repository": {
     "type": "git",
