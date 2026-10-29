@@ -59,14 +59,10 @@ if (fs.existsSync(assetsSrc)) {
   console.log('[BUILD-PAGES] ✅ Pasta assets/ copiada com sucesso.');
 }
 
-// 5. Gerar arquivo _redirects para proxy reverso da API no Cloudflare Edge
-const backendUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || 'https://senai-porto.onrender.com';
-const redirectsContent = `# Cloudflare Pages - Regras de Roteamento e Reverse Proxy no Edge
-# Proxy transparente de rotas de API para o backend Node.js
-/api/* ${backendUrl}/api/:splat 200
-/uploads/* ${backendUrl}/uploads/:splat 200
-
-# Fallback SPA para navegação do frontend
+// 5. Gerar arquivo _redirects para navegação SPA no Cloudflare Edge
+// As rotas /api/* são tratadas nativamente pelas Cloudflare Pages Functions
+const redirectsContent = `# Cloudflare Pages - Roteamento SPA
+# As requisições /api/* são executadas pelas Pages Functions nativas com Cloudflare D1
 /* /index.html 200
 `;
 
