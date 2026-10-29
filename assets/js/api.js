@@ -151,6 +151,13 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.AUTH}/me`, { method: 'GET' });
   }
 
+  async alterarMinhaSenha(dados) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/alterar-senha`, {
+      method: 'PUT',
+      body: JSON.stringify(dados)
+    });
+  }
+
   async solicitarCadastro(dados) {
     return this.request(`${CONFIG.ENDPOINTS.AUTH}/solicitar-cadastro`, {
       method: 'POST',
@@ -190,6 +197,10 @@ class ApiService {
   async getUsuarioById(id) {
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, { method: 'GET' },
       () => window.MockDB.getById('usuarios', id));
+  }
+
+  async getUsuario(id) {
+    return this.getUsuarioById(id);
   }
 
   async createUsuario(data) {
@@ -537,7 +548,7 @@ class ApiService {
   }
 
   // =========================================================================
-  // ADVERTÊNCIAS DISCIPLINARES (Restrito a ADMIN e ADMINISTRADOR)
+  // ADVERTÊNCIAS DISCIPLINARES
   // =========================================================================
   async getAdvertencias(filtros = {}) {
     const params = new URLSearchParams();
@@ -584,7 +595,6 @@ class ApiService {
       body: JSON.stringify({ motivo_decisao })
     });
   }
-
 
   // =========================================================================
   // LIMPEZA
@@ -713,8 +723,5 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/indicadores?periodo_dias=${periodoDias}`, { method: 'GET' });
   }
 }
-
-
-
 
 window.API = new ApiService();

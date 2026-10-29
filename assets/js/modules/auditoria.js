@@ -3,17 +3,65 @@
  * Painel Administrativo com controle de acesso estrito a Administradores (ADMIN).
  * Recursos:
  * 1. Indicadores e Métricas de Governança
- * 2. Gestão e Aprovação de Solicitações de Cadastro (Status PENDENTE)
- * 3. Usuários Conectados Online em Tempo Real (Heartbeat)
- * 4. Listagem Geral de Usuários e Histórico Individual de Ações Auditadas
+ * 2. Listagem Geral de Usuários, Edição de Cargo/Acessos Específicos e Histórico Individual
+ * 3. Gestão e Aprovação de Solicitações de Cadastro (Status PENDENTE)
+ * 4. Usuários Conectados Online em Tempo Real (Heartbeat)
  * 5. Trilha Geral de Logs de Auditoria do Sistema
  */
 
 window.Modules = window.Modules || {};
 
+const PERMISSOES_MODULOS_AUDITORIA = [
+  { chave: 'indicadores.visualizar', modulo: 'Indicadores', acao: 'Visualizar Painel & SLAs' },
+  { chave: 'eventos.visualizar', modulo: 'Agenda', acao: 'Visualizar Reservas' },
+  { chave: 'eventos.criar', modulo: 'Agenda', acao: 'Criar / Reservar Salas' },
+  { chave: 'eventos.editar', modulo: 'Agenda', acao: 'Editar Reservas' },
+  { chave: 'comunicados.visualizar', modulo: 'Comunicação', acao: 'Ler Mural' },
+  { chave: 'comunicados.criar', modulo: 'Comunicação', acao: 'Publicar Avisos' },
+  { chave: 'limpeza.visualizar', modulo: 'Limpeza', acao: 'Visualizar Checklists' },
+  { chave: 'limpeza.criar', modulo: 'Limpeza', acao: 'Criar / Executar Limpeza' },
+  { chave: 'limpeza.editar', modulo: 'Limpeza', acao: 'Validar / Auditar Limpeza' },
+  { chave: 'compras.visualizar', modulo: 'Compras', acao: 'Visualizar Módulo' },
+  { chave: 'compras.criar', modulo: 'Compras', acao: 'Solicitar Compras' },
+  { chave: 'compras.aprovar', modulo: 'Compras', acao: 'Aprovar / Rejeitar Compras' },
+  { chave: 'compras.receber', modulo: 'Compras', acao: 'Dar Entrada em Compras' },
+  { chave: 'equipamentos.visualizar', modulo: 'Equipamentos', acao: 'Visualizar Patrimônio' },
+  { chave: 'equipamentos.criar', modulo: 'Equipamentos', acao: 'Cadastrar Equipamento' },
+  { chave: 'equipamentos.editar', modulo: 'Equipamentos', acao: 'Editar Equipamento' },
+  { chave: 'insumos.visualizar', modulo: 'Insumos', acao: 'Visualizar Estoque' },
+  { chave: 'insumos.criar', modulo: 'Insumos', acao: 'Cadastrar Insumo' },
+  { chave: 'insumos.movimentar', modulo: 'Insumos', acao: 'Movimentar Entrada/Saída' },
+  { chave: 'documentos.visualizar', modulo: 'Documentos', acao: 'Visualizar Biblioteca' },
+  { chave: 'documentos.enviar', modulo: 'Documentos', acao: 'Anexar / Enviar Arquivo' },
+  { chave: 'documentos.arquivar', modulo: 'Documentos', acao: 'Arquivar Documento' },
+  { chave: 'ocorrencias.visualizar', modulo: 'Ocorrências', acao: 'Visualizar Chamados' },
+  { chave: 'ocorrencias.criar', modulo: 'Ocorrências', acao: 'Abrir Chamado' },
+  { chave: 'ocorrencias.atender', modulo: 'Ocorrências', acao: 'Assumir / Atender Chamado' },
+  { chave: 'ocorrencias.escalonar', modulo: 'Ocorrências', acao: 'Escalonar N1 / N2 / N3' },
+  { chave: 'advertencias.visualizar', modulo: 'Advertências', acao: 'Visualizar Disciplinar' },
+  { chave: 'advertencias.solicitar', modulo: 'Advertências', acao: 'Solicitar Advertência' },
+  { chave: 'advertencias.aplicar', modulo: 'Advertências', acao: 'Aplicar Advertência' },
+  { chave: 'advertencias.homologar', modulo: 'Advertências', acao: 'Homologar Advertência' },
+  { chave: 'usuarios.visualizar', modulo: 'Usuários', acao: 'Visualizar Colaboradores' },
+  { chave: 'usuarios.criar', modulo: 'Usuários', acao: 'Cadastrar / Pré-cadastrar' },
+  { chave: 'usuarios.editar', modulo: 'Usuários', acao: 'Editar Cargos e Acessos' },
+  { chave: 'setores.visualizar', modulo: 'Setores', acao: 'Visualizar Setores' },
+  { chave: 'setores.editar', modulo: 'Setores', acao: 'Gerenciar Setores' },
+  { chave: 'auditoria.visualizar', modulo: 'Auditoria', acao: 'Acessar Painel de Governança' }
+];
+
 const AuditoriaModule = {
-  _abaAtiva: 'solicitacoes', // 'solicitacoes' | 'online' | 'usuarios' | 'logs'
+  _abaAtiva: 'usuarios', // 'usuarios' | 'solicitacoes' | 'online' | 'logs'
   _timerAutoRefresh: null,
+
+  _renderPermissoesCheckboxes(cssClass) {
+    return PERMISSOES_MODULOS_AUDITORIA.map(p => `
+      <label class="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-blue-400 transition-colors">
+        <input type="checkbox" value="${p.chave}" class="${cssClass} rounded text-blue-600 shrink-0">
+        <span class="truncate" title="${p.modulo}: ${p.acao}"><strong>${p.modulo}:</strong> ${p.acao}</span>
+      </label>
+    `).join('');
+  },
 
   async render(container) {
     // Verificação de permissão no frontend (o backend já valida estritamente no banco)
@@ -36,6 +84,7 @@ const AuditoriaModule = {
     }
 
     this._container = container;
+    const abaInicial = this._abaAtiva || 'usuarios';
 
     container.innerHTML = `
       <div class="space-y-6">
@@ -47,9 +96,9 @@ const AuditoriaModule = {
                 Controle de Acesso Admin
               </span>
             </div>
-            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight mt-1">Painel de Auditoria & Governança</h2>
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">Painel de Auditoria & Governança</h2>
             <p class="text-xs text-slate-400 font-semibold mt-0.5">
-              Monitoramento em tempo real de acessos, histórico de ações e gestão de novos cadastros.
+              Gestão de usuários, edição de cargos, liberação de acessos específicos a módulos e trilha de auditoria.
             </p>
           </div>
           <div class="flex items-center gap-2">
@@ -72,14 +121,12 @@ const AuditoriaModule = {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="auditoria-kpis">
           <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
-              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Usuários Online</span>
-              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-online">--</div>
-              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ativos nos últimos 5 min
-              </span>
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total de Usuários</span>
+              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-total-usuarios">--</div>
+              <span class="text-[10px] text-slate-400 font-medium mt-0.5">Cadastrados no banco</span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <i data-lucide="radio" class="w-6 h-6"></i>
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <i data-lucide="users" class="w-6 h-6"></i>
             </div>
           </div>
 
@@ -96,12 +143,14 @@ const AuditoriaModule = {
 
           <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm flex items-center justify-between">
             <div>
-              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total de Usuários</span>
-              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-total-usuarios">--</div>
-              <span class="text-[10px] text-slate-400 font-medium mt-0.5">Cadastrados no banco</span>
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Usuários Online</span>
+              <div class="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1" id="kpi-online">--</div>
+              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ativos nos últimos 5 min
+              </span>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <i data-lucide="users" class="w-6 h-6"></i>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <i data-lucide="radio" class="w-6 h-6"></i>
             </div>
           </div>
 
@@ -119,35 +168,35 @@ const AuditoriaModule = {
 
         <!-- NAVEGAÇÃO POR ABAS -->
         <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-1">
+          <button type="button" data-tab="usuarios"
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${abaInicial === 'usuarios' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200'}">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Todos os Usuários & Acessos</span>
+          </button>
           <button type="button" data-tab="solicitacoes"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-blue-600 border-blue-600">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${abaInicial === 'solicitacoes' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200'}">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
             <span>Solicitações de Cadastro</span>
             <span id="badge-aba-pendentes" class="hidden px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-extrabold">0</span>
           </button>
           <button type="button" data-tab="online"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${abaInicial === 'online' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200'}">
             <i data-lucide="activity" class="w-4 h-4"></i>
             <span>Usuários Online</span>
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           </button>
-          <button type="button" data-tab="usuarios"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
-            <i data-lucide="users" class="w-4 h-4"></i>
-            <span>Todos os Usuários & Histórico</span>
-          </button>
           <button type="button" data-tab="logs"
-            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200">
+            class="tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${abaInicial === 'logs' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200'}">
             <i data-lucide="file-text" class="w-4 h-4"></i>
             <span>Trilha de Auditoria (Logs)</span>
           </button>
         </div>
 
         <!-- CONTEÚDO DAS ABAS -->
-        <div id="aba-conteudo-solicitacoes" class="tab-content space-y-4"></div>
-        <div id="aba-conteudo-online" class="tab-content hidden space-y-4"></div>
-        <div id="aba-conteudo-usuarios" class="tab-content hidden space-y-4"></div>
-        <div id="aba-conteudo-logs" class="tab-content hidden space-y-4"></div>
+        <div id="aba-conteudo-usuarios" class="tab-content ${abaInicial === 'usuarios' ? '' : 'hidden'} space-y-4"></div>
+        <div id="aba-conteudo-solicitacoes" class="tab-content ${abaInicial === 'solicitacoes' ? '' : 'hidden'} space-y-4"></div>
+        <div id="aba-conteudo-online" class="tab-content ${abaInicial === 'online' ? '' : 'hidden'} space-y-4"></div>
+        <div id="aba-conteudo-logs" class="tab-content ${abaInicial === 'logs' ? '' : 'hidden'} space-y-4"></div>
       </div>
 
       <!-- MODAL DE HISTÓRICO INDIVIDUAL DE USUÁRIO -->
@@ -157,13 +206,13 @@ const AuditoriaModule = {
 
       <!-- MODAL DE APROVAÇÃO COM DIGITAÇÃO E EDIÇÃO COMPLETA (ADMIN) -->
       <div id="modal-aprovar-usuario" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-200 dark:border-slate-800 modal-enter">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-200 dark:border-slate-800 modal-enter">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
             <div>
-              <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Gestão e Liberação de Cadastro
               </h3>
-              <p class="text-[11px] text-slate-400 mt-0.5">Como administrador, você pode digitar e editar todos os campos do usuário.</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Como administrador, você pode editar todos os campos e liberar acessos específicos.</p>
             </div>
             <button type="button" onclick="document.getElementById('modal-aprovar-usuario').classList.add('hidden')" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
               <i data-lucide="x" class="w-4 h-4"></i>
@@ -174,19 +223,21 @@ const AuditoriaModule = {
 
             <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 flex items-center gap-2">
               <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
-              <span>Você pode corrigir o nome, e-mail, atribuir setor, perfil ou redefinir a senha antes de salvar ou liberar.</span>
+              <span>Você pode corrigir o nome, e-mail, atribuir setor, perfil, acessos adicionais ou redefinir a senha antes de salvar ou liberar.</span>
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
-              <input type="text" id="aprovar-user-nome-input" required minlength="3" placeholder="Ex: Carlos Eduardo de Oliveira"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <input type="text" id="aprovar-user-nome-input" required minlength="3" placeholder="Ex: Carlos Eduardo de Oliveira"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
-              <input type="email" id="aprovar-user-email-input" required placeholder="Ex: carlos.oliveira@secult.es.gov.br"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+                <input type="email" id="aprovar-user-email-input" required placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -228,6 +279,19 @@ const AuditoriaModule = {
               </div>
             </div>
 
+            <!-- PERMISSÕES ADICIONAIS / ACESSOS ESPECÍFICOS -->
+            <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-emerald-600"></i> Liberar Acesso a Lugares / Módulos Específicos
+                </span>
+                <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs max-h-48 overflow-y-auto pr-1">
+                ${this._renderPermissoesCheckboxes('aprovar-perm-extra-cb')}
+              </div>
+            </div>
+
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-bold text-slate-700">Redefinir Senha (Opcional)</label>
@@ -261,9 +325,9 @@ const AuditoriaModule = {
 
       <!-- MODAL DE CADASTRO MANUAL DE NOVO USUÁRIO (ADMIN) -->
       <div id="modal-cadastrar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <i data-lucide="user-plus" class="w-4 h-4 text-blue-600"></i> Cadastrar Novo Usuário
             </h3>
             <button type="button" id="btn-fechar-modal-cadastro" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
@@ -272,18 +336,20 @@ const AuditoriaModule = {
           </div>
 
           <form id="form-cadastrar-usuario" class="space-y-4" novalidate>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
-              <input type="text" id="cad-user-nome" required minlength="3"
-                placeholder="Ex: Carlos Eduardo de Oliveira"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <input type="text" id="cad-user-nome" required minlength="3"
+                  placeholder="Ex: Carlos Eduardo de Oliveira"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+              </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
-              <input type="email" id="cad-user-email" required
-                placeholder="Ex: carlos.oliveira@secult.es.gov.br"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+                <input type="email" id="cad-user-email" required
+                  placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -330,37 +396,14 @@ const AuditoriaModule = {
             <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Permissões Específicas / Acessos Adicionais
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Liberar Acesso a Lugares / Módulos Específicos
                 </span>
                 <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
               </div>
-              <p class="text-[11px] text-slate-500">Marque privilégios extras que este colaborador deve receber (ex: permitir que RH acesse e anexe documentos):</p>
+              <p class="text-[11px] text-slate-500">Marque lugares ou ações extras que este colaborador deve acessar:</p>
               
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="documentos.visualizar" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Documentos:</strong> Visualizar</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="documentos.enviar" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Documentos:</strong> Anexar / Enviar</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="ocorrencias.atender" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Ocorrências:</strong> Assumir Chamados</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="ocorrencias.escalonar" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Ocorrências:</strong> Escalonar N1/N2/N3</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="insumos.visualizar" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Insumos:</strong> Visualizar Estoque</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="compras.criar" class="cad-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Compras:</strong> Solicitar Compras</span>
-                </label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs max-h-52 overflow-y-auto pr-1">
+                ${this._renderPermissoesCheckboxes('cad-perm-extra-cb')}
               </div>
             </div>
 
@@ -395,12 +438,12 @@ const AuditoriaModule = {
         </div>
       </div>
 
-      <!-- MODAL DE EDIÇÃO DE USUÁRIO & CARGO (ADMIN) -->
+      <!-- MODAL DE EDIÇÃO DE USUÁRIO, CARGO & ACESSOS (ADMIN) -->
       <div id="modal-editar-usuario" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-100">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl my-8 max-h-[95vh] overflow-y-auto border border-slate-100 dark:border-slate-800">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <i data-lucide="user-cog" class="w-4 h-4 text-blue-600"></i> Editar Usuário & Cargo
+            <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <i data-lucide="user-cog" class="w-4 h-4 text-blue-600"></i> Editar Usuário, Cargo & Acessos Específicos
             </h3>
             <button type="button" id="btn-fechar-modal-edicao" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
               <i data-lucide="x" class="w-4 h-4"></i>
@@ -410,21 +453,23 @@ const AuditoriaModule = {
           <form id="form-editar-usuario" class="space-y-4" novalidate>
             <input type="hidden" id="edit-user-id">
 
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
-              <input type="text" id="edit-user-nome" required minlength="3"
-                placeholder="Ex: Carlos Eduardo de Oliveira"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
-              <input type="email" id="edit-user-email" required
-                placeholder="Ex: carlos.oliveira@secult.es.gov.br"
-                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
-            </div>
-
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <input type="text" id="edit-user-nome" required minlength="3"
+                  placeholder="Ex: Carlos Eduardo de Oliveira"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">E-mail Corporativo *</label>
+                <input type="email" id="edit-user-email" required
+                  placeholder="Ex: carlos.oliveira@secult.es.gov.br"
+                  class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 bg-white">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Cargo / Perfil de Acesso *</label>
                 <select id="edit-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
@@ -462,54 +507,31 @@ const AuditoriaModule = {
                   <option value="">Sem setor definido</option>
                 </select>
               </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Status da Conta *</label>
+                <select id="edit-user-status" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                  <option value="ATIVO">ATIVO (Acesso liberado)</option>
+                  <option value="INATIVO">INATIVO (Acesso pausado)</option>
+                  <option value="BLOQUEADO">BLOQUEADO (Acesso revogado)</option>
+                  <option value="PENDENTE">PENDENTE (Aguardando liberação)</option>
+                </select>
+              </div>
             </div>
 
             <!-- PERMISSÕES ADICIONAIS / EXCEÇÕES GRANULARES -->
             <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Permissões Específicas / Acessos Adicionais
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Liberar Acesso a Lugares / Módulos Específicos
                 </span>
                 <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
               </div>
-              <p class="text-[11px] text-slate-500">Marque privilégios extras que este colaborador deve receber (ex: permitir que RH acesse e anexe documentos):</p>
+              <p class="text-[11px] text-slate-500">Marque ou desmarque abaixo os módulos e ações específicas que este usuário pode acessar:</p>
               
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="documentos.visualizar" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Documentos:</strong> Visualizar</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="documentos.enviar" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Documentos:</strong> Anexar / Enviar</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="ocorrencias.atender" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Ocorrências:</strong> Assumir Chamados</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="ocorrencias.escalonar" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Ocorrências:</strong> Escalonar N1/N2/N3</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="insumos.visualizar" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Insumos:</strong> Visualizar Estoque</span>
-                </label>
-                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
-                  <input type="checkbox" value="compras.criar" class="edit-perm-extra-cb rounded text-blue-600">
-                  <span><strong>Compras:</strong> Solicitar Compras</span>
-                </label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs max-h-56 overflow-y-auto pr-1">
+                ${this._renderPermissoesCheckboxes('edit-perm-extra-cb')}
               </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Status da Conta *</label>
-              <select id="edit-user-status" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
-                <option value="ATIVO">ATIVO (Acesso liberado)</option>
-                <option value="INATIVO">INATIVO (Acesso pausado)</option>
-                <option value="BLOQUEADO">BLOQUEADO (Acesso revogado)</option>
-                <option value="PENDENTE">PENDENTE (Aguardando liberação)</option>
-              </select>
             </div>
 
             <div class="border-t border-slate-100 pt-3">
@@ -667,7 +689,7 @@ const AuditoriaModule = {
         this._abaAtiva = target;
 
         tabs.forEach(t => {
-          t.className = 'tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800';
+          t.className = 'tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-slate-200';
         });
         btn.className = 'tab-btn px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer text-blue-600 border-blue-600';
 
@@ -689,6 +711,7 @@ const AuditoriaModule = {
         const perfil = container.querySelector('#aprovar-user-perfil').value;
         const setorId = container.querySelector('#aprovar-user-setor')?.value;
         const senha = container.querySelector('#aprovar-user-senha')?.value;
+        const permissoes_adicionais = Array.from(container.querySelectorAll('.aprovar-perm-extra-cb:checked')).map(cb => cb.value);
         const btn = container.querySelector('#btn-confirmar-aprovacao');
 
         if (!nome || nome.length < 3) {
@@ -709,7 +732,8 @@ const AuditoriaModule = {
             email,
             perfil,
             setor_id: setorId ? Number(setorId) : null,
-            senha: senha || undefined
+            senha: senha || undefined,
+            permissoes_adicionais
           });
 
           document.getElementById('modal-aprovar-usuario')?.classList.add('hidden');
@@ -776,6 +800,7 @@ const AuditoriaModule = {
       const perfil = container.querySelector('#aprovar-user-perfil')?.value;
       const setorId = container.querySelector('#aprovar-user-setor')?.value;
       const senha = container.querySelector('#aprovar-user-senha')?.value;
+      const permissoes_adicionais = Array.from(container.querySelectorAll('.aprovar-perm-extra-cb:checked')).map(cb => cb.value);
 
       if (!nome || nome.length < 3) {
         if (window.UI?.toast) window.UI.toast({ title: 'Atenção', message: 'Informe o nome completo (mínimo 3 caracteres).', type: 'warning' });
@@ -799,7 +824,8 @@ const AuditoriaModule = {
           email,
           perfil,
           setor_id: setorId ? Number(setorId) : null,
-          senha: senha || undefined
+          senha: senha || undefined,
+          permissoes_adicionais
         });
         if (window.UI?.toast) {
           window.UI.toast({
@@ -983,7 +1009,7 @@ const AuditoriaModule = {
           if (window.UI?.toast) {
             window.UI.toast({
               title: 'Usuário Atualizado',
-              message: `As informações e o cargo de "${nome}" foram atualizados com sucesso!`,
+              message: `As informações, cargo e acessos de "${nome}" foram atualizados com sucesso!`,
               type: 'success'
             });
           }
@@ -1005,15 +1031,15 @@ const AuditoriaModule = {
 
   async _carregarTudo(container) {
     await Promise.allSettled([
+      this._carregarUsuarios(container),
       this._carregarSolicitacoes(container),
       this._carregarOnline(container),
-      this._carregarUsuarios(container),
       this._carregarLogs(container)
     ]);
     if (window.lucide) lucide.createIcons();
   },
 
-  // ─── ABA 1: SOLICITAÇÕES DE CADASTRO (STATUS PENDENTE) ────────────────────
+  // ─── ABA: SOLICITAÇÕES DE CADASTRO (STATUS PENDENTE) ────────────────────
   async _carregarSolicitacoes(container) {
     const wrap = container.querySelector('#aba-conteudo-solicitacoes');
     if (!wrap) return;
@@ -1021,6 +1047,7 @@ const AuditoriaModule = {
     try {
       const res = await window.API.getAuditoriaSolicitacoes();
       const pendentes = Array.isArray(res) ? res : (res?.data || []);
+      this._solicitacoesPendentes = pendentes;
 
       // Atualiza KPI e badge
       const kpiPendentes = container.querySelector('#kpi-pendentes');
@@ -1034,13 +1061,13 @@ const AuditoriaModule = {
 
       if (!pendentes.length) {
         wrap.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-hub-sm">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center shadow-hub-sm">
             <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
               <i data-lucide="check-check" class="w-6 h-6"></i>
             </div>
-            <h4 class="text-sm font-extrabold text-slate-800">Nenhuma solicitação pendente</h4>
+            <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Nenhuma solicitação pendente</h4>
             <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Todas as contas solicitadas já foram analisadas. Novos cadastros aparecerão aqui automaticamente.
+              Todas as contas solicitadas já foram analisadas. Para gerenciar colaboradores ativos ou editar permissões, utilize a aba <strong>Todos os Usuários & Acessos</strong>.
             </p>
           </div>`;
         return;
@@ -1057,11 +1084,11 @@ const AuditoriaModule = {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-hub-sm overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Usuário</th>
                   <th class="py-3 px-4">E-mail</th>
                   <th class="py-3 px-4">Setor</th>
@@ -1070,16 +1097,16 @@ const AuditoriaModule = {
                   <th class="py-3 px-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${pendentes.map(u => `
-                  <tr class="hover:bg-slate-50/60 transition-colors">
-                    <td class="py-3.5 px-4 font-extrabold text-slate-900 flex items-center gap-2">
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <td class="py-3.5 px-4 font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                       <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-bold text-xs shadow-sm">
                         ${this._iniciais(u.nome)}
                       </div>
                       <span>${this._esc(u.nome)}</span>
                     </td>
-                    <td class="py-3.5 px-4 font-mono text-slate-600">${this._esc(u.email)}</td>
+                    <td class="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-300">${this._esc(u.email)}</td>
                     <td class="py-3.5 px-4 text-slate-500">${this._esc(u.setor_nome || 'Geral / Não atribuído')}</td>
                     <td class="py-3.5 px-4 text-slate-400 font-mono">${u.created_at ? new Date(u.created_at).toLocaleString('pt-BR') : 'N/A'}</td>
                     <td class="py-3.5 px-4">
@@ -1089,8 +1116,8 @@ const AuditoriaModule = {
                     </td>
                     <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
                       <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'}, '${u.perfil || 'OPERADOR'}')"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold text-xs border border-blue-200 transition-colors cursor-pointer" title="Digitar e editar dados da solicitação">
-                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+                        class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold text-xs border border-blue-200 transition-colors cursor-pointer" title="Digitar, editar dados e definir acessos">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar / Acessos
                       </button>
                       <button type="button" onclick="AuditoriaModule.abrirModalAprovacao(${u.id}, '${this._esc(u.nome)}', '${this._esc(u.email)}', ${u.setor_id || 'null'}, '${u.perfil || 'OPERADOR'}')"
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer" title="Liberar acesso ao usuário">
@@ -1126,6 +1153,12 @@ const AuditoriaModule = {
       inputSenha.value = '';
       inputSenha.type = 'password';
     }
+
+    const sol = (this._solicitacoesPendentes || []).find(item => Number(item.id) === Number(id));
+    const userPerms = Array.isArray(sol?.permissoes_adicionais) ? sol.permissoes_adicionais : [];
+    modal.querySelectorAll('.aprovar-perm-extra-cb').forEach(cb => {
+      cb.checked = userPerms.includes(cb.value);
+    });
 
     const selectSetor = document.getElementById('aprovar-user-setor');
     if (selectSetor) {
@@ -1225,7 +1258,7 @@ const AuditoriaModule = {
     }
   },
 
-  // ─── ABA 2: USUÁRIOS ONLINE EM TEMPO REAL ──────────────────────────────────
+  // ─── ABA: USUÁRIOS ONLINE EM TEMPO REAL ──────────────────────────────────
   async _carregarOnline(container) {
     const wrap = container.querySelector('#aba-conteudo-online');
     if (!wrap) return;
@@ -1239,9 +1272,9 @@ const AuditoriaModule = {
 
       if (!onlineList.length) {
         wrap.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-hub-sm">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center shadow-hub-sm">
             <i data-lucide="wifi-off" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
-            <h4 class="text-sm font-bold text-slate-700">Nenhum usuário online no momento</h4>
+            <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">Nenhum usuário online no momento</h4>
             <p class="text-xs text-slate-400 mt-1">Nenhum heartbeat foi detectado nos últimos 5 minutos.</p>
           </div>`;
         return;
@@ -1250,7 +1283,7 @@ const AuditoriaModule = {
       wrap.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           ${onlineList.map(u => `
-            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-hub-sm flex items-start gap-3 relative overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-hub-sm flex items-start gap-3 relative overflow-hidden">
               <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-lg"></span>
               <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-extrabold text-xs shadow-md shrink-0">
                 ${this._iniciais(u.nome)}
@@ -1258,10 +1291,10 @@ const AuditoriaModule = {
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0"></span>
-                  <h4 class="text-xs font-extrabold text-slate-900 truncate">${this._esc(u.nome)}</h4>
+                  <h4 class="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">${this._esc(u.nome)}</h4>
                 </div>
                 <span class="text-[11px] font-mono text-slate-500 block truncate">${this._esc(u.email)}</span>
-                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400">
+                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
                   <span class="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">${this._esc(u.perfil)}</span>
                   <span>${u.setor_nome ? this._esc(u.setor_nome) : 'Geral'}</span>
                   <span class="ml-auto font-mono text-emerald-600 font-bold">Online</span>
@@ -1274,13 +1307,16 @@ const AuditoriaModule = {
     }
   },
 
-  // ─── ABA 3: TODOS OS USUÁRIOS & HISTÓRICO DE AÇÕES ────────────────────────
+  // ─── ABA PRINCIPAL: TODOS OS USUÁRIOS, ACESSOS & HISTÓRICO DE AÇÕES ────────
   async _carregarUsuarios(container) {
     const wrap = container.querySelector('#aba-conteudo-usuarios');
     if (!wrap) return;
 
     try {
-      const res = await window.API.getAuditoriaUsuarios();
+      let res = await window.API.getAuditoriaUsuarios().catch(() => null);
+      if (!res) {
+        res = await window.API.getUsuarios().catch(() => []);
+      }
       const usuarios = Array.isArray(res) ? res : (res?.data || []);
       this._usuarios = usuarios;
 
@@ -1290,23 +1326,25 @@ const AuditoriaModule = {
       const usuarioAtual = window.Auth?.getUsuario?.();
 
       wrap.innerHTML = `
-        <div class="flex items-center gap-2 mb-3">
-          <input id="input-filtro-usuarios" type="text" placeholder="Filtrar por nome ou e-mail..."
-            class="rounded-xl border border-slate-200 px-4 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 w-full sm:w-72">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2 flex-1">
+            <input id="input-filtro-usuarios" type="text" placeholder="Filtrar por nome, e-mail, cargo ou setor..."
+              class="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 w-full sm:w-80">
+          </div>
           <button type="button" onclick="AuditoriaModule.abrirModalCadastro()"
             class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer whitespace-nowrap">
             <i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar Novo Usuário
           </button>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-hub-sm overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Nome</th>
                   <th class="py-3 px-4">E-mail</th>
-                  <th class="py-3 px-4">Cargo / Perfil</th>
+                  <th class="py-3 px-4">Cargo / Acessos Extras</th>
                   <th class="py-3 px-4">Setor</th>
                   <th class="py-3 px-4">Status</th>
                   <th class="py-3 px-4">Ações Auditadas</th>
@@ -1314,15 +1352,20 @@ const AuditoriaModule = {
                   <th class="py-3 px-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody id="tbody-usuarios" class="divide-y divide-slate-100">
+              <tbody id="tbody-usuarios" class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${usuarios.map(u => {
                   const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
                   const isAtivo = u.status === 'ATIVO';
+                  const extras = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
 
                   return `
-                  <tr class="hover:bg-slate-50/60 transition-colors user-row" data-nome="${this._esc(u.nome).toLowerCase()}" data-email="${this._esc(u.email).toLowerCase()}">
-                    <td class="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-[11px] font-bold shrink-0">
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors user-row"
+                      data-nome="${this._esc(u.nome).toLowerCase()}"
+                      data-email="${this._esc(u.email).toLowerCase()}"
+                      data-perfil="${this._esc(u.perfil).toLowerCase()}"
+                      data-setor="${this._esc(u.setor_nome || '').toLowerCase()}">
+                    <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center text-[11px] font-bold shrink-0">
                         ${this._iniciais(u.nome)}
                       </div>
                       <div class="flex flex-col">
@@ -1330,13 +1373,20 @@ const AuditoriaModule = {
                         ${isMe ? '<span class="text-[9px] font-extrabold text-blue-600 uppercase tracking-wider">(Sua Conta)</span>' : ''}
                       </div>
                     </td>
-                    <td class="py-3 px-4 font-mono text-slate-600">${this._esc(u.email)}</td>
+                    <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${this._esc(u.email)}</td>
                     <td class="py-3 px-4">
-                      <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${u.perfil === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 text-slate-700'}">
-                        ${this._esc(u.perfil)}
-                      </span>
+                      <div class="flex flex-col items-start gap-1">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${u.perfil === 'ADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'}">
+                          ${this._esc(u.perfil)}
+                        </span>
+                        ${extras.length > 0 ? `
+                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold" title="${this._esc(extras.join(', '))}">
+                            <i data-lucide="key" class="w-2.5 h-2.5"></i> +${extras.length} acesso(s) extra(s)
+                          </span>
+                        ` : ''}
+                      </div>
                     </td>
-                    <td class="py-3 px-4 text-slate-600">
+                    <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
                       ${this._esc(u.setor_nome || 'Não definido')}
                     </td>
                     <td class="py-3 px-4">
@@ -1354,6 +1404,14 @@ const AuditoriaModule = {
                     </td>
                     <td class="py-3 px-4 text-right whitespace-nowrap">
                       <div class="inline-flex items-center justify-end gap-1">
+                        <!-- Editar Usuário, Cargo & Liberar Acessos -->
+                        <button type="button" onclick="AuditoriaModule.abrirModalEdicao(${u.id})"
+                          title="Editar dados, trocar cargo ou adicionar acesso a módulos específicos"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold text-[11px] transition-colors cursor-pointer">
+                          <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
+                          <span>Editar / Acessos</span>
+                        </button>
+
                         <!-- Alternar Status (Ativo / Inativo) -->
                         ${isAtivo ? `
                           <button type="button" ${isMe ? 'disabled' : `onclick="AuditoriaModule.alternarStatus(${u.id}, 'INATIVO', '${this._esc(u.nome)}')"`}
@@ -1377,13 +1435,6 @@ const AuditoriaModule = {
                             <i data-lucide="mail" class="w-3.5 h-3.5"></i>
                           </button>
                         ` : ''}
-
-                        <!-- Editar Usuário & Trocar Cargo -->
-                        <button type="button" onclick="AuditoriaModule.abrirModalEdicao(${u.id})"
-                          title="Editar dados e trocar cargo"
-                          class="p-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-blue-600 transition-colors cursor-pointer">
-                          <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
-                        </button>
 
                         <!-- Histórico de Auditoria -->
                         <button type="button" onclick="AuditoriaModule.abrirHistoricoUsuario(${u.id})"
@@ -1415,7 +1466,9 @@ const AuditoriaModule = {
         container.querySelectorAll('.user-row').forEach(row => {
           const nome = row.dataset.nome || '';
           const email = row.dataset.email || '';
-          row.style.display = (nome.includes(q) || email.includes(q)) ? '' : 'none';
+          const perfil = row.dataset.perfil || '';
+          const setor = row.dataset.setor || '';
+          row.style.display = (nome.includes(q) || email.includes(q) || perfil.includes(q) || setor.includes(q)) ? '' : 'none';
         });
       });
     } catch (err) {
@@ -1442,7 +1495,7 @@ const AuditoriaModule = {
           <div class="flex items-start justify-between border-b border-slate-100 pb-3">
             <div>
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Histórico de Atividades</span>
-              <h3 class="text-base font-extrabold text-slate-900 mt-0.5">${this._esc(u.nome)}</h3>
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-slate-100 mt-0.5">${this._esc(u.nome)}</h3>
               <p class="text-xs font-mono text-slate-500">${this._esc(u.email)} • Perfil: ${this._esc(u.perfil)}</p>
             </div>
             <button type="button" onclick="document.getElementById('modal-historico-usuario').classList.add('hidden')"
@@ -1452,18 +1505,18 @@ const AuditoriaModule = {
           </div>
 
           <div class="space-y-3">
-            <h4 class="text-xs font-bold text-slate-700">Registros Recentes (${acoes.length})</h4>
+            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">Registros Recentes (${acoes.length})</h4>
             ${!acoes.length ? `
               <p class="text-xs text-slate-400 py-6 text-center">Nenhuma ação registrada para este usuário.</p>` : `
               <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
                 ${acoes.map(a => `
-                  <div class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition-colors text-xs flex flex-col gap-1">
+                  <div class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/80 rounded-xl border border-slate-100 dark:border-slate-800 transition-colors text-xs flex flex-col gap-1">
                     <div class="flex items-center justify-between">
-                      <span class="font-extrabold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200/80">${this._esc(a.acao)}</span>
+                      <span class="font-extrabold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/80 dark:border-slate-700">${this._esc(a.acao)}</span>
                       <span class="text-[10px] font-mono text-slate-400">${a.created_at ? new Date(a.created_at).toLocaleString('pt-BR') : ''}</span>
                     </div>
-                    ${a.descricao ? `<p class="text-slate-600 mt-1">${this._esc(a.descricao)}</p>` : ''}
-                    <div class="flex items-center gap-3 text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-200/50">
+                    ${a.descricao ? `<p class="text-slate-600 dark:text-slate-300 mt-1">${this._esc(a.descricao)}</p>` : ''}
+                    <div class="flex items-center gap-3 text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-200/50 dark:border-slate-700">
                       ${a.entidade ? `<span>Entidade: ${this._esc(a.entidade)} #${a.entidade_id || ''}</span>` : ''}
                       ${a.ip ? `<span>IP: ${this._esc(a.ip)}</span>` : ''}
                     </div>
@@ -1485,30 +1538,30 @@ const AuditoriaModule = {
     }
   },
 
-  // ─── ABA 4: TRILHA GERAL DE AUDITORIA (LOGS) ──────────────────────────────
+  // ─── ABA: TRILHA GERAL DE AUDITORIA (LOGS) ──────────────────────────────
   async _carregarLogs(container) {
     const wrap = container.querySelector('#aba-conteudo-logs');
     if (!wrap) return;
 
     try {
       const res = await window.API.getAuditoriaLogs({ limit: 50 });
-      const logs = res?.data || [];
-      const total = res?.meta?.total || logs.length;
+      const logs = Array.isArray(res) ? res : (res?.data || res?.registros || []);
+      const total = res?.meta?.total || res?.paginacao?.total || logs.length;
 
       const kpiLogs = container.querySelector('#kpi-total-logs');
       if (kpiLogs) kpiLogs.textContent = total;
 
       wrap.innerHTML = `
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-hub-sm overflow-hidden">
-          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <h4 class="text-xs font-extrabold text-slate-900">Últimos Eventos Auditados (${total} registros)</h4>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <h4 class="text-xs font-extrabold text-slate-900 dark:text-slate-100">Últimos Eventos Auditados (${total} registros)</h4>
             <span class="text-[11px] text-slate-400">Exibindo os 50 mais recentes</span>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Data/Hora</th>
                   <th class="py-3 px-4">Ação</th>
                   <th class="py-3 px-4">Usuário</th>
@@ -1516,21 +1569,21 @@ const AuditoriaModule = {
                   <th class="py-3 px-4">IP</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 font-mono text-[11px]">
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
                 ${logs.map(l => `
-                  <tr class="hover:bg-slate-50/60 transition-colors">
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td class="py-2.5 px-4 text-slate-400 whitespace-nowrap">
                       ${l.created_at ? new Date(l.created_at).toLocaleString('pt-BR') : ''}
                     </td>
-                    <td class="py-2.5 px-4 font-bold text-slate-800">
-                      <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px]">
+                    <td class="py-2.5 px-4 font-bold text-slate-800 dark:text-slate-200">
+                      <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px]">
                         ${this._esc(l.acao)}
                       </span>
                     </td>
-                    <td class="py-2.5 px-4 text-slate-700 font-sans font-bold">
+                    <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300 font-sans font-bold">
                       ${this._esc(l.usuario_nome || 'Sistema')}
                     </td>
-                    <td class="py-2.5 px-4 text-slate-600 font-sans max-w-md truncate">
+                    <td class="py-2.5 px-4 text-slate-600 dark:text-slate-400 font-sans max-w-md truncate">
                       ${this._esc(l.descricao || '-')}
                     </td>
                     <td class="py-2.5 px-4 text-slate-400 text-[10px]">

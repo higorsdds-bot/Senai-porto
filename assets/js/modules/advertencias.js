@@ -15,9 +15,17 @@ window.AdvertenciasModule = {
   async render(container) {
     const usuarioLogado = window.Auth?.getUsuario();
     const perfil = String(usuarioLogado?.perfil || '').toUpperCase().trim();
-    const ehPermitido = ['ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR', 'ADMINISTRACAO', 'GESTOR'].includes(perfil)
+    const ehPermitido = [
+      'ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR', 'ADMINISTRACAO',
+      'GESTOR', 'GESTOR_RH', 'ANALISTA_RH', 'RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR'
+    ].includes(perfil)
       || window.Auth?.isAdmin()
-      || window.Auth?.hasPermission('advertencias.visualizar');
+      || window.Auth?.hasAnyPermission?.([
+        'advertencias.visualizar',
+        'advertencias.solicitar',
+        'advertencias.aplicar',
+        'advertencias.homologar'
+      ]);
 
     if (!ehPermitido) {
       container.innerHTML = window.UI.renderEmptyState({

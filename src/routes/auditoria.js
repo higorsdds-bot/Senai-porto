@@ -19,10 +19,55 @@ const {
 const PERFIS_PERMITIDOS = [
   'ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR',
   'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'GESTOR',
-  'TECNICO_N1', 'TECNICO_N2', 'TECNICO_N3',
+  'TECNICO_N1', 'TECNICO_N2', 'TECNICO_N3', 'TECNICO',
   'ANALISTA_RH', 'RH',
   'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'
 ];
+
+async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais) {
+  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => {});
+  if (!Array.isArray(permissoesAdicionais) || permissoesAdicionais.length === 0) return;
+
+  for (const rawChave of permissoesAdicionais) {
+    const chave = String(rawChave || '').trim();
+    if (!chave) continue;
+    await pool.query(
+      `INSERT IGNORE INTO permissoes (chave, nome) VALUES (?, ?)`,
+      [chave, chave]
+    ).catch(() => {});
+    await pool.query(
+      `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
+       SELECT ?, id, 1 FROM permissoes WHERE chave = ?
+       ON DUPLICATE KEY UPDATE concedida = 1`,
+      [usuarioId, chave]
+    ).catch(() => {});
+  }
+}
+
+async function anexarPermissoesAdicionais(pool, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  try {
+    const [extras] = await pool.query(
+      `SELECT up.usuario_id, p.chave
+       FROM usuario_permissoes up
+       JOIN permissoes p ON p.id = up.permissao_id
+       WHERE up.concedida = 1`
+    );
+    const mapExtras = {};
+    for (const e of extras) {
+      if (!mapExtras[e.usuario_id]) mapExtras[e.usuario_id] = [];
+      mapExtras[e.usuario_id].push(e.chave);
+    }
+    for (const r of rows) {
+      r.permissoes_adicionais = mapExtras[r.id] || [];
+    }
+  } catch (_) {
+    for (const r of rows) {
+      r.permissoes_adicionais = [];
+    }
+  }
+  return rows;
+}
 
 // Exige autenticação básica
 router.use(authMiddleware);
@@ -47,7 +92,7 @@ async function requireAdminDirect(req, res, next) {
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '');
 
-    const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(perfilNorm);
+    const isAdmin = ['ADMIN', 'ADMINGERAL', 'ADMINISTRADOR'].includes(perfilNorm);
     const podeAuditoria = isAdmin || await hasPermission(usuario, 'auditoria.visualizar');
 
     if (!podeAuditoria) {
@@ -134,6 +179,8 @@ router.get('/usuarios', async (req, res) => {
       params
     );
 
+    await anexarPermissoesAdicionais(pool, rows);
+
     return res.json({ success: true, data: rows });
   } catch (err) {
     console.error('[AUDITORIA] Erro ao listar usuários:', err.message);
@@ -187,13 +234,15 @@ router.get('/solicitacoes-pendentes', async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.perfil, u.status, u.created_at,
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.created_at,
               s.nome AS setor_nome
        FROM usuarios u
        LEFT JOIN setores s ON s.id = u.setor_id
-       WHERE u.status = 'PENDENTE' AND u.deleted_at IS NULL
+       WHERE u.status IN ('PENDENTE', 'AGUARDANDO_ATIVACAO') AND u.deleted_at IS NULL
        ORDER BY u.created_at ASC`
     );
+
+    await anexarPermissoesAdicionais(pool, rows);
 
     return res.json({ success: true, data: rows, total_pendentes: rows.length });
   } catch (err) {
@@ -211,7 +260,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
   try {
     const pool = getPool();
     const [user] = await pool.query(
-      `SELECT id, nome, email, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      `SELECT id, nome, email, setor_id, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
       [id]
     );
 
@@ -242,10 +291,13 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       emailFinal = cleanEmail;
     }
 
-    let sql = `UPDATE usuarios SET status = 'AGUARDANDO_ATIVACAO', perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
-    const params = [perfilFinal, setorFinal, nomeFinal, emailFinal];
+    const definiuSenhaDireta = Boolean(senha && String(senha).trim().length >= 8);
+    const statusAposAprovacao = definiuSenhaDireta ? 'ATIVO' : 'AGUARDANDO_ATIVACAO';
 
-    if (senha && String(senha).trim().length >= 8) {
+    let sql = `UPDATE usuarios SET status = ?, perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
+    const params = [statusAposAprovacao, perfilFinal, setorFinal, nomeFinal, emailFinal];
+
+    if (definiuSenhaDireta) {
       const senhaHash = await bcrypt.hash(String(senha).trim(), 12);
       sql += `, senha = ?`;
       params.push(senhaHash);
@@ -257,15 +309,8 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     await pool.query(sql, params);
 
     // Grava permissões granulares adicionais
-    if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
-      for (const chave of permissoes_adicionais) {
-        await pool.query(
-          `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
-           SELECT ?, id, 1 FROM permissoes WHERE chave = ?
-           ON DUPLICATE KEY UPDATE concedida = 1`,
-          [id, chave]
-        ).catch(() => {});
-      }
+    if (permissoes_adicionais !== undefined) {
+      await syncPermissoesExtrasUsuario(pool, id, permissoes_adicionais);
     }
 
     clearUserAuthCache(id);
@@ -278,14 +323,14 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     await pool.query(
       `UPDATE tokens_ativacao SET expira_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL`,
       [id]
-    );
+    ).catch(() => {});
 
     // Insere o hash do novo token com validade configurada
     await pool.query(
       `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
        VALUES (?, ?, NOW() + INTERVAL ? HOUR, ?)`,
       [id, tokenHash, ACTIVATION_TOKEN_EXPIRES_HOURS, getClientIp(req)]
-    );
+    ).catch(() => {});
 
     // Busca nome do setor para incluir no e-mail
     let setorNome = null;
@@ -300,7 +345,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       acao: 'APROVAR_CADASTRO',
       entidade: 'usuarios',
       entidade_id: parseInt(id, 10),
-      descricao: `Cadastro do usuário "${nomeFinal}" (${emailFinal}) foi APROVADO com perfil ${perfilFinal}${setorNome ? ` e setor ${setorNome}` : ''}. Link seguro de ativação enviado por e-mail (Validade: ${ACTIVATION_TOKEN_EXPIRES_HOURS}h).`,
+      descricao: `Cadastro do usuário "${nomeFinal}" (${emailFinal}) foi APROVADO com perfil ${perfilFinal}${setorNome ? ` e setor ${setorNome}` : ''}.`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
@@ -326,9 +371,12 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
 
     return res.json({
       success: true,
-      message: emailEnviado
-        ? `Acesso do usuário "${nomeFinal}" aprovado com sucesso! Um e-mail com o link de ativação foi enviado para ${emailFinal}.`
-        : `Acesso aprovado! Atenção: falha no envio do e-mail (${emailStatus?.provedor || 'serviço'}): ${emailStatus?.error || 'verifique configurações'}. Link de ativação disponível abaixo.`,
+      ativacao_direta: definiuSenhaDireta,
+      message: definiuSenhaDireta
+        ? `Acesso do usuário "${nomeFinal}" aprovado e ativado imediatamente com a senha definida!`
+        : (emailEnviado
+          ? `Acesso do usuário "${nomeFinal}" aprovado com sucesso! Um e-mail com o link de ativação foi enviado para ${emailFinal}.`
+          : `Acesso aprovado! Atenção: falha no envio do e-mail (${emailStatus?.provedor || 'serviço'}): ${emailStatus?.error || 'verifique configurações'}. Link de ativação disponível abaixo.`),
       emailEnviado,
       emailProvedor: emailStatus?.provedor || null,
       emailErro: emailStatus?.error || null,
@@ -396,17 +444,7 @@ router.put('/solicitacoes/:id', async (req, res) => {
 
     // Atualiza permissões granulares adicionais
     if (permissoes_adicionais !== undefined) {
-      await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [id]).catch(() => {});
-      if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
-        for (const chave of permissoes_adicionais) {
-          await pool.query(
-            `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
-             SELECT ?, id, 1 FROM permissoes WHERE chave = ?
-             ON DUPLICATE KEY UPDATE concedida = 1`,
-            [id, chave]
-          ).catch(() => {});
-        }
-      }
+      await syncPermissoesExtrasUsuario(pool, id, permissoes_adicionais);
     }
 
     clearUserAuthCache(id);

@@ -4,6 +4,123 @@
  * Suporta modo VISITANTE: acesso público sem login a comunicados e agenda.
  */
 
+const FALLBACK_PROFILE_PERMISSIONS = {
+    GESTOR: [
+        'dashboard.visualizar', 'indicadores.visualizar',
+        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+        'compras.visualizar', 'compras.criar', 'compras.editar', 'compras.aprovar',
+        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+        'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar', 'documentos.arquivar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'comunicados.visualizar', 'comunicados.criar',
+        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+        'setores.visualizar', 'usuarios.visualizar',
+        'advertencias.visualizar', 'advertencias.solicitar'
+    ],
+    GESTOR_RH: [
+        'dashboard.visualizar', 'indicadores.visualizar',
+        'comunicados.visualizar', 'comunicados.criar',
+        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar', 'documentos.arquivar',
+        'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'usuarios.bloquear',
+        'setores.visualizar', 'setores.criar', 'setores.editar',
+        'advertencias.visualizar', 'advertencias.solicitar',
+        'ocorrencias.visualizar', 'ocorrencias.criar',
+        'rh.visualizar', 'rh.gerenciar'
+    ],
+    ANALISTA_RH: [
+        'dashboard.visualizar', 'comunicados.visualizar', 'eventos.visualizar',
+        'usuarios.visualizar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'setores.visualizar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'advertencias.visualizar', 'advertencias.solicitar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
+    ],
+    RH: [
+        'dashboard.visualizar', 'comunicados.visualizar', 'eventos.visualizar',
+        'usuarios.visualizar', 'usuarios.pre_cadastrar', 'setores.visualizar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'advertencias.visualizar', 'advertencias.solicitar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
+    ],
+    GESTOR_INFRA: [
+        'dashboard.visualizar', 'indicadores.visualizar',
+        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
+        'comunicados.visualizar', 'comunicados.criar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.excluir',
+        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
+        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+        'compras.visualizar', 'compras.criar', 'compras.editar', 'compras.aprovar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'usuarios.visualizar', 'setores.visualizar',
+        'advertencias.visualizar', 'advertencias.solicitar'
+    ],
+    TECNICO_N3: [
+        'dashboard.visualizar', 'indicadores.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar'
+    ],
+    TECNICO_N2: [
+        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'equipamentos.visualizar', 'equipamentos.editar',
+        'insumos.visualizar', 'insumos.baixar',
+        'documentos.visualizar', 'documentos.baixar'
+    ],
+    TECNICO_N1: [
+        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'equipamentos.visualizar', 'documentos.visualizar', 'documentos.baixar'
+    ],
+    TECNICO: [
+        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'equipamentos.visualizar', 'equipamentos.editar',
+        'insumos.visualizar', 'documentos.visualizar', 'documentos.baixar'
+    ],
+    GESTOR_OPERADOR: [
+        'dashboard.visualizar', 'indicadores.visualizar',
+        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+        'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'comunicados.visualizar', 'comunicados.criar',
+        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+        'compras.visualizar', 'compras.criar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'equipamentos.visualizar', 'usuarios.visualizar', 'setores.visualizar',
+        'advertencias.visualizar', 'advertencias.solicitar'
+    ],
+    OPERADOR: [
+        'dashboard.visualizar',
+        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'comunicados.visualizar',
+        'equipamentos.visualizar',
+        'documentos.visualizar', 'documentos.baixar'
+    ],
+    ADMINISTRACAO: [
+        'dashboard.visualizar', 'comunicados.visualizar',
+        'eventos.visualizar', 'eventos.criar',
+        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.receber',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'usuarios.visualizar', 'usuarios.pre_cadastrar',
+        'ocorrencias.visualizar', 'ocorrencias.criar',
+        'equipamentos.visualizar', 'setores.visualizar',
+        'advertencias.visualizar'
+    ],
+    LIMPEZA: [
+        'limpeza.visualizar', 'limpeza.editar',
+        'compras.visualizar_proprias', 'compras.criar',
+        'insumos.visualizar', 'insumos.baixar',
+        'ocorrencias.visualizar', 'ocorrencias.criar',
+        'comunicados.visualizar', 'eventos.visualizar'
+    ]
+};
+
 class AuthManager {
     constructor() {
         this.usuario = null;
@@ -12,6 +129,29 @@ class AuthManager {
         this.permissionsReady = false;
         this._heartbeatInterval = null;
         this._modoVisitante = false;
+    }
+
+    _normalizeProfile(perfil) {
+        const raw = String(perfil || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase()
+            .trim()
+            .replace(/[\s-]+/g, '_')
+            .replace(/[^A-Z0-9_]/g, '');
+        const aliases = {
+            ADMINGERAL: 'ADMIN',
+            ADMIN_GERAL: 'ADMIN',
+            SUPERADMIN: 'ADMIN',
+            GESTORRH: 'GESTOR_RH',
+            ANALISTARH: 'ANALISTA_RH',
+            GESTORINFRA: 'GESTOR_INFRA',
+            GESTOROPERADOR: 'GESTOR_OPERADOR',
+            TECNICON1: 'TECNICO_N1',
+            TECNICON2: 'TECNICO_N2',
+            TECNICON3: 'TECNICO_N3'
+        };
+        return aliases[raw] || raw;
     }
 
     getToken() {
@@ -29,9 +169,12 @@ class AuthManager {
             if (raw) {
                 try {
                     this.usuario = JSON.parse(raw);
-                    this.permissoes = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
+                    const perfilNorm = this._normalizeProfile(this.usuario?.perfil);
+                    const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+                    const storedPerms = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
+                    this.permissoes = Array.from(new Set([...fallbackPerms, ...storedPerms]));
                     this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
-                    this.permissionsReady = Array.isArray(this.usuario?.permissoes);
+                    this.permissionsReady = true;
 
                     // Sincroniza para o sessionStorage da aba atual caso tenha vindo do fallback
                     if (typeof sessionStorage !== 'undefined') {
@@ -61,7 +204,7 @@ class AuthManager {
     /** Verifica se é visitante (modo anônimo público ou perfil VISITANTE no banco) */
     isVisitante() {
         const u = this.getUsuario();
-        const p = u && u.perfil ? String(u.perfil).toUpperCase().trim() : '';
+        const p = u && u.perfil ? this._normalizeProfile(u.perfil) : '';
         if (p === 'VISITANTE') return true;
         if (this._modoVisitante) return true;
         return !this.estaLogado();
@@ -70,7 +213,7 @@ class AuthManager {
     isAdmin() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase();
+        const p = this._normalizeProfile(u.perfil);
         return p === 'ADMIN' || p === 'ADMINISTRADOR';
     }
 
@@ -78,42 +221,42 @@ class AuthManager {
     isAdminGeral() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
-        return p === 'ADMIN' || p === 'ADMIN_GERAL';
+        const p = this._normalizeProfile(u.perfil);
+        return p === 'ADMIN';
     }
 
     isGestorRH() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
+        const p = this._normalizeProfile(u.perfil);
         return this.isAdmin() || p === 'GESTOR_RH';
     }
 
     isGestorInfra() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
+        const p = this._normalizeProfile(u.perfil);
         return this.isAdmin() || p === 'GESTOR_INFRA';
     }
 
     isGestorOperador() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
+        const p = this._normalizeProfile(u.perfil);
         return this.isAdmin() || p === 'GESTOR_OPERADOR';
     }
 
     isTecnico() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
+        const p = this._normalizeProfile(u.perfil);
         return this.isAdmin() || p.startsWith('TECNICO') || p === 'GESTOR_INFRA';
     }
 
     isRH() {
         const u = this.getUsuario();
         if (!u || !u.perfil) return false;
-        const p = String(u.perfil).toUpperCase().trim();
+        const p = this._normalizeProfile(u.perfil);
         return this.isAdmin() || p.includes('RH');
     }
 
@@ -122,14 +265,20 @@ class AuthManager {
         if (this.isVisitante()) {
             return chave === 'comunicados.visualizar' || chave === 'eventos.visualizar';
         }
-        return this.isAdmin() || this.permissoes.includes(chave);
+        if (this.isAdmin()) return true;
+        if (this.permissoes.includes(chave)) return true;
+        const u = this.getUsuario();
+        const perfilNorm = this._normalizeProfile(u?.perfil);
+        const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+        return fallbackPerms.includes(chave);
     }
 
     hasAnyPermission(chaves = []) {
         if (this.isVisitante()) {
             return chaves.some(c => c === 'comunicados.visualizar' || c === 'eventos.visualizar');
         }
-        return this.isAdmin() || chaves.some(chave => this.permissoes.includes(chave));
+        if (this.isAdmin()) return true;
+        return chaves.some(chave => this.hasPermission(chave));
     }
 
     canAccessModule(moduleName, permissionKeys = []) {
@@ -137,7 +286,7 @@ class AuthManager {
             return moduleName === 'comunicacao' || moduleName === 'agenda';
         }
         if (this.isAdmin()) return true;
-        if (this.modulos.length > 0) return this.modulos.includes(moduleName);
+        if (Array.isArray(this.modulos) && this.modulos.includes(moduleName)) return true;
         return this.hasAnyPermission(permissionKeys);
     }
 
@@ -212,9 +361,14 @@ class AuthManager {
     async login(email, senha) {
         const res = await window.API.login(email, senha);
         if (res?.success && res.data?.token) {
+            const perfilNorm = this._normalizeProfile(res.data.usuario?.perfil);
+            const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+            const apiPerms = Array.isArray(res.data.permissoes) ? res.data.permissoes : [];
+            const mergedPerms = Array.from(new Set([...fallbackPerms, ...apiPerms]));
+
             const usuario = {
                 ...res.data.usuario,
-                permissoes: res.data.permissoes || [],
+                permissoes: mergedPerms,
                 modulos: res.data.modulos || []
             };
             // Isola a sessão ativamente nesta aba via sessionStorage
@@ -337,7 +491,10 @@ class AuthManager {
         try {
             const session = await window.API.me();
             if (!session?.usuario) throw new Error('Resposta de sessão inválida.');
-            this.permissoes = Array.isArray(session.permissoes) ? session.permissoes : [];
+            const perfilNorm = this._normalizeProfile(session.usuario.perfil);
+            const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+            const apiPerms = Array.isArray(session.permissoes) ? session.permissoes : [];
+            this.permissoes = Array.from(new Set([...fallbackPerms, ...apiPerms]));
             this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
             this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
             this.permissionsReady = true;
@@ -349,11 +506,13 @@ class AuthManager {
                 localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
             }
             this.preencherInfoUsuario();
+            window.App?.atualizarVisibilidadeRotas();
             window.App?.handleRoute();
         } catch (err) {
             console.error('[AUTH] Não foi possível atualizar as permissões da sessão:', err.message);
             if (!this.estaLogado()) return;
             this.permissionsReady = true;
+            window.App?.atualizarVisibilidadeRotas();
             window.App?.handleRoute();
         }
     }
@@ -391,8 +550,9 @@ class AuthManager {
             LIMPEZA: 'Limpeza',
             VISITANTE: 'Visitante'
         };
+        const perfilNorm = this._normalizeProfile(u.perfil);
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
-            el.textContent = nomesPerfil[String(u.perfil || '').toUpperCase()] || u.perfil || '';
+            el.textContent = nomesPerfil[perfilNorm] || u.perfil || '';
         });
         this._removerBotaoLoginTopbar();
         this.atualizarVisibilidadeAdmin();
@@ -413,6 +573,10 @@ class AuthManager {
     ocultarTelaLogin() {
         document.getElementById('tela-login')?.classList.add('hidden');
         document.getElementById('app-conteudo')?.classList.remove('hidden');
+    }
+
+    mostrarTelaLogin() {
+        this.renderizarTelaLogin();
     }
 
     renderizarTelaLogin() {
@@ -747,7 +911,7 @@ class AuthManager {
             tela.querySelector('#btn-ir-login-ativacao')?.addEventListener('click', () => {
                 window.location.hash = '';
                 this.ocultarTelaAtivacao();
-                this.mostrarTelaLogin();
+                this.renderizarTelaLogin();
             });
 
             // Submit do formulário de ativação
@@ -816,7 +980,7 @@ class AuthManager {
                     tela.querySelector('#btn-concluir-ativacao-login')?.addEventListener('click', () => {
                         window.location.hash = '';
                         this.ocultarTelaAtivacao();
-                        this.mostrarTelaLogin();
+                        this.renderizarTelaLogin();
                         const inputEmail = document.getElementById('login-email');
                         if (inputEmail) inputEmail.value = dadosUsuario.email || '';
                     });
@@ -862,7 +1026,7 @@ class AuthManager {
             tela.querySelector('#btn-erro-ir-login')?.addEventListener('click', () => {
                 window.location.hash = '';
                 this.ocultarTelaAtivacao();
-                this.mostrarTelaLogin();
+                this.renderizarTelaLogin();
             });
 
             tela.querySelector('#btn-erro-visitante')?.addEventListener('click', () => {

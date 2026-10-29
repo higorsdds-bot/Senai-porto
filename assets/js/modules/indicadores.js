@@ -25,14 +25,21 @@ window.IndicadoresModule = {
     `;
 
     try {
-      const [ocorrencias, compras, limpeza, setores, eventos, equipamentos] = await Promise.all([
-        window.API.getOcorrencias(),
-        window.API.getCompras(),
-        window.API.getLimpeza(),
-        window.API.getSetores(),
-        window.API.getEventos(),
-        window.API.getEquipamentos()
+      const [ocorrenciasRes, comprasRes, limpezaRes, setoresRes, eventosRes, equipamentosRes] = await Promise.all([
+        window.API.getOcorrencias().catch(() => []),
+        window.API.getCompras().catch(() => []),
+        window.API.getLimpeza().catch(() => []),
+        window.API.getSetores().catch(() => []),
+        window.API.getEventos().catch(() => []),
+        window.API.getEquipamentos().catch(() => [])
       ]);
+
+      const ocorrencias = Array.isArray(ocorrenciasRes) ? ocorrenciasRes : [];
+      const compras = Array.isArray(comprasRes) ? comprasRes : [];
+      const limpeza = Array.isArray(limpezaRes) ? limpezaRes : [];
+      const setores = Array.isArray(setoresRes) ? setoresRes : [];
+      const eventos = Array.isArray(eventosRes) ? eventosRes : [];
+      const equipamentos = Array.isArray(equipamentosRes) ? equipamentosRes : [];
 
       const taxaResolucaoOcorrencias = ocorrencias.length > 0 
         ? Math.round((ocorrencias.filter(o => o.status === 'resolvido').length / ocorrencias.length) * 100) 

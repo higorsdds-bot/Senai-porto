@@ -24,10 +24,57 @@ const {
 const PERFIS_VALIDOS = [
   'ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR',
   'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'GESTOR',
-  'TECNICO_N1', 'TECNICO_N2', 'TECNICO_N3',
+  'TECNICO_N1', 'TECNICO_N2', 'TECNICO_N3', 'TECNICO',
   'ANALISTA_RH', 'RH',
   'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'
 ];
+
+// Helper para garantir que as permissões adicionais existam em `permissoes` e sejam salvas em `usuario_permissoes`
+async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais) {
+  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => {});
+  if (!Array.isArray(permissoesAdicionais) || permissoesAdicionais.length === 0) return;
+
+  for (const rawChave of permissoesAdicionais) {
+    const chave = String(rawChave || '').trim();
+    if (!chave) continue;
+    await pool.query(
+      `INSERT IGNORE INTO permissoes (chave, nome) VALUES (?, ?)`,
+      [chave, chave]
+    ).catch(() => {});
+    await pool.query(
+      `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
+       SELECT ?, id, 1 FROM permissoes WHERE chave = ?
+       ON DUPLICATE KEY UPDATE concedida = 1`,
+      [usuarioId, chave]
+    ).catch(() => {});
+  }
+}
+
+// Helper para anexar permissoes_adicionais a uma lista de usuários
+async function anexarPermissoesAdicionais(pool, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+  try {
+    const [extras] = await pool.query(
+      `SELECT up.usuario_id, p.chave
+       FROM usuario_permissoes up
+       JOIN permissoes p ON p.id = up.permissao_id
+       WHERE up.concedida = 1`
+    );
+    const mapExtras = {};
+    for (const e of extras) {
+      if (!mapExtras[e.usuario_id]) mapExtras[e.usuario_id] = [];
+      mapExtras[e.usuario_id].push(e.chave);
+    }
+    for (const r of rows) {
+      r.permissoes_adicionais = mapExtras[r.id] || [];
+    }
+  } catch (_) {
+    for (const r of rows) {
+      r.permissoes_adicionais = [];
+    }
+  }
+  return rows;
+}
 
 // Todas as rotas exigem autenticação
 router.use(authMiddleware);
@@ -131,6 +178,7 @@ router.get('/pre-cadastros', requireAnyPermission('usuarios.pre_cadastrar', 'usu
        ORDER BY u.created_at DESC
        LIMIT 50`
     );
+    await anexarPermissoesAdicionais(pool, rows);
     return res.json({ success: true, data: rows });
   } catch (err) {
     console.error('[USUARIOS] GET pre-cadastros:', err.message);
@@ -248,6 +296,8 @@ router.get('/', requirePermission('usuarios.visualizar'), async (req, res) => {
        ORDER BY u.nome ASC`,
       params
     );
+
+    await anexarPermissoesAdicionais(pool, rows);
 
     return res.json({ success: true, data: rows });
   } catch (err) {
@@ -370,14 +420,7 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
 
     // Conceder permissões granulares adicionais
     if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
-      for (const chave of permissoes_adicionais) {
-        await pool.query(
-          `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
-           SELECT ?, id, 1 FROM permissoes WHERE chave = ?
-           ON DUPLICATE KEY UPDATE concedida = 1`,
-          [novoId, chave]
-        ).catch(() => {});
-      }
+      await syncPermissoesExtrasUsuario(pool, novoId, permissoes_adicionais);
     }
 
     await registrarAuditoria({
@@ -506,17 +549,7 @@ router.put('/:id', requirePermission('usuarios.editar'), async (req, res) => {
 
     // Atualiza permissões granulares adicionais
     if (permissoes_adicionais !== undefined) {
-      await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [id]).catch(() => {});
-      if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
-        for (const chave of permissoes_adicionais) {
-          await pool.query(
-            `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
-             SELECT ?, id, 1 FROM permissoes WHERE chave = ?
-             ON DUPLICATE KEY UPDATE concedida = 1`,
-            [id, chave]
-          ).catch(() => {});
-        }
-      }
+      await syncPermissoesExtrasUsuario(pool, id, permissoes_adicionais);
     }
 
     // Invalida caches em memória para efeito instantâneo

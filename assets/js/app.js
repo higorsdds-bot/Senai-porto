@@ -1,6 +1,6 @@
 /**
  * HUB ES+ - Aplicação Principal e Roteador SPA (app.js)
- * Gerencia a navegação entre todos os 10 módulos através de rotas por Hash (#modulo),
+ * Gerencia a navegação entre todos os módulos através de rotas por Hash (#modulo),
  * sincroniza os estados de navegação na sidebar, menu mobile e topbar.
  */
 
@@ -10,7 +10,7 @@ class AppRouter {
     this.mobileMenu = null;
     this.currentRoute = '';
     
-    // Mapeamento dos 10 módulos exigidos
+    // Mapeamento dos módulos
     this.routes = {
       'dashboard': {
         title: 'Dashboard Executivo',
@@ -24,42 +24,42 @@ class AppRouter {
         module: window.DocumentosModule,
         navId: 'nav-documentos',
         moduleKey: 'documentos',
-        permissions: ['documentos.visualizar']
+        permissions: ['documentos.visualizar', 'documentos.enviar', 'documentos.baixar']
       },
       'insumos': {
         title: 'Controle de Insumos',
         module: window.InsumosModule,
         navId: 'nav-insumos',
         moduleKey: 'insumos',
-        permissions: ['insumos.visualizar']
+        permissions: ['insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar']
       },
       'compras': {
         title: 'Compras & Suprimentos',
         module: window.ComprasModule,
         navId: 'nav-compras',
         moduleKey: 'compras',
-        permissions: ['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias']
+        permissions: ['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar', 'compras.aprovar', 'compras.receber']
       },
       'agenda': {
         title: 'Agenda Inteligente',
         module: window.AgendaModule,
         navId: 'nav-agenda',
         moduleKey: 'agenda',
-        permissions: ['eventos.visualizar']
+        permissions: ['eventos.visualizar', 'eventos.criar', 'eventos.editar']
       },
       'ocorrencias': {
         title: 'Ocorrências Técnicas',
         module: window.OcorrenciasModule || (window.Modules && window.Modules.ocorrencias),
         navId: 'nav-ocorrencias',
         moduleKey: 'ocorrencias',
-        permissions: ['ocorrencias.visualizar']
+        permissions: ['ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar']
       },
       'comunicacao': {
         title: 'Central de Comunicação',
         module: window.ComunicacaoModule,
         navId: 'nav-comunicacao',
         moduleKey: 'comunicacao',
-        permissions: ['comunicados.visualizar']
+        permissions: ['comunicados.visualizar', 'comunicados.criar']
       },
       'indicadores': {
         title: 'Painel de Indicadores',
@@ -73,29 +73,28 @@ class AppRouter {
         module: window.LimpezaModule,
         navId: 'nav-limpeza',
         moduleKey: 'limpeza',
-        permissions: ['limpeza.visualizar']
+        permissions: ['limpeza.visualizar', 'limpeza.criar', 'limpeza.editar']
       },
       'equipamentos': {
         title: 'Controle de Equipamentos',
         module: window.EquipamentosModule,
         navId: 'nav-equipamentos',
         moduleKey: 'equipamentos',
-        permissions: ['equipamentos.visualizar']
+        permissions: ['equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar']
       },
       'usuarios': {
         title: 'Gestão de Usuários',
         module: window.UsuariosModule || (window.Modules && window.Modules.usuarios),
         navId: 'nav-usuarios',
         moduleKey: 'usuarios',
-        permissions: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
+        permissions: ['usuarios.visualizar', 'usuarios.pre_cadastrar', 'usuarios.criar', 'usuarios.editar']
       },
       'advertencias': {
         title: 'Gestão de Advertências',
         module: window.AdvertenciasModule || (window.Modules && window.Modules.advertencias),
         navId: 'nav-advertencias',
         moduleKey: 'advertencias',
-        adminOnly: true,
-        permissions: ['advertencias.visualizar']
+        permissions: ['advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar']
       },
       'auditoria': {
         title: 'Auditoria & Governança',
@@ -250,7 +249,8 @@ class AppRouter {
     if (window.Auth?.isVisitante()) {
       return route.moduleKey === 'comunicacao' || route.moduleKey === 'agenda';
     }
-    if (route.adminOnly && !window.Auth?.isAdmin() && !window.Auth?.hasPermission('auditoria.visualizar')) return false;
+    if (window.Auth?.isAdmin()) return true;
+    if (route.adminOnly && !window.Auth?.hasPermission('auditoria.visualizar')) return false;
     return !route.permissions || window.Auth?.canAccessModule(route.moduleKey, route.permissions);
   }
 

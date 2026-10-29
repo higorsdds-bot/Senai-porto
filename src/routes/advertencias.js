@@ -8,22 +8,18 @@ const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
 
-// Middleware adicional de segurança estrita: apenas ADMIN, ADMINISTRADOR ou GESTOR
-function checkAdminOuGestor(req, res, next) {
-  const perfil = req.usuario && req.usuario.perfil ? String(req.usuario.perfil).toUpperCase().trim() : '';
-  if (!['ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR', 'ADMINISTRACAO', 'GESTOR'].includes(perfil)) {
-    return res.status(403).json({
-      success: false,
-      message: 'Acesso restrito ao Administrador Geral, Administradores e Gestores.'
-    });
-  }
-  next();
-}
+// Middleware adicional de segurança: perfis autorizados ou colaboradores com permissão concedida
+const checkAdminOuGestor = requireAnyPermission(
+  'advertencias.visualizar',
+  'advertencias.solicitar',
+  'advertencias.aplicar',
+  'advertencias.homologar'
+);
 
 router.use(checkAdminOuGestor);
 
