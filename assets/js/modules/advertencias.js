@@ -552,7 +552,7 @@ window.AdvertenciasModule = {
     }
 
     if (ehAdminGeral && ehPendente) {
-      const modalEl = document.getElementById('global-modal');
+      const modalEl = document.getElementById('hub-modal-container');
       modalEl?.querySelector('#btn-modal-aceitar')?.addEventListener('click', () => {
         const parecer = (modalEl.querySelector('#txt-parecer-decisao-modal')?.value || '').trim();
         window.UI.closeModal();

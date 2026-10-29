@@ -4,36 +4,57 @@
  * Suporta modo VISITANTE: acesso público sem login a comunicados e agenda.
  */
 
+const FALLBACK_ALL_PERMISSIONS = [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar', 'limpeza.excluir',
+    'compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber', 'compras.excluir',
+    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar', 'documentos.excluir',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
+    'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+    'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar', 'insumos.excluir',
+    'comunicados.visualizar', 'comunicados.criar', 'comunicados.excluir',
+    'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear', 'usuarios.excluir',
+    'setores.visualizar', 'setores.criar', 'setores.editar', 'setores.excluir',
+    'auditoria.visualizar', 'auditoria.exportar',
+    'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
+    'rh.visualizar', 'rh.gerenciar'
+];
+
 const FALLBACK_PROFILE_PERMISSIONS = {
+    ADMIN: FALLBACK_ALL_PERMISSIONS,
+    ADMINISTRADOR: FALLBACK_ALL_PERMISSIONS,
     GESTOR: [
         'dashboard.visualizar', 'indicadores.visualizar',
         'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'compras.visualizar', 'compras.criar', 'compras.editar', 'compras.aprovar',
+        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
         'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
         'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar', 'documentos.arquivar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
         'comunicados.visualizar', 'comunicados.criar',
         'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
-        'setores.visualizar', 'usuarios.visualizar',
+        'setores.visualizar', 'usuarios.visualizar', 'usuarios.pre_cadastrar',
         'advertencias.visualizar', 'advertencias.solicitar'
     ],
     GESTOR_RH: [
         'dashboard.visualizar', 'indicadores.visualizar',
         'comunicados.visualizar', 'comunicados.criar',
         'eventos.visualizar', 'eventos.criar', 'eventos.editar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar', 'documentos.arquivar',
-        'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'usuarios.bloquear',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
+        'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear',
         'setores.visualizar', 'setores.criar', 'setores.editar',
-        'advertencias.visualizar', 'advertencias.solicitar',
+        'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
         'ocorrencias.visualizar', 'ocorrencias.criar',
         'rh.visualizar', 'rh.gerenciar'
     ],
     ANALISTA_RH: [
-        'dashboard.visualizar', 'comunicados.visualizar', 'eventos.visualizar',
+        'dashboard.visualizar', 'indicadores.visualizar',
+        'comunicados.visualizar', 'comunicados.criar',
+        'eventos.visualizar',
         'usuarios.visualizar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'setores.visualizar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'advertencias.visualizar', 'advertencias.solicitar',
+        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.baixar',
+        'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar',
         'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
     ],
     RH: [
@@ -47,79 +68,101 @@ const FALLBACK_PROFILE_PERMISSIONS = {
         'dashboard.visualizar', 'indicadores.visualizar',
         'eventos.visualizar', 'eventos.criar', 'eventos.editar',
         'comunicados.visualizar', 'comunicados.criar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.excluir',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
         'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
         'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
-        'compras.visualizar', 'compras.criar', 'compras.editar', 'compras.aprovar',
+        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
+        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
         'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
         'usuarios.visualizar', 'setores.visualizar',
         'advertencias.visualizar', 'advertencias.solicitar'
     ],
     TECNICO_N3: [
         'dashboard.visualizar', 'indicadores.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
         'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
         'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar'
+        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+        'setores.visualizar'
     ],
     TECNICO_N2: [
         'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
         'equipamentos.visualizar', 'equipamentos.editar',
-        'insumos.visualizar', 'insumos.baixar',
-        'documentos.visualizar', 'documentos.baixar'
+        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+        'documentos.visualizar', 'documentos.baixar',
+        'setores.visualizar'
     ],
     TECNICO_N1: [
         'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
-        'equipamentos.visualizar', 'documentos.visualizar', 'documentos.baixar'
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+        'equipamentos.visualizar', 'insumos.visualizar',
+        'documentos.visualizar', 'documentos.baixar',
+        'setores.visualizar'
     ],
     TECNICO: [
         'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar',
-        'equipamentos.visualizar', 'equipamentos.editar',
-        'insumos.visualizar', 'documentos.visualizar', 'documentos.baixar'
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+        'equipamentos.visualizar', 'insumos.visualizar',
+        'documentos.visualizar', 'documentos.baixar',
+        'setores.visualizar'
     ],
     GESTOR_OPERADOR: [
         'dashboard.visualizar', 'indicadores.visualizar',
         'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
         'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
         'comunicados.visualizar', 'comunicados.criar',
-        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
-        'compras.visualizar', 'compras.criar',
+        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+        'compras.visualizar', 'compras.criar', 'compras.editar',
         'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'equipamentos.visualizar', 'usuarios.visualizar', 'setores.visualizar',
+        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+        'usuarios.visualizar', 'setores.visualizar',
         'advertencias.visualizar', 'advertencias.solicitar'
     ],
     OPERADOR: [
         'dashboard.visualizar',
-        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar',
+        'limpeza.visualizar', 'limpeza.criar',
+        'eventos.visualizar', 'eventos.criar',
+        'ocorrencias.visualizar', 'ocorrencias.criar',
         'comunicados.visualizar',
         'equipamentos.visualizar',
+        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
         'documentos.visualizar', 'documentos.baixar'
     ],
     ADMINISTRACAO: [
-        'dashboard.visualizar', 'comunicados.visualizar',
-        'eventos.visualizar', 'eventos.criar',
-        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
-        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.receber',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'usuarios.visualizar', 'usuarios.pre_cadastrar',
-        'ocorrencias.visualizar', 'ocorrencias.criar',
-        'equipamentos.visualizar', 'setores.visualizar',
-        'advertencias.visualizar'
+        'comunicados.visualizar',
+        'compras.visualizar_pedidos', 'compras.receber',
+        'eventos.visualizar',
+        'insumos.visualizar', 'insumos.baixar',
+        'usuarios.pre_cadastrar',
+        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+        'advertencias.visualizar', 'advertencias.solicitar'
     ],
     LIMPEZA: [
+        'comunicados.visualizar',
         'limpeza.visualizar', 'limpeza.editar',
-        'compras.visualizar_proprias', 'compras.criar',
-        'insumos.visualizar', 'insumos.baixar',
-        'ocorrencias.visualizar', 'ocorrencias.criar',
-        'comunicados.visualizar', 'eventos.visualizar'
+        'compras.visualizar_proprias', 'compras.criar'
     ]
 };
+
+const CONTAS_TESTE_CARGOS = [
+    { cargo: 'ADMIN', label: 'Admin Geral', email: 'admin@secult.es.gov.br', senha: 'Admin@Secult2026!', grupo: 'Governança & Direção' },
+    { cargo: 'ADMINISTRADOR', label: 'Administrador', email: 'administrador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
+    { cargo: 'ADMINISTRACAO', label: 'Administração (Pedidos/Admissão)', email: 'administracao@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
+    { cargo: 'GESTOR', label: 'Gestor Geral', email: 'gestor@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+    { cargo: 'GESTOR_RH', label: 'Gestor de RH', email: 'gestor.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+    { cargo: 'GESTOR_INFRA', label: 'Gestor de Infra & TI', email: 'gestor.infra@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+    { cargo: 'GESTOR_OPERADOR', label: 'Gestor de Operadores', email: 'gestor.operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+    { cargo: 'ANALISTA_RH', label: 'Analista de RH', email: 'analista.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
+    { cargo: 'RH', label: 'Assistente de RH', email: 'rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
+    { cargo: 'TECNICO_N3', label: 'Técnico N3 (Infra/Servidores)', email: 'tecnico.n3@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+    { cargo: 'TECNICO_N2', label: 'Técnico N2 (Hardware/Redes)', email: 'tecnico.n2@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+    { cargo: 'TECNICO_N1', label: 'Técnico N1 (Helpdesk)', email: 'tecnico.n1@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+    { cargo: 'TECNICO', label: 'Técnico Geral', email: 'tecnico@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+    { cargo: 'OPERADOR', label: 'Operador', email: 'operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' },
+    { cargo: 'LIMPEZA', label: 'Equipe de Limpeza', email: 'limpeza@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' }
+];
 
 class AuthManager {
     constructor() {
@@ -172,7 +215,7 @@ class AuthManager {
                     const perfilNorm = this._normalizeProfile(this.usuario?.perfil);
                     const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
                     const storedPerms = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
-                    this.permissoes = Array.from(new Set([...fallbackPerms, ...storedPerms]));
+                    this.permissoes = storedPerms.length > 0 ? storedPerms : fallbackPerms;
                     this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
                     this.permissionsReady = true;
 
@@ -364,7 +407,7 @@ class AuthManager {
             const perfilNorm = this._normalizeProfile(res.data.usuario?.perfil);
             const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
             const apiPerms = Array.isArray(res.data.permissoes) ? res.data.permissoes : [];
-            const mergedPerms = Array.from(new Set([...fallbackPerms, ...apiPerms]));
+            const mergedPerms = apiPerms.length > 0 ? apiPerms : fallbackPerms;
 
             const usuario = {
                 ...res.data.usuario,
@@ -494,7 +537,7 @@ class AuthManager {
             const perfilNorm = this._normalizeProfile(session.usuario.perfil);
             const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
             const apiPerms = Array.isArray(session.permissoes) ? session.permissoes : [];
-            this.permissoes = Array.from(new Set([...fallbackPerms, ...apiPerms]));
+            this.permissoes = apiPerms.length > 0 ? apiPerms : fallbackPerms;
             this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
             this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
             this.permissionsReady = true;
@@ -623,9 +666,35 @@ class AuthManager {
                 placeholder="••••••••">
             </div>
             <button type="submit" id="btn-login"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed">
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
               Entrar no Sistema
             </button>
+
+            <!-- PAINEL DE TESTE RÁPIDO POR CARGO (HOMOLOGAÇÃO INTERNA) -->
+            <div class="pt-3 border-t border-slate-100">
+              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="key-round" class="w-3.5 h-3.5 text-blue-600"></i>
+                    Login Rápido por Cargo (Teste)
+                  </span>
+                  <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">15 Perfis</span>
+                </div>
+                <div class="flex gap-2">
+                  <select id="select-cargo-teste" class="flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20">
+                    <option value="">Selecione um cargo para testar...</option>
+                    ${CONTAS_TESTE_CARGOS.map(c => `<option value="${c.cargo}">[${c.cargo}] ${c.label} (${c.email})</option>`).join('')}
+                  </select>
+                  <button type="button" id="btn-entrar-cargo-teste"
+                    class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all whitespace-nowrap cursor-pointer">
+                    Testar Cargo
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-tight">
+                  Selecione qualquer cargo acima para preencher o login de teste automaticamente e validar seu fluxo operacional.
+                </p>
+              </div>
+            </div>
           </form>
 
           <!-- FORMULÁRIO 2: SOLICITAÇÃO DE CADASTRO (STATUS PENDENTE) -->
@@ -703,6 +772,35 @@ class AuthManager {
                 tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
                 formCadastro.classList.remove('hidden');
                 formLogin.classList.add('hidden');
+            });
+
+            // Painel de teste rápido por cargo
+            const selectCargoTeste = tela.querySelector('#select-cargo-teste');
+            const btnEntrarCargoTeste = tela.querySelector('#btn-entrar-cargo-teste');
+            const preencherCargoSelecionado = () => {
+                const cargoVal = selectCargoTeste?.value;
+                const conta = CONTAS_TESTE_CARGOS.find(c => c.cargo === cargoVal);
+                if (conta) {
+                    tela.querySelector('#login-email').value = conta.email;
+                    tela.querySelector('#login-senha').value = conta.senha;
+                    return conta;
+                }
+                return null;
+            };
+
+            selectCargoTeste?.addEventListener('change', () => {
+                limparFeedback();
+                preencherCargoSelecionado();
+            });
+
+            btnEntrarCargoTeste?.addEventListener('click', () => {
+                limparFeedback();
+                const conta = preencherCargoSelecionado();
+                if (!conta) {
+                    mostrarFeedback('Selecione um cargo na lista para testar o acesso.', 'aviso');
+                    return;
+                }
+                formLogin.requestSubmit();
             });
 
             // Submit: Formulário de Login

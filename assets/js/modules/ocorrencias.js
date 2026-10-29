@@ -498,7 +498,7 @@ const OcorrenciasModule = {
   },
 
   async _carregarEquipamentos(container) {
-    const sel = container.querySelector('#oc-select-equipamento');
+    const sel = container.querySelector('#oc-select-equipamento'); if (!sel || (window.Auth && !window.Auth.hasPermission('equipamentos.visualizar'))) return;
     if (!sel) return;
     try {
       const res = await window.API.getEquipamentos();
@@ -609,7 +609,7 @@ const OcorrenciasModule = {
       const o = res?.data || res;
 
       const canAtender = window.Auth?.hasPermission('ocorrencias.atender') || window.Auth?.isTecnico() || window.Auth?.isAdmin();
-      const canEscalonar = window.Auth?.hasPermission('ocorrencias.escalonar') || window.Auth?.isTecnico() || window.Auth?.isAdmin();
+      const canEscalonar = window.Auth?.hasPermission('ocorrencias.escalonar') || window.Auth?.isTecnico() || window.Auth?.isAdmin(); const canMudarStatus = window.Auth?.hasAnyPermission(['ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.fechar']) || window.Auth?.isTecnico() || window.Auth?.isAdmin();
 
       conteudo.innerHTML = `
         <div class="space-y-5">
@@ -726,14 +726,14 @@ const OcorrenciasModule = {
           <!-- ALTERAR STATUS DA OCORRÊNCIA -->
           <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-slate-600">Alterar status:</span>
-              <select id="sel-mudar-status-${o.id}" class="text-xs font-bold rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+              <span class="${canMudarStatus ? 'text-xs font-bold text-slate-600' : 'hidden'}">Alterar status:</span>
+              <select id="sel-mudar-status-${o.id}" class="${canMudarStatus ? 'text-xs font-bold rounded-lg border border-slate-200 bg-white px-2.5 py-1.5' : 'hidden'}">
                 <option value="aberto" ${o.status === 'aberto' ? 'selected' : ''}>Aberto</option>
                 <option value="em_andamento" ${o.status === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
                 <option value="resolvido" ${o.status === 'resolvido' ? 'selected' : ''}>Resolvido</option>
               </select>
               <button type="button" onclick="OcorrenciasModule.atualizarStatus(${o.id})"
-                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+                class="${canMudarStatus ? 'bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer' : 'hidden'}">
                 Atualizar
               </button>
             </div>
@@ -840,7 +840,7 @@ const OcorrenciasModule = {
   },
 
   async atualizarStatus(id) {
-    const sel = document.getElementById(`sel-mudar-status-${id}`);
+    const sel = document.getElementById(`sel-mudar-status-${id}`); if (!sel) return;
     if (!sel) return;
     const novoStatus = sel.value;
 

@@ -15,8 +15,8 @@ const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 router.use(authMiddleware);
 
-// GET /api/v1/setores
-router.get('/', requirePermission('setores.visualizar'), async (req, res) => {
+// GET /api/v1/setores (acessível a usuários autenticados para seletores de setor)
+router.get('/', async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(

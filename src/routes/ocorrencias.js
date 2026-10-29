@@ -339,9 +339,10 @@ router.patch('/:id/assumir', requireAnyPermission('ocorrencias.assumir', 'ocorre
 // Permite transferir o chamado entre N1 -> N2 -> N3 com histórico de parecer técnico
 router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'ocorrencias.editar'), async (req, res) => {
   const id = req.params.id;
-  const { nivel, parecer_tecnico } = req.body;
+  const { nivel, nivel_atendimento, parecer_tecnico } = req.body;
+  const nivelFinal = String(nivel || nivel_atendimento || '').toUpperCase().trim();
 
-  if (!['N1', 'N2', 'N3'].includes(nivel)) {
+  if (!['N1', 'N2', 'N3'].includes(nivelFinal)) {
     return res.status(422).json({ success: false, message: 'Nível de escalonamento inválido. Use N1, N2 ou N3.' });
   }
 
@@ -357,7 +358,7 @@ router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'oc
     let parecerAtualizado = current[0].parecer_tecnico || '';
     if (parecer_tecnico && String(parecer_tecnico).trim().length > 0) {
       const dataHora = new Date().toLocaleString('pt-BR');
-      const entrada = `[${dataHora}] Escalonado de ${nivelAnterior} para ${nivel} por ${req.usuario.nome}:\n${parecer_tecnico.trim()}\n`;
+      const entrada = `[${dataHora}] Escalonado de ${nivelAnterior} para ${nivelFinal} por ${req.usuario.nome}:\n${parecer_tecnico.trim()}\n`;
       parecerAtualizado = parecerAtualizado ? `${parecerAtualizado}\n${entrada}` : entrada;
     }
 
@@ -365,7 +366,7 @@ router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'oc
       `UPDATE ocorrencias 
        SET nivel_atendimento = ?, parecer_tecnico = ?, updated_at = NOW() 
        WHERE id = ? AND deleted_at IS NULL`,
-      [nivel, parecerAtualizado, id]
+      [nivelFinal, parecerAtualizado, id]
     );
 
     await registrarAuditoria({
@@ -373,15 +374,15 @@ router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'oc
       acao: 'ESCALONAR_OCORRENCIA',
       entidade: 'ocorrencias',
       entidade_id: parseInt(id),
-      descricao: `Ocorrência #${id} escalonada de ${nivelAnterior} para ${nivel} por ${req.usuario.nome}.${parecer_tecnico ? ` Parecer: ${parecer_tecnico.trim()}` : ''}`,
+      descricao: `Ocorrência #${id} escalonada de ${nivelAnterior} para ${nivelFinal} por ${req.usuario.nome}.${parecer_tecnico ? ` Parecer: ${parecer_tecnico.trim()}` : ''}`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
     return res.json({
       success: true,
-      message: `Chamado escalonado com sucesso para o nível ${nivel}!`,
-      data: { nivel_atendimento: nivel, parecer_tecnico: parecerAtualizado }
+      message: `Chamado escalonado com sucesso para o nível ${nivelFinal}!`,
+      data: { nivel_atendimento: nivelFinal, parecer_tecnico: parecerAtualizado }
     });
   } catch (err) {
     console.error('[OCORRENCIAS] PATCH escalonar:', err.message);
@@ -391,7 +392,7 @@ router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'oc
 
 
 // ─── PATCH /api/v1/ocorrencias/:id/status ───────────────────────────────────
-router.patch('/:id/status', requirePermission('ocorrencias.editar'), async (req, res) => {
+router.patch('/:id/status', requireAnyPermission('ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.fechar'), async (req, res) => {
   const { status } = req.body;
   const validos = ['aberto', 'em_andamento', 'resolvido'];
   if (!validos.includes(status)) {
@@ -399,8 +400,19 @@ router.patch('/:id/status', requirePermission('ocorrencias.editar'), async (req,
   }
   try {
     const pool = getPool();
-    const [current] = await pool.query(`SELECT status FROM ocorrencias WHERE id = ? LIMIT 1`, [req.params.id]);
+    const [current] = await pool.query(`SELECT status, equipamento_id FROM ocorrencias WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [req.params.id]);
+    if (!current.length) {
+      return res.status(404).json({ success: false, message: 'Ocorrência não encontrada.' });
+    }
     await pool.query(`UPDATE ocorrencias SET status = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`, [status, req.params.id]);
+
+    // Se resolvido e houver equipamento vinculado, restaura estado para 'bom'
+    if (status === 'resolvido' && current[0].equipamento_id) {
+      await pool.query(
+        `UPDATE equipamentos SET estado = 'bom', updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
+        [current[0].equipamento_id]
+      );
+    }
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,

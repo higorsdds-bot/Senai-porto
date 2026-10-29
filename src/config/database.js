@@ -160,6 +160,7 @@ async function initSchemaExtensions() {
       ADD COLUMN parecer_tecnico TEXT NULL AFTER equipamento_id
     `).catch(() => {});
 
+    await require('../database/seed').seed().catch(err => console.warn('[DATABASE] Aviso ao sincronizar contas de teste:', err.message));
     console.log('[DATABASE] ✅ Estrutura de extensões de schema verificada com sucesso.');
   } catch (err) {
     console.warn('[DATABASE] Aviso na inicialização de extensões de schema:', err.message);

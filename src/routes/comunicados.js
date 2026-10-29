@@ -15,27 +15,30 @@ router.get('/', requirePermission('comunicados.visualizar'), async (req, res) =>
   try {
     const pool = getPool();
     const { prioridade, destinatario_perfil, q } = req.query;
-    const perfilUsuario = req.usuario.perfil;
-    const ehAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(perfilUsuario);
+    const perfilUsuario = String(req.usuario.perfil || '').toUpperCase().trim();
+    const ehAdminOuGestorGeral = ['ADMIN', 'ADMINISTRADOR', 'GESTOR'].includes(perfilUsuario);
 
     let conds = ['c.deleted_at IS NULL'];
     let params = [];
 
-    // RBAC: Usuários não-admin só visualizam comunicados direcionados a 'TODOS', ao seu próprio perfil ou criados por eles
-    if (!ehAdmin) {
-      conds.push("(c.destinatario_perfil = 'TODOS' OR c.destinatario_perfil IS NULL OR c.destinatario_perfil = ? OR c.autor_id = ?)");
-      params.push(perfilUsuario, req.usuario.id);
+    // RBAC: Usuários não-admin visualizam comunicados direcionados a 'TODOS', ao seu perfil específico,
+    // ao seu grupo hierárquico (ex: GESTOR_* vê GESTOR; TECNICO_* vê TECNICO/OPERADOR) ou criados por eles
+    if (!ehAdminOuGestorGeral) {
+      const perfisEquivalentes = [perfilUsuario];
+      if (perfilUsuario.startsWith('GESTOR_')) perfisEquivalentes.push('GESTOR');
+      if (perfilUsuario.startsWith('TECNICO')) perfisEquivalentes.push('TECNICO', 'OPERADOR');
+      if (['ANALISTA_RH', 'RH'].includes(perfilUsuario)) perfisEquivalentes.push('RH', 'OPERADOR');
+      if (perfilUsuario === 'ADMINISTRACAO') perfisEquivalentes.push('ADMINISTRADOR', 'OPERADOR');
+
+      const placeholders = perfisEquivalentes.map(() => '?').join(', ');
+      conds.push(`(c.destinatario_perfil = 'TODOS' OR c.destinatario_perfil IS NULL OR c.destinatario_perfil IN (${placeholders}) OR c.autor_id = ?)`);
+      params.push(...perfisEquivalentes, req.usuario.id);
     }
 
     // Filtro por destinatario_perfil
     if (destinatario_perfil && destinatario_perfil !== 'TODOS_FILTRO') {
-      if (ehAdmin) {
-        conds.push('c.destinatario_perfil = ?');
-        params.push(destinatario_perfil);
-      } else if (destinatario_perfil === 'TODOS' || destinatario_perfil === perfilUsuario) {
-        conds.push('c.destinatario_perfil = ?');
-        params.push(destinatario_perfil);
-      }
+      conds.push('c.destinatario_perfil = ?');
+      params.push(destinatario_perfil);
     }
 
     if (prioridade) {
@@ -92,7 +95,13 @@ router.post('/', requirePermission('comunicados.criar'), async (req, res) => {
   const prioridades = ['alta', 'media', 'normal'];
   if (prioridadeNorm && !prioridades.includes(prioridadeNorm)) erros.prioridade = `Prioridade deve ser: ${prioridades.join(', ')}`;
 
-  const perfisValidos = ['TODOS', 'ADMIN', 'ADMINISTRADOR', 'GESTOR', 'LIMPEZA', 'OPERADOR'];
+  const perfisValidos = [
+    'TODOS', 'ADMIN', 'ADMINISTRADOR', 'ADMINISTRACAO',
+    'GESTOR', 'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR',
+    'ANALISTA_RH', 'RH',
+    'TECNICO_N3', 'TECNICO_N2', 'TECNICO_N1', 'TECNICO',
+    'OPERADOR', 'LIMPEZA'
+  ];
   const perfilDest = (destinatario_perfil && perfisValidos.includes(destinatario_perfil.toUpperCase()))
     ? destinatario_perfil.toUpperCase()
     : 'TODOS';

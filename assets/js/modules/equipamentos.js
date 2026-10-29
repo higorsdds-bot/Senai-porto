@@ -69,7 +69,7 @@ window.EquipamentosModule = {
             <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Controle de Equipamentos</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Gestão patrimonial de bens duráveis, equipamentos com fotos e rastreio de guarda</p>
           </div>
-          <button id="btn-novo-equipamento" class="btn-primary">
+          <button id="btn-novo-equipamento" class="${window.Auth?.hasPermission('equipamentos.criar') ? 'btn-primary' : 'hidden'}">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             Cadastrar Patrimônio
           </button>
@@ -97,7 +97,7 @@ window.EquipamentosModule = {
           window.UI.renderEmptyState({
             title: 'Nenhum equipamento localizado',
             description: 'Verifique os termos de pesquisa informados ou cadastre um novo item.',
-            actionLabel: 'Cadastrar Patrimônio',
+            actionLabel: window.Auth?.hasPermission('equipamentos.criar') ? 'Cadastrar Patrimônio' : null,
             onActionClick: () => this._openFormModal(container)
           })
           : `
@@ -167,10 +167,10 @@ window.EquipamentosModule = {
                         </td>
                         <td class="p-3.5 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar">
+                            <button onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.editar') ? 'btn-action-table action-edit' : 'hidden'}" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
+                            <button onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.excluir') ? 'btn-action-table action-delete' : 'hidden'}" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                           </div>

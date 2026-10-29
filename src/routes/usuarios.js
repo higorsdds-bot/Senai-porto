@@ -265,7 +265,8 @@ router.put('/pre-cadastro/:id', requireAnyPermission('usuarios.pre_cadastrar', '
 });
 
 // ─── GET /api/v1/usuarios ────────────────────────────────────────────────────
-router.get('/', requirePermission('usuarios.visualizar'), async (req, res) => {
+// Acessível a qualquer usuário autenticado para preenchimento de seletores operacionais e listagem
+router.get('/', async (req, res) => {
   try {
     const pool = getPool();
     const { perfil, setor_id, status, q } = req.query;

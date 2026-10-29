@@ -29,7 +29,11 @@ window.DashboardModule = {
     `;
 
     try {
-      // Carrega dados concorrentes de todos os módulos
+      const isAdm = window.Auth?.isAdmin();
+      const hasPerm = (p) => isAdm || window.Auth?.hasPermission(p);
+      const hasAny = (arr) => isAdm || window.Auth?.hasAnyPermission(arr);
+
+      // Carrega dados concorrentes apenas dos módulos permitidos para o perfil ativo
       const [
         ocorrencias,
         compras,
@@ -43,17 +47,17 @@ window.DashboardModule = {
         advertencias,
         auditoriaLogs
       ] = await Promise.all([
-        window.API.getOcorrencias().catch(() => []),
-        window.API.getCompras().catch(() => []),
-        window.API.getEventos().catch(() => []),
-        window.API.getDocumentos().catch(() => []),
-        window.API.getEquipamentos().catch(() => []),
-        window.API.getInsumos().catch(() => []),
+        hasPerm('ocorrencias.visualizar') ? window.API.getOcorrencias().catch(() => []) : Promise.resolve([]),
+        hasAny(['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar']) ? window.API.getCompras().catch(() => []) : Promise.resolve([]),
+        hasPerm('eventos.visualizar') ? window.API.getEventos().catch(() => []) : Promise.resolve([]),
+        hasPerm('documentos.visualizar') ? window.API.getDocumentos().catch(() => []) : Promise.resolve([]),
+        hasPerm('equipamentos.visualizar') ? window.API.getEquipamentos().catch(() => []) : Promise.resolve([]),
+        hasPerm('insumos.visualizar') ? window.API.getInsumos().catch(() => []) : Promise.resolve([]),
         window.API.getSetores().catch(() => []),
         window.API.getUsuarios().catch(() => []),
-        window.API.getComunicados().catch(() => []),
-        window.API.getAdvertencias().catch(() => []),
-        window.API.getAuditoriaLogs ? window.API.getAuditoriaLogs({ limit: 12 }).catch(() => []) : Promise.resolve([])
+        hasPerm('comunicados.visualizar') ? window.API.getComunicados().catch(() => []) : Promise.resolve([]),
+        hasPerm('advertencias.visualizar') ? window.API.getAdvertencias().catch(() => []) : Promise.resolve([]),
+        (hasPerm('auditoria.visualizar') && window.API.getAuditoriaLogs) ? window.API.getAuditoriaLogs({ limit: 12 }).catch(() => []) : Promise.resolve([])
       ]);
 
       const listaOcorrencias = Array.isArray(ocorrencias) ? ocorrencias : [];
@@ -277,6 +281,27 @@ window.DashboardModule = {
       documentos
     } = data;
 
+    const isAdm = window.Auth?.isAdmin();
+    const podeVerCompras = isAdm || window.Auth?.hasAnyPermission(['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar']);
+    const podeVerAdvertencias = isAdm || window.Auth?.hasPermission('advertencias.visualizar');
+    const podeVerInsumos = isAdm || window.Auth?.hasPermission('insumos.visualizar');
+    const podeVerAuditoria = isAdm || window.Auth?.hasPermission('auditoria.visualizar');
+    const podeVerLimpeza = isAdm || window.Auth?.hasPermission('limpeza.visualizar');
+    const podeVerDocumentos = isAdm || window.Auth?.hasPermission('documentos.visualizar');
+    const podeVerEquipamentos = isAdm || window.Auth?.hasPermission('equipamentos.visualizar');
+
+    const abasFilaDisponiveis = [
+      { id: 'TODAS', label: 'Todas' },
+      { id: 'OCORRENCIA', label: 'Chamados' },
+      ...(podeVerCompras ? [{ id: 'COMPRA', label: 'Compras' }] : []),
+      ...(podeVerAdvertencias ? [{ id: 'ADVERTENCIA', label: 'Advertências' }] : []),
+      ...(podeVerInsumos ? [{ id: 'INSUMO', label: 'Insumos' }] : [])
+    ];
+
+    if (!abasFilaDisponiveis.some(a => a.id === this.abaFilaAtiva)) {
+      this.abaFilaAtiva = 'TODAS';
+    }
+
     // Filtragem da Fila Operacional Crítica por aba selecionada
     const filaFiltrada = this.demandasConsolidadas.filter(item => {
       if (this.abaFilaAtiva === 'TODAS') return true;
@@ -318,10 +343,17 @@ window.DashboardModule = {
               <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
               <span>Exportar Métricas</span>
             </button>
-            <button onclick="window.location.hash = '#compras'" class="btn-primary text-xs shadow-md shadow-blue-600/20">
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-              <span>Nova Demanda</span>
-            </button>
+            ${podeVerCompras ? `
+              <button onclick="window.location.hash = '#compras'" class="btn-primary text-xs shadow-md shadow-blue-600/20">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Nova Demanda</span>
+              </button>
+            ` : `
+              <button onclick="window.location.hash = '#ocorrencias'" class="btn-primary text-xs shadow-md shadow-blue-600/20">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Abrir Chamado</span>
+              </button>
+            `}
           </div>
         </div>
 
@@ -372,27 +404,50 @@ window.DashboardModule = {
             </div>
           </div>
 
-          <!-- Célula 2: Compras & Suprimentos -->
-          <div onclick="window.location.hash = '#compras'" class="telemetry-cell cursor-pointer group">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                Suprimentos Pendentes
-              </span>
-              <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
-                Pedidos ↗
-              </span>
+          <!-- Célula 2: Compras & Suprimentos (ou Acervo Documental para perfis sem compras) -->
+          ${podeVerCompras ? `
+            <div onclick="window.location.hash = '#compras'" class="telemetry-cell cursor-pointer group">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  Suprimentos Pendentes
+                </span>
+                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                  Pedidos ↗
+                </span>
+              </div>
+              <div class="mt-2.5 flex items-baseline gap-2">
+                <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
+                <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  Aguardando cotação
+                </span>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Fluxo de Compras</span>
+                <span class="font-mono text-[10px]">Almoxarifado</span>
+              </div>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2">
-              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
-              <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                Aguardando cotação
-              </span>
+          ` : `
+            <div onclick="window.location.hash = '${podeVerDocumentos ? '#documentos' : '#equipamentos'}'" class="telemetry-cell cursor-pointer group">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  Acervo & Patrimônio
+                </span>
+                <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+                  Consultar ↗
+                </span>
+              </div>
+              <div class="mt-2.5 flex items-baseline gap-2">
+                <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${totalDocs + totalEquipamentos}</span>
+                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  Itens ativos
+                </span>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+                <span>${totalDocs} docs • ${totalEquipamentos} ativos</span>
+                <span class="font-mono text-[10px]">Repositório</span>
+              </div>
             </div>
-            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-              <span>Fluxo de Compras</span>
-              <span class="font-mono text-[10px]">Almoxarifado</span>
-            </div>
-          </div>
+          `}
 
           <!-- Célula 3: Agenda & Espaços -->
           <div onclick="window.location.hash = '#agenda'" class="telemetry-cell cursor-pointer group">
@@ -478,7 +533,7 @@ window.DashboardModule = {
                     { id: 'ADVERTENCIA', label: 'Advertências' },
                     { id: 'INSUMO', label: 'Insumos' }
                   ].map(aba => `
-                    <button data-aba-fila="${aba.id}" class="px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">
+                    <button data-aba-fila="${aba.id}" class="${!abasFilaDisponiveis.some(a => a.id === aba.id) ? 'hidden' : 'px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ' + (this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200')}">
                       ${aba.label}
                     </button>
                   `).join('')}
@@ -604,7 +659,7 @@ window.DashboardModule = {
               </div>
 
               <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <button onclick="window.location.hash = '#auditoria'" class="text-xs font-bold text-blue-600 dark:text-sky-400 hover:underline">
+                <button onclick="window.location.hash = '#auditoria'" class="${podeVerAuditoria ? 'text-xs font-bold text-blue-600 dark:text-sky-400 hover:underline' : 'hidden'}">
                   Ver Trilha de Auditoria Completa ↗
                 </button>
               </div>
@@ -659,20 +714,20 @@ window.DashboardModule = {
                   <span class="font-bold text-[11px]">Chamados</span>
                   <span class="text-[10px] text-slate-400 mt-0.5">Ocorrências</span>
                 </a>
-                <a href="#compras" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                <a href="${podeVerCompras ? '#compras' : '#insumos'}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-500 mb-2"></i>
                   <span class="font-bold text-[11px]">Suprimentos</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">Compras</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">${podeVerCompras ? 'Compras' : 'Insumos'}</span>
                 </a>
                 <a href="#agenda" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="calendar" class="w-4 h-4 text-sky-500 mb-2"></i>
                   <span class="font-bold text-[11px]">Agenda</span>
                   <span class="text-[10px] text-slate-400 mt-0.5">Espaços</span>
                 </a>
-                <a href="#advertencias" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
+                <a href="${podeVerAdvertencias ? '#advertencias' : '#comunicacao'}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="shield-alert" class="w-4 h-4 text-purple-500 mb-2"></i>
-                  <span class="font-bold text-[11px]">Advertências</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">Disciplina</span>
+                  <span class="font-bold text-[11px]">${podeVerAdvertencias ? 'Advertências' : 'Mural'}</span>
+                  <span class="text-[10px] text-slate-400 mt-0.5">${podeVerAdvertencias ? 'Disciplina' : 'Comunicados'}</span>
                 </a>
               </div>
             </div>

@@ -278,17 +278,17 @@ window.DocumentosModule = {
                             </button>
 
                             <!-- Editar Metadados -->
-                            <button onclick="window.DocumentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="Editar Metadados">
+                            <button onclick="window.DocumentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('documentos.editar') ? 'btn-action-table action-edit' : 'hidden'}" title="Editar Metadados">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
 
                             <!-- Alternar Status (Arquivar / Reativar) -->
-                            <button onclick="window.DocumentosModule._toggleStatus(document.getElementById('main-content'), ${item.id}, '${isAtivo ? 'arquivado' : 'ativo'}')" class="btn-action-table action-edit" title="${isAtivo ? 'Arquivar Documento' : 'Reativar Documento'}">
+                            <button onclick="window.DocumentosModule._toggleStatus(document.getElementById('main-content'), ${item.id}, '${isAtivo ? 'arquivado' : 'ativo'}')" class="${window.Auth?.hasAnyPermission(['documentos.arquivar', 'documentos.editar']) ? 'btn-action-table action-edit' : 'hidden'}" title="${isAtivo ? 'Arquivar Documento' : 'Reativar Documento'}">
                               <i data-lucide="${isAtivo ? 'archive' : 'rotate-ccw'}" class="w-4 h-4"></i>
                             </button>
 
                             <!-- Excluir -->
-                            <button onclick="window.DocumentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir Documento">
+                            <button onclick="window.DocumentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('documentos.excluir') ? 'btn-action-table action-delete' : 'hidden'}" title="Excluir Documento">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                           </div>

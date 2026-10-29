@@ -134,6 +134,7 @@ const ALL_SYSTEM_PERMISSIONS = [
   'ocorrencias.assumir',
   'ocorrencias.atender',
   'ocorrencias.escalonar',
+  'ocorrencias.fechar',
   'ocorrencias.excluir',
   'eventos.visualizar',
   'eventos.criar',
@@ -151,7 +152,9 @@ const ALL_SYSTEM_PERMISSIONS = [
   'usuarios.visualizar',
   'usuarios.criar',
   'usuarios.pre_cadastrar',
+  'usuarios.aprovar',
   'usuarios.editar',
+  'usuarios.alterar_status',
   'usuarios.bloquear',
   'usuarios.excluir',
   'setores.visualizar',
@@ -159,10 +162,12 @@ const ALL_SYSTEM_PERMISSIONS = [
   'setores.editar',
   'setores.excluir',
   'auditoria.visualizar',
+  'auditoria.exportar',
   'advertencias.visualizar',
   'advertencias.solicitar',
   'advertencias.aplicar',
   'advertencias.homologar',
+  'advertencias.revogar',
   'rh.visualizar',
   'rh.gerenciar'
 ];
@@ -181,6 +186,7 @@ const FIXED_PROFILE_PERMISSIONS = {
     'compras.criar',
     'compras.editar',
     'compras.aprovar',
+    'compras.receber',
     'insumos.visualizar',
     'insumos.criar',
     'insumos.editar',
@@ -192,11 +198,17 @@ const FIXED_PROFILE_PERMISSIONS = {
     'eventos.excluir',
     'documentos.visualizar',
     'documentos.enviar',
+    'documentos.criar',
+    'documentos.editar',
     'documentos.baixar',
     'documentos.arquivar',
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'ocorrencias.editar',
+    'ocorrencias.assumir',
+    'ocorrencias.atender',
+    'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'comunicados.visualizar',
     'comunicados.criar',
     'equipamentos.visualizar',
@@ -204,6 +216,7 @@ const FIXED_PROFILE_PERMISSIONS = {
     'equipamentos.editar',
     'setores.visualizar',
     'usuarios.visualizar',
+    'usuarios.pre_cadastrar',
     'advertencias.visualizar',
     'advertencias.solicitar'
   ],
@@ -217,18 +230,25 @@ const FIXED_PROFILE_PERMISSIONS = {
     'eventos.editar',
     'documentos.visualizar',
     'documentos.enviar',
+    'documentos.criar',
+    'documentos.editar',
     'documentos.baixar',
     'documentos.arquivar',
     'usuarios.visualizar',
     'usuarios.criar',
     'usuarios.pre_cadastrar',
+    'usuarios.aprovar',
     'usuarios.editar',
+    'usuarios.alterar_status',
     'usuarios.bloquear',
     'setores.visualizar',
     'setores.criar',
     'setores.editar',
     'advertencias.visualizar',
     'advertencias.solicitar',
+    'advertencias.aplicar',
+    'advertencias.homologar',
+    'advertencias.revogar',
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'rh.visualizar',
@@ -236,7 +256,9 @@ const FIXED_PROFILE_PERMISSIONS = {
   ],
   ANALISTA_RH: [
     'dashboard.visualizar',
+    'indicadores.visualizar',
     'comunicados.visualizar',
+    'comunicados.criar',
     'eventos.visualizar',
     'usuarios.visualizar',
     'usuarios.pre_cadastrar',
@@ -244,9 +266,11 @@ const FIXED_PROFILE_PERMISSIONS = {
     'setores.visualizar',
     'documentos.visualizar',
     'documentos.enviar',
+    'documentos.criar',
     'documentos.baixar',
     'advertencias.visualizar',
     'advertencias.solicitar',
+    'advertencias.aplicar',
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'rh.visualizar'
@@ -271,6 +295,8 @@ const FIXED_PROFILE_PERMISSIONS = {
     'dashboard.visualizar',
     'indicadores.visualizar',
     'eventos.visualizar',
+    'eventos.criar',
+    'eventos.editar',
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'ocorrencias.editar',
@@ -278,6 +304,7 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.assumir',
     'ocorrencias.atender',
     'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'equipamentos.visualizar',
     'equipamentos.criar',
     'equipamentos.editar',
@@ -286,14 +313,23 @@ const FIXED_PROFILE_PERMISSIONS = {
     'insumos.criar',
     'insumos.editar',
     'insumos.movimentar',
+    'insumos.baixar',
     'compras.visualizar',
+    'compras.visualizar_pedidos',
     'compras.criar',
     'compras.editar',
+    'compras.aprovar',
+    'compras.receber',
+    'limpeza.visualizar',
+    'limpeza.criar',
+    'limpeza.editar',
     'comunicados.visualizar',
     'comunicados.criar',
     'documentos.visualizar',
     'documentos.enviar',
     'documentos.baixar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
     'usuarios.visualizar',
     'setores.visualizar'
   ],
@@ -306,10 +342,13 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.assumir',
     'ocorrencias.atender',
     'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'equipamentos.visualizar',
+    'insumos.visualizar',
     'documentos.visualizar',
     'documentos.baixar',
-    'comunicados.visualizar'
+    'comunicados.visualizar',
+    'setores.visualizar'
   ],
   TECNICO: [
     'dashboard.visualizar',
@@ -320,10 +359,13 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.assumir',
     'ocorrencias.atender',
     'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'equipamentos.visualizar',
+    'insumos.visualizar',
     'documentos.visualizar',
     'documentos.baixar',
-    'comunicados.visualizar'
+    'comunicados.visualizar',
+    'setores.visualizar'
   ],
   TECNICO_N2: [
     'dashboard.visualizar',
@@ -334,13 +376,16 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.assumir',
     'ocorrencias.atender',
     'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'equipamentos.visualizar',
     'equipamentos.editar',
     'insumos.visualizar',
     'insumos.movimentar',
+    'insumos.baixar',
     'documentos.visualizar',
     'documentos.baixar',
-    'comunicados.visualizar'
+    'comunicados.visualizar',
+    'setores.visualizar'
   ],
   TECNICO_N3: [
     'dashboard.visualizar',
@@ -349,19 +394,21 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'ocorrencias.editar',
-    'ocorrencias.excluir',
     'ocorrencias.assumir',
     'ocorrencias.atender',
     'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'equipamentos.visualizar',
     'equipamentos.criar',
     'equipamentos.editar',
     'insumos.visualizar',
     'insumos.movimentar',
+    'insumos.baixar',
     'documentos.visualizar',
     'documentos.enviar',
     'documentos.baixar',
-    'comunicados.visualizar'
+    'comunicados.visualizar',
+    'setores.visualizar'
   ],
   GESTOR_OPERADOR: [
     'dashboard.visualizar',
@@ -387,11 +434,17 @@ const FIXED_PROFILE_PERMISSIONS = {
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'ocorrencias.editar',
+    'ocorrencias.assumir',
+    'ocorrencias.atender',
+    'ocorrencias.escalonar',
+    'ocorrencias.fechar',
     'limpeza.visualizar',
     'limpeza.criar',
     'limpeza.editar',
     'comunicados.visualizar',
     'comunicados.criar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
     'usuarios.visualizar',
     'setores.visualizar'
   ],
@@ -408,6 +461,7 @@ const FIXED_PROFILE_PERMISSIONS = {
     'eventos.criar',
     'insumos.visualizar',
     'insumos.movimentar',
+    'insumos.baixar',
     'comunicados.visualizar'
   ],
   ADMINISTRACAO: [
@@ -615,7 +669,9 @@ function requireAnyPermission(...permissoesChave) {
  * Une as permissões do perfil base + as permissões granulares adicionais concedidas.
  */
 async function getPermissoesDoUsuario(usuario) {
-  if (!usuario) return [];
+  if (!usuario && !arguments[1]) return [];
+  if (typeof usuario === 'string') usuario = { perfil: usuario };
+  else if (typeof usuario === 'number' || arguments[1]) usuario = { id: usuario, perfil: arguments[1] };
   const perfil = normalizeProfile(usuario.perfil);
 
   if (['ADMIN', 'ADMINISTRADOR'].includes(perfil)) {
@@ -632,11 +688,11 @@ async function getPermissoesDoUsuario(usuario) {
 
   if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
     for (const p of FIXED_PROFILE_PERMISSIONS[perfil]) combined.add(p);
-  }
-
-  const perms = await loadPermissoesPorPerfil();
-  if (perms[perfil]) {
-    for (const p of perms[perfil]) combined.add(p);
+  } else {
+    const perms = await loadPermissoesPorPerfil();
+    if (perms[perfil]) {
+      for (const p of perms[perfil]) combined.add(p);
+    }
   }
 
   // Mescla com permissões extras por usuário

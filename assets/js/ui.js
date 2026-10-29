@@ -192,7 +192,22 @@ class UIManager {
       });
     }
 
+    this._activeCloseModal = closeModal;
     return { close: closeModal };
+  }
+
+  closeModal() {
+    if (typeof this._activeCloseModal === 'function') {
+      this._activeCloseModal();
+      this._activeCloseModal = null;
+      return;
+    }
+    document.body.style.overflow = '';
+    if (this.modalContainer) {
+      this.modalContainer.classList.add('hidden');
+      this.modalContainer.classList.remove('flex');
+      this.modalContainer.innerHTML = '';
+    }
   }
 
   // =========================================================================

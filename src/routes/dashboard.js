@@ -10,8 +10,8 @@ const { requirePermission } = require('../middleware/permissions');
 
 router.use(authMiddleware);
 
-// GET /api/v1/dashboard
-router.get('/', requirePermission('dashboard.visualizar'), async (req, res) => {
+// GET /api/v1/dashboard e /api/v1/dashboard/stats
+router.get(['/', '/stats'], requirePermission('dashboard.visualizar'), async (req, res) => {
   try {
     const pool = getPool();
 

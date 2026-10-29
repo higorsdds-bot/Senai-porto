@@ -119,7 +119,21 @@ class AppRouter {
     window.addEventListener('hub:login', () => {
       this.atualizarVisibilidadeRotas();
       this.atualizarBadgeComunicados();
-      this.handleRoute();
+      const perfil = String(window.Auth?.getUsuario()?.perfil || '').toUpperCase().trim();
+      let homeRoute = 'dashboard';
+      if (perfil === 'LIMPEZA') {
+        homeRoute = 'limpeza';
+      } else if (perfil === 'ADMINISTRACAO') {
+        homeRoute = 'compras';
+      } else if (!this._canAccess(this.routes['dashboard'])) {
+        const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
+        if (allowed) homeRoute = allowed[0];
+      }
+      if (window.location.hash !== `#${homeRoute}`) {
+        window.location.hash = `#${homeRoute}`;
+      } else {
+        this.handleRoute();
+      }
     });
 
     // Atualiza imediatamente a visibilidade dos links no menu

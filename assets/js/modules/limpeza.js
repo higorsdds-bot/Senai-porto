@@ -112,7 +112,7 @@ window.LimpezaModule = {
             <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Controle de Limpeza</h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Acompanhe se os ambientes estão limpos ou necessitam de higienização</p>
           </div>
-          <button id="btn-nova-limpeza" onclick="window.LimpezaModule._openFormModal(document.getElementById('main-content'))" class="btn-primary cursor-pointer">
+          <button id="btn-nova-limpeza" onclick="window.LimpezaModule._openFormModal(document.getElementById('main-content'))" class="${window.Auth?.hasPermission('limpeza.criar') ? 'btn-primary cursor-pointer' : 'hidden'}">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
             Nova Rotina de Limpeza
           </button>
@@ -194,7 +194,7 @@ window.LimpezaModule = {
           window.UI.renderEmptyState({
             title: 'Nenhuma tarefa de limpeza',
             description: 'Não foram encontradas tarefas com os filtros especificados.',
-            actionLabel: 'Agendar Limpeza',
+            actionLabel: window.Auth?.hasPermission('limpeza.criar') ? 'Agendar Limpeza' : null,
             onActionClick: () => this._openFormModal(container)
           })
           : `
@@ -239,7 +239,7 @@ window.LimpezaModule = {
                             ${isLimpo ? `
                               <button 
                                 onclick="window.LimpezaModule.alternarStatusRapido(document.getElementById('main-content'), ${item.id}, 'nao_limpo')" 
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors shadow-sm cursor-pointer" 
+                                class="${window.Auth?.hasPermission('limpeza.editar') ? 'inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors shadow-sm cursor-pointer' : 'hidden'}" 
                                 title="Marcar este ambiente como Não Limpo"
                               >
                                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -248,7 +248,7 @@ window.LimpezaModule = {
                             ` : `
                               <button 
                                 onclick="window.LimpezaModule.alternarStatusRapido(document.getElementById('main-content'), ${item.id}, 'limpo')" 
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors shadow-sm cursor-pointer" 
+                                class="${window.Auth?.hasPermission('limpeza.editar') ? 'inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors shadow-sm cursor-pointer' : 'hidden'}" 
                                 title="Marcar este ambiente como Limpo"
                               >
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -259,7 +259,7 @@ window.LimpezaModule = {
                             <!-- Editar Status completo / Vistoria -->
                             <button 
                               onclick="window.LimpezaModule._openStatusModal(document.getElementById('main-content'), ${item.id})" 
-                              class="btn-action-table action-primary" 
+                              class="${window.Auth?.hasPermission('limpeza.editar') ? 'btn-action-table action-primary' : 'hidden'}" 
                               title="Alterar Status / Vistoria"
                             >
                               <i data-lucide="clipboard-check" class="w-4 h-4"></i>
@@ -268,7 +268,7 @@ window.LimpezaModule = {
                             <!-- Editar Dados Cadastrais -->
                             <button 
                               onclick="window.LimpezaModule._openFormModal(document.getElementById('main-content'), ${item.id})" 
-                              class="btn-action-table action-edit" 
+                              class="${window.Auth?.hasPermission('limpeza.editar') ? 'btn-action-table action-edit' : 'hidden'}" 
                               title="Editar Detalhes"
                             >
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -277,7 +277,7 @@ window.LimpezaModule = {
                             <!-- Excluir -->
                             <button 
                               onclick="window.LimpezaModule._confirmDelete(document.getElementById('main-content'), ${item.id})" 
-                              class="btn-action-table action-delete" 
+                              class="${window.Auth?.hasPermission('limpeza.excluir') ? 'btn-action-table action-delete' : 'hidden'}" 
                               title="Excluir"
                             >
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
