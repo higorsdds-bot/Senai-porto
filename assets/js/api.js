@@ -237,6 +237,10 @@ class ApiService {
     });
   }
 
+  async getPermissoesDisponiveis() {
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/permissoes-disponiveis`, { method: 'GET' });
+  }
+
   // =========================================================================
   // SETORES
   // =========================================================================
@@ -432,6 +436,19 @@ class ApiService {
   async deleteOcorrencia(id) {
     return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}`, { method: 'DELETE' },
       () => window.MockDB.delete('ocorrencias', id));
+  }
+
+  async assumirOcorrencia(id) {
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}/assumir`, {
+      method: 'PATCH'
+    });
+  }
+
+  async escalonarOcorrencia(id, data = {}) {
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}/escalonar`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
   }
 
   // =========================================================================

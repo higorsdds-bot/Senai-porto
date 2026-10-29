@@ -193,11 +193,31 @@ const AuditoriaModule = {
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissões (Função) *</label>
                 <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                  <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
-                  <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
-                  <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
-                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
-                  <option value="ADMIN">ADMINISTRADOR GERAL (Acesso Total e Auditoria)</option>
+                  <optgroup label="Administração e Governança">
+                    <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
+                    <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
+                    <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Estoque, Agenda e Entrada de Pedidos)</option>
+                  </optgroup>
+                  <optgroup label="Gestores Setoriais">
+                    <option value="GESTOR_RH">GESTOR_RH (Supervisão de RH e Acessos)</option>
+                    <option value="GESTOR_INFRA">GESTOR_INFRA (Comando N1, N2, N3 e Redes)</option>
+                    <option value="GESTOR_OPERADOR">GESTOR_OPERADOR (Comando de Operadores)</option>
+                    <option value="GESTOR">GESTOR (Gestão Operacional e Aprovações)</option>
+                  </optgroup>
+                  <optgroup label="Suporte Técnico & TI">
+                    <option value="TECNICO_N3">TECNICO_N3 (Avançado / Infra / Servidores)</option>
+                    <option value="TECNICO_N2">TECNICO_N2 (Hardware / Redes / Bancadas)</option>
+                    <option value="TECNICO_N1">TECNICO_N1 (Helpdesk / Atendimento N1)</option>
+                    <option value="TECNICO">TECNICO (Suporte Técnico)</option>
+                  </optgroup>
+                  <optgroup label="Recursos Humanos">
+                    <option value="ANALISTA_RH">ANALISTA_RH (Analista de RH)</option>
+                    <option value="RH">RH (Assistente / Operações de RH)</option>
+                  </optgroup>
+                  <optgroup label="Operacional">
+                    <option value="OPERADOR" selected>OPERADOR (Acesso Padrão às Rotinas)</option>
+                    <option value="LIMPEZA">LIMPEZA (Solicitação de Materiais de Consumo)</option>
+                  </optgroup>
                 </select>
               </div>
               <div>
@@ -268,13 +288,33 @@ const AuditoriaModule = {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissão *</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissão / Hierarquia *</label>
                 <select id="cad-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
-                  <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
-                  <option value="GESTOR">GESTOR (Gestão Operacional)</option>
-                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
-                  <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-                  <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+                  <optgroup label="Administração e Governança">
+                    <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
+                    <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
+                    <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
+                  </optgroup>
+                  <optgroup label="Gestores Setoriais">
+                    <option value="GESTOR_RH">GESTOR_RH (Supervisão de RH e Acessos)</option>
+                    <option value="GESTOR_INFRA">GESTOR_INFRA (Comando N1, N2, N3 e Redes)</option>
+                    <option value="GESTOR_OPERADOR">GESTOR_OPERADOR (Comando de Operadores)</option>
+                    <option value="GESTOR">GESTOR (Gestão Operacional)</option>
+                  </optgroup>
+                  <optgroup label="Suporte Técnico & TI">
+                    <option value="TECNICO_N3">TECNICO_N3 (Avançado / Infra / Servidores)</option>
+                    <option value="TECNICO_N2">TECNICO_N2 (Hardware / Redes / Bancadas)</option>
+                    <option value="TECNICO_N1">TECNICO_N1 (Helpdesk / Atendimento N1)</option>
+                    <option value="TECNICO">TECNICO (Suporte Técnico)</option>
+                  </optgroup>
+                  <optgroup label="Recursos Humanos">
+                    <option value="ANALISTA_RH">ANALISTA_RH (Analista de RH)</option>
+                    <option value="RH">RH (Assistente / Operações de RH)</option>
+                  </optgroup>
+                  <optgroup label="Operacional">
+                    <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
+                    <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -283,6 +323,44 @@ const AuditoriaModule = {
                 <select id="cad-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <option value="">Carregando setores...</option>
                 </select>
+              </div>
+            </div>
+
+            <!-- PERMISSÕES ADICIONAIS / EXCEÇÕES GRANULARES -->
+            <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Permissões Específicas / Acessos Adicionais
+                </span>
+                <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
+              </div>
+              <p class="text-[11px] text-slate-500">Marque privilégios extras que este colaborador deve receber (ex: permitir que RH acesse e anexe documentos):</p>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="documentos.visualizar" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Documentos:</strong> Visualizar</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="documentos.enviar" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Documentos:</strong> Anexar / Enviar</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="ocorrencias.atender" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Ocorrências:</strong> Assumir Chamados</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="ocorrencias.escalonar" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Ocorrências:</strong> Escalonar N1/N2/N3</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="insumos.visualizar" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Insumos:</strong> Visualizar Estoque</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="compras.criar" class="cad-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Compras:</strong> Solicitar Compras</span>
+                </label>
               </div>
             </div>
 
@@ -350,11 +428,31 @@ const AuditoriaModule = {
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Cargo / Perfil de Acesso *</label>
                 <select id="edit-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
-                  <option value="OPERADOR">OPERADOR (Operações Básicas)</option>
-                  <option value="GESTOR">GESTOR (Gestão Operacional)</option>
-                  <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
-                  <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-                  <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+                  <optgroup label="Administração e Governança">
+                    <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
+                    <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
+                    <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
+                  </optgroup>
+                  <optgroup label="Gestores Setoriais">
+                    <option value="GESTOR_RH">GESTOR_RH (Supervisão de RH e Acessos)</option>
+                    <option value="GESTOR_INFRA">GESTOR_INFRA (Comando N1, N2, N3 e Redes)</option>
+                    <option value="GESTOR_OPERADOR">GESTOR_OPERADOR (Comando de Operadores)</option>
+                    <option value="GESTOR">GESTOR (Gestão Operacional)</option>
+                  </optgroup>
+                  <optgroup label="Suporte Técnico & TI">
+                    <option value="TECNICO_N3">TECNICO_N3 (Avançado / Infra / Servidores)</option>
+                    <option value="TECNICO_N2">TECNICO_N2 (Hardware / Redes / Bancadas)</option>
+                    <option value="TECNICO_N1">TECNICO_N1 (Helpdesk / Atendimento N1)</option>
+                    <option value="TECNICO">TECNICO (Suporte Técnico)</option>
+                  </optgroup>
+                  <optgroup label="Recursos Humanos">
+                    <option value="ANALISTA_RH">ANALISTA_RH (Analista de RH)</option>
+                    <option value="RH">RH (Assistente / Operações de RH)</option>
+                  </optgroup>
+                  <optgroup label="Operacional">
+                    <option value="OPERADOR">OPERADOR (Operações Básicas)</option>
+                    <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -363,6 +461,44 @@ const AuditoriaModule = {
                 <select id="edit-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <option value="">Sem setor definido</option>
                 </select>
+              </div>
+            </div>
+
+            <!-- PERMISSÕES ADICIONAIS / EXCEÇÕES GRANULARES -->
+            <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Permissões Específicas / Acessos Adicionais
+                </span>
+                <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
+              </div>
+              <p class="text-[11px] text-slate-500">Marque privilégios extras que este colaborador deve receber (ex: permitir que RH acesse e anexe documentos):</p>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="documentos.visualizar" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Documentos:</strong> Visualizar</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="documentos.enviar" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Documentos:</strong> Anexar / Enviar</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="ocorrencias.atender" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Ocorrências:</strong> Assumir Chamados</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="ocorrencias.escalonar" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Ocorrências:</strong> Escalonar N1/N2/N3</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="insumos.visualizar" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Insumos:</strong> Visualizar Estoque</span>
+                </label>
+                <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+                  <input type="checkbox" value="compras.criar" class="edit-perm-extra-cb rounded text-blue-600">
+                  <span><strong>Compras:</strong> Solicitar Compras</span>
+                </label>
               </div>
             </div>
 
@@ -742,6 +878,8 @@ const AuditoriaModule = {
         btnSalvar.disabled = true;
         btnSalvar.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Cadastrando...`;
 
+        const permissoes_adicionais = Array.from(container.querySelectorAll('.cad-perm-extra-cb:checked')).map(cb => cb.value);
+
         try {
           await window.API.createUsuario({
             nome,
@@ -749,7 +887,8 @@ const AuditoriaModule = {
             senha,
             perfil,
             setor_id: setor_id ? Number(setor_id) : null,
-            status: 'ATIVO'
+            status: 'ATIVO',
+            permissoes_adicionais
           });
 
           if (window.UI?.toast) {
@@ -824,12 +963,15 @@ const AuditoriaModule = {
         btnSalvar.disabled = true;
         btnSalvar.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Salvando...`;
 
+        const permissoes_adicionais = Array.from(container.querySelectorAll('.edit-perm-extra-cb:checked')).map(cb => cb.value);
+
         const payload = {
           nome,
           email,
           perfil,
           setor_id: setor_id ? Number(setor_id) : null,
-          status: status || 'ATIVO'
+          status: status || 'ATIVO',
+          permissoes_adicionais
         };
         if (senha && senha.length >= 8) {
           payload.senha = senha;
@@ -1454,21 +1596,22 @@ const AuditoriaModule = {
       }
     }
 
-    // Buscar usuário da lista em memória ou da API
-    let u = (this._usuarios || []).find(item => Number(item.id) === Number(id));
-    if (!u) {
-      try {
-        const res = await window.API.getUsuarioById(id);
-        u = res?.data || res;
-      } catch (err) {
-        if (window.UI?.toast) {
-          window.UI.toast({ title: 'Erro', message: 'Não foi possível carregar os dados do usuário.', type: 'error' });
-        }
-        return;
-      }
+    // Buscar dados completos do usuário da API para obter permissoes_adicionais atualizadas
+    let u = null;
+    try {
+      const getFn = window.API.getUsuario ? window.API.getUsuario.bind(window.API) : window.API.getUsuarioById.bind(window.API);
+      const res = await getFn(id);
+      u = res?.data || res;
+    } catch (_) {
+      u = (this._usuarios || []).find(item => Number(item.id) === Number(id));
     }
 
-    if (!u) return;
+    if (!u) {
+      if (window.UI?.toast) {
+        window.UI.toast({ title: 'Erro', message: 'Não foi possível carregar os dados do usuário.', type: 'error' });
+      }
+      return;
+    }
 
     // Preencher campos
     document.getElementById('edit-user-id').value = u.id;
@@ -1476,6 +1619,13 @@ const AuditoriaModule = {
     document.getElementById('edit-user-email').value = u.email || '';
     document.getElementById('edit-user-perfil').value = u.perfil || 'OPERADOR';
     document.getElementById('edit-user-status').value = u.status || 'ATIVO';
+
+    // Marcar checkboxes de permissões adicionais
+    const editPermCbs = modal.querySelectorAll('.edit-perm-extra-cb');
+    const userPerms = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
+    editPermCbs.forEach(cb => {
+      cb.checked = userPerms.includes(cb.value);
+    });
 
     const inputSenha = document.getElementById('edit-user-senha');
     if (inputSenha) {

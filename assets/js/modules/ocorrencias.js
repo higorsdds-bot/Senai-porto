@@ -66,6 +66,22 @@ const OcorrenciasModule = {
                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                 placeholder="Ex: Elétrica, Hidráulica, TI, Ar-condicionado...">
             </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Equipamento Relacionado (Opcional)</label>
+              <select name="equipamento_id" id="oc-select-equipamento"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+                <option value="">Nenhum equipamento vinculado</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Nível Inicial de Suporte</label>
+              <select name="nivel_atendimento"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 font-semibold">
+                <option value="N1" selected>N1 • Helpdesk / Atendimento Básico</option>
+                <option value="N2">N2 • Hardware / Redes / Manutenção</option>
+                <option value="N3">N3 • Servidores / Infraestrutura Crítica</option>
+              </select>
+            </div>
             <div class="sm:col-span-2">
               <label class="block text-xs font-bold text-slate-600 mb-1.5">Descrição Detalhada do Problema</label>
               <textarea name="descricao" rows="3"
@@ -190,6 +206,7 @@ const OcorrenciasModule = {
     `;
 
     this._bind(container);
+    this._carregarEquipamentos(container);
     await this._carregar(container);
     if (window.lucide) lucide.createIcons();
   },
@@ -304,6 +321,13 @@ const OcorrenciasModule = {
           fd.append('local', localVal);
           fd.append('tipo', tipoVal);
           fd.append('descricao', descVal);
+
+          if (form.equipamento_id?.value) {
+            fd.append('equipamento_id', form.equipamento_id.value);
+          }
+          if (form.nivel_atendimento?.value) {
+            fd.append('nivel_atendimento', form.nivel_atendimento.value);
+          }
 
           if (this._fotoSelecionada) {
             fd.append('foto', this._fotoSelecionada);
@@ -462,6 +486,30 @@ const OcorrenciasModule = {
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold uppercase tracking-wide bg-slate-50 text-slate-600 border-slate-200">${label}</span>`;
   },
 
+  _nivelBadge(nivel) {
+    const n = String(nivel || 'N1').toUpperCase();
+    if (n === 'N3') {
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200">N3 • Infra Crítica</span>`;
+    }
+    if (n === 'N2') {
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">N2 • Hardware/Rede</span>`;
+    }
+    return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">N1 • Helpdesk</span>`;
+  },
+
+  async _carregarEquipamentos(container) {
+    const sel = container.querySelector('#oc-select-equipamento');
+    if (!sel) return;
+    try {
+      const res = await window.API.getEquipamentos();
+      const lista = Array.isArray(res) ? res : (res?.data || []);
+      sel.innerHTML = '<option value="">Nenhum equipamento vinculado</option>' +
+        lista.map(eq => `<option value="${eq.id}">${this._esc(eq.nome)} (${this._esc(eq.codigo || eq.patrimonio || 'S/C')})</option>`).join('');
+    } catch (_) {
+      sel.innerHTML = '<option value="">Nenhum equipamento vinculado</option>';
+    }
+  },
+
   async _carregar(container) {
     const lista = container.querySelector('#oc-lista');
     const q = container.querySelector('#oc-busca')?.value.trim() || '';
@@ -489,9 +537,16 @@ const OcorrenciasModule = {
           <div class="space-y-3">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
-                <span class="text-[10px] font-mono text-slate-400 font-bold">#${o.id}</span>
-                <h4 class="text-sm font-extrabold text-slate-900 truncate tracking-tight">${this._esc(o.local)}</h4>
-                ${o.tipo ? `<span class="inline-block mt-0.5 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">${this._esc(o.tipo)}</span>` : ''}
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] font-mono text-slate-400 font-bold">#${o.id}</span>
+                  ${this._nivelBadge(o.nivel_atendimento)}
+                  ${o.tipo ? `<span class="inline-block text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">${this._esc(o.tipo)}</span>` : ''}
+                </div>
+                <h4 class="text-sm font-extrabold text-slate-900 truncate tracking-tight mt-1">${this._esc(o.local)}</h4>
+                ${o.equipamento_nome ? `
+                  <div class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-1">
+                    <i data-lucide="cpu" class="w-3 h-3 text-slate-500"></i> ${this._esc(o.equipamento_nome)} ${o.equipamento_codigo ? `(${this._esc(o.equipamento_codigo)})` : ''}
+                  </div>` : ''}
               </div>
               ${this._statusBadge(o.status)}
             </div>
@@ -553,12 +608,16 @@ const OcorrenciasModule = {
       const res = await window.API.request(`/ocorrencias/${id}`);
       const o = res?.data || res;
 
+      const canAtender = window.Auth?.hasPermission('ocorrencias.atender') || window.Auth?.isTecnico() || window.Auth?.isAdmin();
+      const canEscalonar = window.Auth?.hasPermission('ocorrencias.escalonar') || window.Auth?.isTecnico() || window.Auth?.isAdmin();
+
       conteudo.innerHTML = `
         <div class="space-y-5">
           <div class="flex items-start justify-between border-b border-slate-100 pb-3">
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-mono font-bold text-slate-400">Ocorrência #${o.id}</span>
+                ${this._nivelBadge(o.nivel_atendimento)}
                 ${this._statusBadge(o.status)}
               </div>
               <h3 class="text-base font-extrabold text-slate-900 mt-1">${this._esc(o.local)}</h3>
@@ -569,22 +628,46 @@ const OcorrenciasModule = {
             </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div class="bg-slate-50 p-3 rounded-xl">
-              <span class="text-[10px] text-slate-400 font-bold uppercase block">Tipo</span>
-              <span class="font-extrabold text-slate-800">${this._esc(o.tipo || 'Não especificado')}</span>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Categoria</span>
+              <span class="font-extrabold text-slate-800 block truncate mt-0.5">${this._esc(o.tipo || 'Geral')}</span>
             </div>
             <div class="bg-slate-50 p-3 rounded-xl">
-              <span class="text-[10px] text-slate-400 font-bold uppercase block">Registrado por</span>
-              <span class="font-extrabold text-slate-800">${this._esc(o.usuario_nome || 'N/A')}</span>
-            </div>
-            <div class="bg-slate-50 p-3 rounded-xl">
-              <span class="text-[10px] text-slate-400 font-bold uppercase block">Data e Hora</span>
-              <span class="font-mono text-slate-700">${o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : 'N/A'}</span>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Equipamento</span>
+              <span class="font-extrabold text-slate-800 block truncate mt-0.5" title="${this._esc(o.equipamento_nome || '')}">
+                ${o.equipamento_nome ? `${this._esc(o.equipamento_nome)}` : 'Não vinculado'}
+              </span>
             </div>
             <div class="bg-slate-50 p-3 rounded-xl">
               <span class="text-[10px] text-slate-400 font-bold uppercase block">Responsável</span>
-              <span class="font-extrabold text-slate-800">${this._esc(o.responsavel_nome || 'Não atribuído')}</span>
+              <span class="font-extrabold text-slate-800 block truncate mt-0.5">${this._esc(o.responsavel_nome || 'Aguardando')}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Data/Hora</span>
+              <span class="font-mono text-slate-700 block truncate mt-0.5">${o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : 'N/A'}</span>
+            </div>
+          </div>
+
+          <!-- BOTÕES DE AÇÃO OPERACIONAL TÉCNICA -->
+          <div class="p-3 bg-gradient-to-r from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i>
+              <span class="text-xs font-bold text-slate-800">Ações Técnicas e Governança:</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              ${canAtender ? `
+                <button type="button" onclick="OcorrenciasModule.assumirChamado(${o.id})"
+                  class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Assumir Chamado
+                </button>
+              ` : ''}
+              ${canEscalonar ? `
+                <button type="button" onclick="OcorrenciasModule.abrirModalEscalonar(${o.id}, '${o.nivel_atendimento || 'N1'}')"
+                  class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer">
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Escalonar (N1 / N2 / N3)
+                </button>
+              ` : ''}
             </div>
           </div>
 
@@ -594,6 +677,17 @@ const OcorrenciasModule = {
               ${this._esc(o.descricao || 'Sem descrição adicional.')}
             </div>
           </div>
+
+          <!-- PARECER TÉCNICO E HISTÓRICO DE ESCALONAMENTO -->
+          ${o.parecer_tecnico ? `
+            <div>
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <i data-lucide="wrench" class="w-3.5 h-3.5 text-blue-600"></i> Parecer Técnico & Diagnóstico de Atendimento
+              </h4>
+              <div class="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5 text-xs text-blue-950 leading-relaxed whitespace-pre-wrap font-mono">
+                ${this._esc(o.parecer_tecnico)}
+              </div>
+            </div>` : ''}
 
           <!-- FOTO AMPLIADA -->
           ${o.foto_url ? `
@@ -653,7 +747,95 @@ const OcorrenciasModule = {
 
       if (window.lucide) lucide.createIcons();
     } catch (err) {
-      conteudo.innerHTML = `<div class="p-6 text-center text-xs text-red-500">${this._esc(err.message || 'Erro ao carregar detalhes.')}</div>`;
+      conteudo.innerHTML = `
+        <div class="py-8 text-center text-xs text-red-500 bg-red-50 rounded-2xl border border-red-100 p-4">
+          ${this._esc(err.message || 'Erro ao carregar detalhes da ocorrência.')}
+        </div>`;
+    }
+  },
+
+  async assumirChamado(id) {
+    try {
+      await window.API.assumirOcorrencia(id);
+      if (window.UI?.toast) {
+        window.UI.toast({
+          title: 'Chamado Atribuído',
+          message: 'Você assumiu o atendimento deste chamado com sucesso!',
+          type: 'success'
+        });
+      }
+      await this.abrirDetalhes(id);
+      const container = document.getElementById('main-content');
+      if (container) await this._carregar(container);
+    } catch (err) {
+      if (window.UI?.toast) {
+        window.UI.toast({ title: 'Erro ao Assumir', message: err.message || 'Não foi possível assumir o chamado.', type: 'error' });
+      }
+    }
+  },
+
+  abrirModalEscalonar(id, nivelAtual) {
+    const modalContent = `
+      <form id="form-escalonar-modal" class="space-y-4">
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+          <i data-lucide="arrow-up-right" class="w-4 h-4 text-amber-600 shrink-0"></i>
+          <span><strong>Escalonamento Técnico:</strong> Transfira este chamado para a equipe correspondente ao nível de complexidade.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Novo Nível de Atendimento *</label>
+          <select id="modal-escalonar-nivel" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 font-bold bg-white">
+            <option value="N1" ${nivelAtual === 'N1' ? 'selected' : ''}>N1 • Helpdesk / Atendimento Básico</option>
+            <option value="N2" ${nivelAtual === 'N2' ? 'selected' : ''}>N2 • Hardware / Redes / Manutenção Local</option>
+            <option value="N3" ${nivelAtual === 'N3' ? 'selected' : ''}>N3 • Servidores / Infraestrutura Crítica / Banco</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Parecer Técnico / Motivo do Escalonamento *</label>
+          <textarea id="modal-escalonar-parecer" required rows="3" placeholder="Descreva os diagnósticos já realizados, testes efetuados e motivo da necessidade de escalonamento..."
+            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white"></textarea>
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Escalonar Chamado Técnico',
+      subtitle: `Ocorrência #${id} • Nível Atual: ${nivelAtual}`,
+      contentHtml: modalContent,
+      saveLabel: 'Confirmar Escalonamento',
+      onSave: async () => {
+        const nivel = document.getElementById('modal-escalonar-nivel')?.value;
+        const parecer_tecnico = document.getElementById('modal-escalonar-parecer')?.value.trim();
+
+        if (!parecer_tecnico || parecer_tecnico.length < 5) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe um parecer técnico detalhado para o escalonamento.', type: 'warning' });
+          return false;
+        }
+
+        try {
+          await window.API.escalonarOcorrencia(id, { nivel, parecer_tecnico });
+          window.UI.toast({
+            title: 'Chamado Escalonado',
+            message: `Ocorrência #${id} transferida para o nível ${nivel} com sucesso!`,
+            type: 'success'
+          });
+          await this.abrirDetalhes(id);
+          const container = document.getElementById('main-content');
+          if (container) await this._carregar(container);
+          return true;
+        } catch (err) {
+          window.UI.toast({ title: 'Erro ao Escalonar', message: err.message || 'Não foi possível escalonar o chamado.', type: 'error' });
+          return false;
+        }
+      }
+    });
+
+    if (window.lucide) {
+      setTimeout(() => {
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) lucide.createIcons({ root: modalContainer });
+      }, 50);
     }
   },
 

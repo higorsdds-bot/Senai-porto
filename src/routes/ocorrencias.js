@@ -9,7 +9,7 @@ const fs = require('fs');
 const multer = require('multer');
 const { getPool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { requirePermission } = require('../middleware/permissions');
+const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 
 // ─── Configuração do Multer (fotos e documentos anexados) ───────────────────
@@ -86,13 +86,16 @@ router.get('/', requirePermission('ocorrencias.visualizar'), async (req, res) =>
 
     const [rows] = await pool.query(
       `SELECT o.id, o.local, o.descricao, o.tipo, o.status,
+              o.nivel_atendimento, o.equipamento_id, o.parecer_tecnico,
               o.foto_url, o.anexo_url, o.anexo_nome,
               o.created_at, o.updated_at,
               o.usuario_id, u1.nome AS usuario_nome,
-              o.responsavel_id, u2.nome AS responsavel_nome
+              o.responsavel_id, u2.nome AS responsavel_nome,
+              eq.nome AS equipamento_nome, eq.patrimonio AS equipamento_patrimonio
        FROM ocorrencias o
        LEFT JOIN usuarios u1 ON u1.id = o.usuario_id
        LEFT JOIN usuarios u2 ON u2.id = o.responsavel_id
+       LEFT JOIN equipamentos eq ON eq.id = o.equipamento_id
        WHERE ${conds.join(' AND ')}
        ORDER BY o.created_at DESC`,
       params
@@ -110,13 +113,16 @@ router.get('/:id', requirePermission('ocorrencias.visualizar'), async (req, res)
     const pool = getPool();
     const [rows] = await pool.query(
       `SELECT o.id, o.local, o.descricao, o.tipo, o.status,
+              o.nivel_atendimento, o.equipamento_id, o.parecer_tecnico,
               o.foto_url, o.anexo_url, o.anexo_nome,
               o.created_at, o.updated_at,
               o.usuario_id, u1.nome AS usuario_nome,
-              o.responsavel_id, u2.nome AS responsavel_nome
+              o.responsavel_id, u2.nome AS responsavel_nome,
+              eq.nome AS equipamento_nome, eq.patrimonio AS equipamento_patrimonio
        FROM ocorrencias o
        LEFT JOIN usuarios u1 ON u1.id = o.usuario_id
        LEFT JOIN usuarios u2 ON u2.id = o.responsavel_id
+       LEFT JOIN equipamentos eq ON eq.id = o.equipamento_id
        WHERE o.id = ? AND o.deleted_at IS NULL LIMIT 1`,
       [req.params.id]
     );
@@ -138,10 +144,9 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
     next();
   });
 }, async (req, res) => {
-  const { local, descricao, tipo, responsavel_id, foto_base64 } = req.body;
+  const { local, descricao, tipo, responsavel_id, foto_base64, nivel_atendimento, equipamento_id } = req.body;
 
   if (!local || String(local).trim().length < 3) {
-    // Limpa uploads em caso de erro de validação
     if (req.files) {
       if (req.files.foto) fs.unlink(req.files.foto[0].path, () => {});
       if (req.files.anexo) fs.unlink(req.files.anexo[0].path, () => {});
@@ -157,25 +162,25 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
   let anexo_url = null;
   let anexo_nome = null;
 
-  // Processa arquivo de foto vindo do multer
   if (req.files && req.files.foto && req.files.foto[0]) {
     foto_url = `/uploads/ocorrencias/${req.files.foto[0].filename}`;
   } else if (foto_base64) {
-    // Processa foto vinda da câmera via webcam base64
     foto_url = salvarBase64Foto(foto_base64);
   }
 
-  // Processa anexo/documento
   if (req.files && req.files.anexo && req.files.anexo[0]) {
     anexo_url = `/uploads/ocorrencias/${req.files.anexo[0].filename}`;
     anexo_nome = req.files.anexo[0].originalname;
   }
 
+  const nivelFinal = ['N1', 'N2', 'N3'].includes(nivel_atendimento) ? nivel_atendimento : 'N1';
+  const equipamentoIdFinal = equipamento_id ? Number(equipamento_id) : null;
+
   try {
     const pool = getPool();
     const [result] = await pool.query(
-      `INSERT INTO ocorrencias (local, descricao, tipo, foto_url, anexo_url, anexo_nome, usuario_id, responsavel_id, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aberto')`,
+      `INSERT INTO ocorrencias (local, descricao, tipo, foto_url, anexo_url, anexo_nome, usuario_id, responsavel_id, status, nivel_atendimento, equipamento_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aberto', ?, ?)`,
       [
         String(local).trim(),
         descricao?.trim() || null,
@@ -184,11 +189,21 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
         anexo_url,
         anexo_nome,
         req.usuario.id,
-        responsavel_id || null
+        responsavel_id || null,
+        nivelFinal,
+        equipamentoIdFinal
       ]
     );
 
-    const descAuditoria = `Ocorrência #${result.insertId} registrada no local "${String(local).trim()}".${foto_url ? ' [Com Foto]' : ''}${anexo_url ? ` [Anexo: ${anexo_nome}]` : ''}`;
+    // Se vinculou um equipamento à ocorrência, marca o equipamento como 'manutencao'
+    if (equipamentoIdFinal) {
+      await pool.query(
+        `UPDATE equipamentos SET estado = 'manutencao', updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
+        [equipamentoIdFinal]
+      ).catch(() => {});
+    }
+
+    const descAuditoria = `Ocorrência #${result.insertId} registrada no nível ${nivelFinal} no local "${String(local).trim()}".${foto_url ? ' [Com Foto]' : ''}${equipamentoIdFinal ? ` [Equipamento #${equipamentoIdFinal}]` : ''}`;
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,
@@ -205,6 +220,7 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
       message: 'Ocorrência registrada com sucesso.',
       data: {
         id: result.insertId,
+        nivel_atendimento: nivelFinal,
         foto_url,
         anexo_url,
         anexo_nome
@@ -222,7 +238,7 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
 
 // ─── PUT /api/v1/ocorrencias/:id ─────────────────────────────────────────────
 router.put('/:id', requirePermission('ocorrencias.editar'), async (req, res) => {
-  const { local, descricao, tipo, responsavel_id, status } = req.body;
+  const { local, descricao, tipo, responsavel_id, status, nivel_atendimento, equipamento_id, parecer_tecnico } = req.body;
   if (!local || String(local).trim().length < 3) {
     return res.status(422).json({ success: false, message: 'Local inválido.', errors: { local: 'Mínimo 3 caracteres.' } });
   }
@@ -230,29 +246,148 @@ router.put('/:id', requirePermission('ocorrencias.editar'), async (req, res) => 
   if (status && !statusValidos.includes(status)) {
     return res.status(422).json({ success: false, message: 'Status inválido.', errors: { status: `Use: ${statusValidos.join(', ')}` } });
   }
+
+  const nivelFinal = ['N1', 'N2', 'N3'].includes(nivel_atendimento) ? nivel_atendimento : 'N1';
+  const equipamentoIdFinal = equipamento_id ? Number(equipamento_id) : null;
+
   try {
     const pool = getPool();
     await pool.query(
       `UPDATE ocorrencias
-       SET local = ?, descricao = ?, tipo = ?, responsavel_id = ?, status = ?, updated_at = NOW()
+       SET local = ?, descricao = ?, tipo = ?, responsavel_id = ?, status = ?,
+           nivel_atendimento = ?, equipamento_id = ?, parecer_tecnico = ?, updated_at = NOW()
        WHERE id = ? AND deleted_at IS NULL`,
-      [String(local).trim(), descricao?.trim() || null, tipo?.trim() || null, responsavel_id || null, status || 'aberto', req.params.id]
+      [
+        String(local).trim(),
+        descricao?.trim() || null,
+        tipo?.trim() || null,
+        responsavel_id || null,
+        status || 'aberto',
+        nivelFinal,
+        equipamentoIdFinal,
+        parecer_tecnico?.trim() || null,
+        req.params.id
+      ]
     );
+
+    // Se o chamado foi resolvido e possui equipamento vinculado, restaura estado para 'bom'
+    if (status === 'resolvido' && equipamentoIdFinal) {
+      await pool.query(
+        `UPDATE equipamentos SET estado = 'bom', updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
+        [equipamentoIdFinal]
+      ).catch(() => {});
+    }
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,
       acao: 'EDITAR_OCORRENCIA',
       entidade: 'ocorrencias',
       entidade_id: parseInt(req.params.id),
-      descricao: `Ocorrência #${req.params.id} editada.`,
+      descricao: `Ocorrência #${req.params.id} editada (Nível: ${nivelFinal}, Status: ${status}).`,
       ip: getClientIp(req),
       user_agent: req.headers['user-agent']
     });
 
-    return res.json({ success: true, message: 'Ocorrência atualizada.' });
+    return res.json({ success: true, message: 'Ocorrência atualizada com sucesso.' });
   } catch (err) {
     console.error('[OCORRENCIAS] PUT:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao atualizar ocorrência.' });
+  }
+});
+
+// ─── PATCH /api/v1/ocorrencias/:id/assumir ───────────────────────────────────
+// Permite ao técnico de suporte (N1, N2, N3) assumir o chamado imediatamente
+router.patch('/:id/assumir', requireAnyPermission('ocorrencias.assumir', 'ocorrencias.editar'), async (req, res) => {
+  const id = req.params.id;
+  try {
+    const pool = getPool();
+    const [current] = await pool.query(
+      `SELECT id, status, responsavel_id, nivel_atendimento FROM ocorrencias WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+    if (!current.length) return res.status(404).json({ success: false, message: 'Ocorrência não encontrada.' });
+
+    await pool.query(
+      `UPDATE ocorrencias 
+       SET responsavel_id = ?, status = 'em_andamento', updated_at = NOW() 
+       WHERE id = ? AND deleted_at IS NULL`,
+      [req.usuario.id, id]
+    );
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'ASSUMIR_OCORRENCIA',
+      entidade: 'ocorrencias',
+      entidade_id: parseInt(id),
+      descricao: `Ocorrência #${id} assumida para atendimento pelo técnico ${req.usuario.nome}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: `Atendimento assumido com sucesso por ${req.usuario.nome}!`,
+      data: { responsavel_id: req.usuario.id, responsavel_nome: req.usuario.nome, status: 'em_andamento' }
+    });
+  } catch (err) {
+    console.error('[OCORRENCIAS] PATCH assumir:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao assumir chamado.' });
+  }
+});
+
+// ─── PATCH /api/v1/ocorrencias/:id/escalonar ─────────────────────────────────
+// Permite transferir o chamado entre N1 -> N2 -> N3 com histórico de parecer técnico
+router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'ocorrencias.editar'), async (req, res) => {
+  const id = req.params.id;
+  const { nivel, parecer_tecnico } = req.body;
+
+  if (!['N1', 'N2', 'N3'].includes(nivel)) {
+    return res.status(422).json({ success: false, message: 'Nível de escalonamento inválido. Use N1, N2 ou N3.' });
+  }
+
+  try {
+    const pool = getPool();
+    const [current] = await pool.query(
+      `SELECT id, nivel_atendimento, parecer_tecnico FROM ocorrencias WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+    if (!current.length) return res.status(404).json({ success: false, message: 'Ocorrência não encontrada.' });
+
+    const nivelAnterior = current[0].nivel_atendimento || 'N1';
+    let parecerAtualizado = current[0].parecer_tecnico || '';
+    if (parecer_tecnico && String(parecer_tecnico).trim().length > 0) {
+      const dataHora = new Date().toLocaleString('pt-BR');
+      const entrada = `[${dataHora}] Escalonado de ${nivelAnterior} para ${nivel} por ${req.usuario.nome}:\n${parecer_tecnico.trim()}\n`;
+      parecerAtualizado = parecerAtualizado ? `${parecerAtualizado}\n${entrada}` : entrada;
+    }
+
+    await pool.query(
+      `UPDATE ocorrencias 
+       SET nivel_atendimento = ?, parecer_tecnico = ?, updated_at = NOW() 
+       WHERE id = ? AND deleted_at IS NULL`,
+      [nivel, parecerAtualizado, id]
+    );
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'ESCALONAR_OCORRENCIA',
+      entidade: 'ocorrencias',
+      entidade_id: parseInt(id),
+      descricao: `Ocorrência #${id} escalonada de ${nivelAnterior} para ${nivel} por ${req.usuario.nome}.${parecer_tecnico ? ` Parecer: ${parecer_tecnico.trim()}` : ''}`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: `Chamado escalonado com sucesso para o nível ${nivel}!`,
+      data: { nivel_atendimento: nivel, parecer_tecnico: parecerAtualizado }
+    });
+  } catch (err) {
+    console.error('[OCORRENCIAS] PATCH escalonar:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao escalonar chamado.' });
+  }
+});
   }
 });
 

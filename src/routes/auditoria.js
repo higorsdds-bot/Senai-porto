@@ -6,8 +6,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { getPool } = require('../config/database');
-const { authMiddleware } = require('../middleware/auth');
-const { hasPermission } = require('../middleware/permissions');
+const { authMiddleware, clearUserAuthCache } = require('../middleware/auth');
+const { hasPermission, clearUserPermCache } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   gerarTokenAtivacao,
@@ -15,6 +15,14 @@ const {
   enviarEmailRejeicaoCadastro,
   ACTIVATION_TOKEN_EXPIRES_HOURS
 } = require('../services/email');
+
+const PERFIS_PERMITIDOS = [
+  'ADMIN', 'ADMIN_GERAL', 'ADMINISTRADOR',
+  'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'GESTOR',
+  'TECNICO_N1', 'TECNICO_N2', 'TECNICO_N3',
+  'ANALISTA_RH', 'RH',
+  'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'
+];
 
 // Exige autenticação básica
 router.use(authMiddleware);
@@ -197,7 +205,7 @@ router.get('/solicitacoes-pendentes', async (req, res) => {
 // ─── POST /api/v1/auditoria/solicitacoes/:id/aprovar ─────────────────────────
 // Aprova solicitação de cadastro liberando o acesso e permitindo digitar/editar todos os dados
 router.post('/solicitacoes/:id/aprovar', async (req, res) => {
-  const { perfil, setor_id, nome, email, senha } = req.body;
+  const { perfil, setor_id, nome, email, senha, permissoes_adicionais } = req.body;
   const id = req.params.id;
 
   try {
@@ -211,8 +219,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
-    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
-    const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : 'OPERADOR';
+    const perfilFinal = perfil && PERFIS_PERMITIDOS.includes(perfil) ? perfil : 'OPERADOR';
 
     const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
       ? Number(setor_id)
@@ -248,6 +255,21 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     params.push(id);
 
     await pool.query(sql, params);
+
+    // Grava permissões granulares adicionais
+    if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
+      for (const chave of permissoes_adicionais) {
+        await pool.query(
+          `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
+           SELECT ?, id, 1 FROM permissoes WHERE chave = ?
+           ON DUPLICATE KEY UPDATE concedida = 1`,
+          [id, chave]
+        ).catch(() => {});
+      }
+    }
+
+    clearUserAuthCache(id);
+    clearUserPermCache(id);
 
     // Gera token de alta entropia de uso único e validade limitada
     const { token, tokenHash } = gerarTokenAtivacao();
@@ -321,7 +343,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
 // ─── PUT /api/v1/auditoria/solicitacoes/:id ──────────────────────────────────
 // Permite ao Administrador digitar e alterar todos os dados da solicitação pendente sem liberar imediatamente
 router.put('/solicitacoes/:id', async (req, res) => {
-  const { perfil, setor_id, nome, email, senha } = req.body;
+  const { perfil, setor_id, nome, email, senha, permissoes_adicionais } = req.body;
   const id = req.params.id;
 
   try {
@@ -335,8 +357,7 @@ router.put('/solicitacoes/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Solicitação não encontrada.' });
     }
 
-    const perfisPermitidos = ['ADMIN', 'GESTOR', 'OPERADOR', 'ADMINISTRACAO', 'LIMPEZA'];
-    const perfilFinal = perfil && perfisPermitidos.includes(perfil) ? perfil : user[0].perfil;
+    const perfilFinal = perfil && PERFIS_PERMITIDOS.includes(perfil) ? perfil : user[0].perfil;
 
     const setorFinal = (setor_id !== undefined && setor_id !== null && setor_id !== '')
       ? Number(setor_id)
@@ -372,6 +393,24 @@ router.put('/solicitacoes/:id', async (req, res) => {
     params.push(id);
 
     await pool.query(sql, params);
+
+    // Atualiza permissões granulares adicionais
+    if (permissoes_adicionais !== undefined) {
+      await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [id]).catch(() => {});
+      if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
+        for (const chave of permissoes_adicionais) {
+          await pool.query(
+            `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
+             SELECT ?, id, 1 FROM permissoes WHERE chave = ?
+             ON DUPLICATE KEY UPDATE concedida = 1`,
+            [id, chave]
+          ).catch(() => {});
+        }
+      }
+    }
+
+    clearUserAuthCache(id);
+    clearUserPermCache(id);
 
     await registrarAuditoria({
       usuario_id: req.usuario.id,

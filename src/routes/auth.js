@@ -195,9 +195,9 @@ router.post('/login', async (req, res) => {
       [usuario.id]
     );
 
-    // Buscar permissões
-    const permissoes = await getPermissoesDoUsuario({ perfil: usuario.perfil });
-    const modulos = await getModulosDoUsuario({ perfil: usuario.perfil });
+    // Buscar permissões completas (perfil base + extras do usuário)
+    const permissoes = await getPermissoesDoUsuario({ id: usuario.id, perfil: usuario.perfil });
+    const modulos = await getModulosDoUsuario({ id: usuario.id, perfil: usuario.perfil });
 
     // Registrar auditoria
     await registrarAuditoria({

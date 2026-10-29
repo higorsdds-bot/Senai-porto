@@ -128,6 +128,38 @@ async function initSchemaExtensions() {
       ADD COLUMN local_destino VARCHAR(255) NULL
     `).catch(() => {});
 
+    // 6. Garantir tabela usuario_permissoes para permissões granulares por colaborador
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS usuario_permissoes (
+        id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+        usuario_id   BIGINT NOT NULL,
+        permissao_id BIGINT NOT NULL,
+        concedida    TINYINT(1) NOT NULL DEFAULT 1,
+        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_usr_perm_user (usuario_id),
+        INDEX idx_usr_perm_perm (permissao_id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+        FOREIGN KEY (permissao_id) REFERENCES permissoes(id) ON DELETE CASCADE,
+        UNIQUE KEY uk_usuario_permissao (usuario_id, permissao_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `).catch(() => {});
+
+    // 7. Garantir colunas de nível, equipamento e parecer técnico em ocorrencias
+    await p.query(`
+      ALTER TABLE ocorrencias 
+      ADD COLUMN nivel_atendimento VARCHAR(10) NOT NULL DEFAULT 'N1' AFTER status
+    `).catch(() => {});
+
+    await p.query(`
+      ALTER TABLE ocorrencias 
+      ADD COLUMN equipamento_id BIGINT NULL AFTER nivel_atendimento
+    `).catch(() => {});
+
+    await p.query(`
+      ALTER TABLE ocorrencias 
+      ADD COLUMN parecer_tecnico TEXT NULL AFTER equipamento_id
+    `).catch(() => {});
+
     console.log('[DATABASE] ✅ Estrutura de extensões de schema verificada com sucesso.');
   } catch (err) {
     console.warn('[DATABASE] Aviso na inicialização de extensões de schema:', err.message);

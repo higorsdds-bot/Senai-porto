@@ -82,6 +82,41 @@ class AuthManager {
         return p === 'ADMIN' || p === 'ADMIN_GERAL';
     }
 
+    isGestorRH() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return this.isAdmin() || p === 'GESTOR_RH';
+    }
+
+    isGestorInfra() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return this.isAdmin() || p === 'GESTOR_INFRA';
+    }
+
+    isGestorOperador() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return this.isAdmin() || p === 'GESTOR_OPERADOR';
+    }
+
+    isTecnico() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return this.isAdmin() || p.startsWith('TECNICO') || p === 'GESTOR_INFRA';
+    }
+
+    isRH() {
+        const u = this.getUsuario();
+        if (!u || !u.perfil) return false;
+        const p = String(u.perfil).toUpperCase().trim();
+        return this.isAdmin() || p.includes('RH');
+    }
+
     hasPermission(chave) {
         // Visitante público: só pode ver comunicados e eventos
         if (this.isVisitante()) {
@@ -339,12 +374,21 @@ class AuthManager {
         document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
 
         const nomesPerfil = {
-            ADMIN: 'Administrador Geral',
-            ADMINISTRADOR: 'Administrador Geral',
+            ADMIN: 'Super Administrador (Admin)',
+            ADMINISTRADOR: 'Administrador Institucional',
             ADMINISTRACAO: 'Administração',
-            LIMPEZA: 'Limpeza',
-            GESTOR: 'Gestor',
+            GESTOR_RH: 'Gestor de Recursos Humanos',
+            GESTOR_INFRA: 'Gestor de Infra & TI',
+            GESTOR_OPERADOR: 'Gestor Operacional',
+            GESTOR: 'Gestor Geral',
+            ANALISTA_RH: 'Analista de RH',
+            RH: 'Recursos Humanos',
+            TECNICO_N3: 'Técnico N3 (Avançado)',
+            TECNICO_N2: 'Técnico N2 (Hardware/Redes)',
+            TECNICO_N1: 'Técnico N1 (Helpdesk)',
+            TECNICO: 'Técnico',
             OPERADOR: 'Operador',
+            LIMPEZA: 'Limpeza',
             VISITANTE: 'Visitante'
         };
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => {

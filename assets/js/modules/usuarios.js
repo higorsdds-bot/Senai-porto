@@ -520,13 +520,33 @@ window.UsuariosModule = {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Acesso *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Acesso / Hierarquia *</label>
             <select id="novo-user-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
-              <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
-              <option value="GESTOR">GESTOR (Gestão Operacional)</option>
-              <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Pedidos e Insumos)</option>
-              <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
-              <option value="ADMIN">ADMINISTRADOR GERAL (Total)</option>
+              <optgroup label="Administração e Governança">
+                <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
+                <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
+                <option value="ADMINISTRACAO">ADMINISTRAÇÃO (Admissão e Pedidos)</option>
+              </optgroup>
+              <optgroup label="Gestores Setoriais">
+                <option value="GESTOR_RH">GESTOR_RH (Supervisão de RH e Acessos)</option>
+                <option value="GESTOR_INFRA">GESTOR_INFRA (Comando N1, N2, N3 e Redes)</option>
+                <option value="GESTOR_OPERADOR">GESTOR_OPERADOR (Comando de Operadores)</option>
+                <option value="GESTOR">GESTOR (Gestão Geral Operacional)</option>
+              </optgroup>
+              <optgroup label="Suporte Técnico & TI">
+                <option value="TECNICO_N3">TECNICO_N3 (Avançado / Infra / Servidores)</option>
+                <option value="TECNICO_N2">TECNICO_N2 (Hardware / Redes / Bancadas)</option>
+                <option value="TECNICO_N1">TECNICO_N1 (Helpdesk / Atendimento N1)</option>
+                <option value="TECNICO">TECNICO (Suporte Técnico)</option>
+              </optgroup>
+              <optgroup label="Recursos Humanos">
+                <option value="ANALISTA_RH">ANALISTA_RH (Analista de RH)</option>
+                <option value="RH">RH (Assistente / Operações de RH)</option>
+              </optgroup>
+              <optgroup label="Operacional">
+                <option value="OPERADOR" selected>OPERADOR (Operações Básicas)</option>
+                <option value="LIMPEZA">LIMPEZA (Consumo e Higienização)</option>
+              </optgroup>
             </select>
           </div>
 
@@ -536,6 +556,44 @@ window.UsuariosModule = {
               <option value="">Sem setor definido</option>
               ${setoresOptions}
             </select>
+          </div>
+        </div>
+
+        <!-- PERMISSÕES ADICIONAIS / EXCEÇÕES GRANULARES -->
+        <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Permissões Específicas / Acessos Adicionais
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium">Além do perfil base</span>
+          </div>
+          <p class="text-[11px] text-slate-500">Marque privilégios extras que este colaborador deve receber (ex: permitir que RH acesse e anexe documentos):</p>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="documentos.visualizar" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Documentos:</strong> Visualizar</span>
+            </label>
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="documentos.enviar" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Documentos:</strong> Anexar / Enviar</span>
+            </label>
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="ocorrencias.atender" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Ocorrências:</strong> Assumir Chamados</span>
+            </label>
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="ocorrencias.escalonar" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Ocorrências:</strong> Escalonar N1/N2/N3</span>
+            </label>
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="insumos.visualizar" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Insumos:</strong> Visualizar Estoque</span>
+            </label>
+            <label class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-400">
+              <input type="checkbox" value="compras.criar" class="perm-extra-cb rounded text-blue-600">
+              <span><strong>Compras:</strong> Solicitar Compras</span>
+            </label>
           </div>
         </div>
 
@@ -570,6 +628,7 @@ window.UsuariosModule = {
         const perfil = document.getElementById('novo-user-perfil')?.value;
         const setor_id = document.getElementById('novo-user-setor')?.value;
         const senha = document.getElementById('novo-user-senha')?.value;
+        const permissoes_adicionais = Array.from(document.querySelectorAll('.perm-extra-cb:checked')).map(cb => cb.value);
 
         if (!nome || nome.length < 3) {
           window.UI.toast({ title: 'Atenção', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
@@ -591,7 +650,8 @@ window.UsuariosModule = {
             senha,
             perfil,
             setor_id: setor_id ? Number(setor_id) : null,
-            status: 'ATIVO'
+            status: 'ATIVO',
+            permissoes_adicionais
           });
 
           window.UI.toast({

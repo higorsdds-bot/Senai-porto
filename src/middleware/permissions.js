@@ -30,10 +30,53 @@ const MODULE_PERMISSIONS = {
   equipamentos: ['equipamentos.visualizar'],
   auditoria: ['auditoria.visualizar'],
   advertencias: ['advertencias.visualizar'],
-  usuarios: ['usuarios.visualizar', 'usuarios.pre_cadastrar']
+  usuarios: ['usuarios.visualizar', 'usuarios.pre_cadastrar'],
+  rh: ['rh.visualizar']
 };
 
 const FIXED_PROFILE_PERMISSIONS = {
+  ADMINISTRADOR: [
+    'dashboard.visualizar',
+    'indicadores.visualizar',
+    'limpeza.visualizar',
+    'limpeza.criar',
+    'limpeza.editar',
+    'compras.visualizar',
+    'compras.visualizar_pedidos',
+    'compras.criar',
+    'compras.editar',
+    'compras.aprovar',
+    'compras.receber',
+    'insumos.visualizar',
+    'insumos.criar',
+    'insumos.editar',
+    'insumos.movimentar',
+    'insumos.baixar',
+    'eventos.visualizar',
+    'eventos.criar',
+    'eventos.editar',
+    'eventos.excluir',
+    'documentos.visualizar',
+    'documentos.enviar',
+    'documentos.baixar',
+    'documentos.arquivar',
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.assumir',
+    'ocorrencias.escalonar',
+    'comunicados.visualizar',
+    'comunicados.criar',
+    'equipamentos.visualizar',
+    'equipamentos.criar',
+    'equipamentos.editar',
+    'usuarios.visualizar',
+    'usuarios.pre_cadastrar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
+    'rh.visualizar',
+    'rh.gerenciar'
+  ],
   GESTOR: [
     'dashboard.visualizar',
     'compras.visualizar',
@@ -46,11 +89,12 @@ const FIXED_PROFILE_PERMISSIONS = {
     'eventos.criar',
     'eventos.editar',
     'documentos.visualizar',
-    'documentos.criar',
+    'documentos.enviar',
+    'documentos.baixar',
+    'documentos.arquivar',
     'ocorrencias.visualizar',
     'ocorrencias.criar',
     'ocorrencias.editar',
-    'ocorrencias.status',
     'comunicados.visualizar',
     'comunicados.criar',
     'indicadores.visualizar',
@@ -59,6 +103,106 @@ const FIXED_PROFILE_PERMISSIONS = {
     'usuarios.visualizar',
     'advertencias.visualizar',
     'advertencias.solicitar'
+  ],
+  GESTOR_RH: [
+    'dashboard.visualizar',
+    'indicadores.visualizar',
+    'comunicados.visualizar',
+    'comunicados.criar',
+    'documentos.visualizar',
+    'documentos.enviar',
+    'documentos.baixar',
+    'documentos.arquivar',
+    'usuarios.visualizar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
+    'rh.visualizar',
+    'rh.gerenciar'
+  ],
+  ANALISTA_RH: [
+    'comunicados.visualizar',
+    'documentos.visualizar',
+    'documentos.enviar',
+    'documentos.baixar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
+    'rh.visualizar'
+  ],
+  RH: [
+    'comunicados.visualizar',
+    'documentos.visualizar',
+    'documentos.enviar',
+    'documentos.baixar',
+    'advertencias.visualizar',
+    'advertencias.solicitar',
+    'rh.visualizar'
+  ],
+  GESTOR_INFRA: [
+    'dashboard.visualizar',
+    'indicadores.visualizar',
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.excluir',
+    'ocorrencias.assumir',
+    'ocorrencias.escalonar',
+    'equipamentos.visualizar',
+    'equipamentos.criar',
+    'equipamentos.editar',
+    'equipamentos.excluir',
+    'comunicados.visualizar',
+    'comunicados.criar',
+    'documentos.visualizar',
+    'documentos.baixar'
+  ],
+  TECNICO_N1: [
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.assumir',
+    'ocorrencias.escalonar',
+    'equipamentos.visualizar',
+    'comunicados.visualizar'
+  ],
+  TECNICO_N2: [
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.assumir',
+    'ocorrencias.escalonar',
+    'equipamentos.visualizar',
+    'equipamentos.editar',
+    'comunicados.visualizar'
+  ],
+  TECNICO_N3: [
+    'indicadores.visualizar',
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'ocorrencias.editar',
+    'ocorrencias.excluir',
+    'ocorrencias.assumir',
+    'ocorrencias.escalonar',
+    'equipamentos.visualizar',
+    'equipamentos.criar',
+    'equipamentos.editar',
+    'comunicados.visualizar'
+  ],
+  GESTOR_OPERADOR: [
+    'dashboard.visualizar',
+    'insumos.visualizar',
+    'insumos.criar',
+    'insumos.editar',
+    'insumos.movimentar',
+    'insumos.baixar',
+    'eventos.visualizar',
+    'eventos.criar',
+    'eventos.editar',
+    'eventos.excluir',
+    'ocorrencias.visualizar',
+    'ocorrencias.criar',
+    'limpeza.visualizar',
+    'comunicados.visualizar',
+    'comunicados.criar'
   ],
   ADMINISTRACAO: [
     'comunicados.visualizar',
@@ -82,6 +226,53 @@ const FIXED_PROFILE_PERMISSIONS = {
     'compras.criar'
   ]
 };
+
+// Cache de permissões extras por usuário (TTL 1 min)
+const _userPermCache = new Map();
+const USER_PERM_TTL = 60 * 1000;
+
+function clearUserPermCache(userId) {
+  if (userId) {
+    _userPermCache.delete(Number(userId));
+  } else {
+    _userPermCache.clear();
+  }
+}
+
+async function loadPermissoesCustomizadasUsuario(usuarioId) {
+  if (!usuarioId) return { extras: new Set(), revogadas: new Set() };
+  const uid = Number(usuarioId);
+  const now = Date.now();
+  const cached = _userPermCache.get(uid);
+  if (cached && (now - cached.timestamp < USER_PERM_TTL)) {
+    return cached.data;
+  }
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT p.chave, up.concedida
+       FROM usuario_permissoes up
+       JOIN permissoes p ON p.id = up.permissao_id
+       WHERE up.usuario_id = ?`,
+      [uid]
+    );
+
+    const data = { extras: new Set(), revogadas: new Set() };
+    for (const r of rows) {
+      if (r.concedida) {
+        data.extras.add(r.chave);
+      } else {
+        data.revogadas.add(r.chave);
+      }
+    }
+    _userPermCache.set(uid, { data, timestamp: now });
+    return data;
+  } catch (err) {
+    // Falha silenciosa caso tabela não esteja acessível momentaneamente
+    return { extras: new Set(), revogadas: new Set() };
+  }
+}
 
 async function loadPermissoesPorPerfil() {
   const now = Date.now();
@@ -114,15 +305,26 @@ async function loadPermissoesPorPerfil() {
 
 /**
  * Verifica se um usuário possui a permissão indicada.
- * @param {object} usuario - Objeto do req.usuario (precisa ter campo `perfil`)
- * @param {string} permissaoChave - Ex: 'compras.criar'
+ * Prioridade:
+ * 1. ADMIN / ADMIN_GERAL -> Bypass Total
+ * 2. usuario_permissoes (concedida = 0) -> Bloqueado
+ * 3. usuario_permissoes (concedida = 1) -> Permitido
+ * 4. Perfil Base (FIXED_PROFILE_PERMISSIONS ou perfil_permissoes no banco)
  */
 async function hasPermission(usuario, permissaoChave) {
   if (!usuario) return false;
-  // ADMIN tem permissão total (bypass)
-  if (['ADMIN', 'ADMINISTRADOR'].includes(normalizeProfile(usuario.perfil))) return true;
-
   const perfil = normalizeProfile(usuario.perfil);
+
+  // ADMIN e ADMIN_GERAL possuem bypass irrestrito
+  if (['ADMIN', 'ADMINGERAL'].includes(perfil)) return true;
+
+  // Verifica permissões customizadas individuais do colaborador
+  if (usuario.id) {
+    const userCustom = await loadPermissoesCustomizadasUsuario(usuario.id);
+    if (userCustom.revogadas.has(permissaoChave)) return false;
+    if (userCustom.extras.has(permissaoChave)) return true;
+  }
+
   if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
     return FIXED_PROFILE_PERMISSIONS[perfil].includes(permissaoChave);
   }
@@ -135,7 +337,6 @@ async function hasPermission(usuario, permissaoChave) {
 
 /**
  * Middleware factory: exige a permissão indicada.
- * Uso: router.get('/', requirePermission('compras.visualizar'), handler)
  */
 function requirePermission(permissaoChave) {
   return async (req, res, next) => {
@@ -173,23 +374,41 @@ function requireAnyPermission(...permissoesChave) {
 }
 
 /**
- * Retorna a lista de chaves de permissão de um usuário (para o frontend montar menus).
+ * Retorna a lista completa de chaves de permissão efetivas de um colaborador.
+ * Une as permissões do perfil base + as permissões granulares adicionais concedidas.
  */
 async function getPermissoesDoUsuario(usuario) {
   if (!usuario) return [];
   const perfil = normalizeProfile(usuario.perfil);
-  if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
-    return [...FIXED_PROFILE_PERMISSIONS[perfil]];
-  }
 
-  const perms = await loadPermissoesPorPerfil();
-  if (['ADMIN', 'ADMINISTRADOR'].includes(perfil)) {
-    // Admin: retorna todas as chaves cadastradas
-    const allKeys = Object.values(perms).flatMap(s => [...s]);
+  let basePerms = [];
+  if (['ADMIN', 'ADMINGERAL'].includes(perfil)) {
+    const perms = await loadPermissoesPorPerfil();
+    const allKeys = [
+      ...Object.values(perms).flatMap(s => [...s]),
+      ...Object.values(FIXED_PROFILE_PERMISSIONS).flatMap(arr => arr)
+    ];
     return [...new Set(allKeys)];
   }
-  const permSet = perms[perfil];
-  return permSet ? [...permSet] : [];
+
+  if (Object.prototype.hasOwnProperty.call(FIXED_PROFILE_PERMISSIONS, perfil)) {
+    basePerms = [...FIXED_PROFILE_PERMISSIONS[perfil]];
+  } else {
+    const perms = await loadPermissoesPorPerfil();
+    const permSet = perms[perfil];
+    if (permSet) basePerms = [...permSet];
+  }
+
+  // Mescla com permissões extras por usuário
+  if (usuario.id) {
+    const userCustom = await loadPermissoesCustomizadasUsuario(usuario.id);
+    const combined = new Set(basePerms);
+    for (const p of userCustom.extras) combined.add(p);
+    for (const p of userCustom.revogadas) combined.delete(p);
+    return [...combined];
+  }
+
+  return basePerms;
 }
 
 async function getModulosDoUsuario(usuario) {
@@ -205,5 +424,9 @@ module.exports = {
   requireAnyPermission,
   getPermissoesDoUsuario,
   getModulosDoUsuario,
-  loadPermissoesPorPerfil
+  loadPermissoesPorPerfil,
+  clearUserPermCache,
+  MODULE_PERMISSIONS,
+  FIXED_PROFILE_PERMISSIONS
 };
+

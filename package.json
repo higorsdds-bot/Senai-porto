@@ -7,7 +7,8 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js && node src/database/migrate-auditoria-ocorrencias.js && node src/database/migrate-permissoes-comunicados.js && node src/database/migrate-permissao-operador-eventos.js && node src/database/migrate-fluxo-ativacao-emails.js && node src/database/migrate-remove-compras-operador.js && node src/database/migrate-dispensar-cadastro-visitante.js"
+    "migrate": "node src/database/migrate.js && node src/database/seed.js && node src/database/migrate-foto-ocorrencias.js && node src/database/migrate-auditoria-ocorrencias.js && node src/database/migrate-permissoes-comunicados.js && node src/database/migrate-permissao-operador-eventos.js && node src/database/migrate-fluxo-ativacao-emails.js && node src/database/migrate-remove-compras-operador.js && node src/database/migrate-dispensar-cadastro-visitante.js && node src/database/migrate-hierarquia-e-permissoes.js",
+    "gerar-manual": "node scripts/gerar-pdf-manual-hierarquia.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
     "mysql2": "^3.24.5",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "pdfkit": "^0.20.2"
   }
 }
