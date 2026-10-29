@@ -101,22 +101,26 @@ Senai-porto/
     │   ├── migrate-foto-ocorrencias.js # Migração incremental para coluna foto_url
     │   ├── migrate-auditoria-ocorrencias.js # Migração incremental para status PENDENTE e anexos
     │   ├── migrate-remove-compras-operador.js # Migração para revogação de compras do perfil OPERADOR
-    │   └── migrate-dispensar-cadastro-visitante.js # Migração para dispensar cadastro de perfil VISITANTE
+    │   ├── migrate-dispensar-cadastro-visitante.js # Migração para dispensar cadastro de perfil VISITANTE
+    │   └── migrate-hierarquia-e-permissoes.js # Migração incremental da hierarquia, setores, usuario_permissoes e níveis N1/N2/N3
     └── routes/                       # Controladores / Routers Express montados sob /api/v1/
         ├── auth.js                   # Login, logout, /me, heartbeat, solicitar-cadastro
-        ├── usuarios.js               # CRUD de usuários, alteração de status e senha
+        ├── usuarios.js               # CRUD de usuários, alteração de status, senha e permissões granulares
         ├── setores.js                # Listagem e gestão de setores
         ├── limpeza.js                # Rotas de escala e tarefas de limpeza
         ├── compras.js                # Solicitações de compra, aprovação e recebimento
         ├── equipamentos.js           # Gestão de equipamentos e patrimônio
         ├── documentos.js             # Upload, metadados e download de documentos
-        ├── ocorrencias.js            # Chamados técnicos com suporte a fotos e anexos
+        ├── ocorrencias.js            # Chamados técnicos com suporte a fotos, anexos, equipamentos e escalonamento N1/N2/N3
         ├── eventos.js                # Agenda e reserva de espaços
         ├── insumos.js                # Almoxarifado e movimentações de estoque
         ├── comunicados.js            # Mural de avisos e comunicados internos
         ├── dashboard.js              # Agrupamento de métricas e KPIs
         ├── publico.js                # Rotas públicas sem autenticação (comunicados e eventos para visitantes)
-        └── auditoria.js              # Consulta de logs, usuários online e aprovação de cadastros
+        └── auditoria.js              # Consulta de logs, usuários online e aprovação de cadastros com permissões granulares
+├── scripts/                          # Scripts utilitários e de geração de relatórios
+│   └── gerar-pdf-manual-hierarquia.js # Gerador de manual oficial em PDF (PDFKit)
+└── MANUAL_HIERARQUIA_E_PERMISSOES_HUB_ES.pdf # Manual executivo diagramado em PDF
 ```
 
 ---
@@ -201,18 +205,46 @@ Senai-porto/
 
 ---
 
-## 5. Modelo de Perfis e Permissões (RBAC)
+## 5. Modelo de Perfis e Permissões (RBAC) e Hierarquia Setorial
 
-O sistema possui controle de acesso por perfis, armazenado nas tabelas `permissoes` e `perfil_permissoes`, com cache em memória de 5 minutos no backend (`src/middleware/permissions.js`):
+O sistema possui controle de acesso baseado em funções e hierarquia de comando, com perfis padronizados armazenados em `permissoes`, `perfil_permissoes` e permissões adicionais customizadas por usuário em `usuario_permissoes`, com cache em memória de 5 minutos no backend (`src/middleware/permissions.js`):
 
-| Perfil | Descrição | Comportamento de Acesso |
-| :--- | :--- | :--- |
-| **ADMIN / ADMINISTRADOR** | Acesso irrestrito a todas as rotas e ao módulo exclusivo de **Auditoria & Governança**. | Bypass total: tem todas as permissões. |
-| **GESTOR** | Gestão operacional de compras, ocorrências, limpeza, insumos, documentos, agenda e setores. | Possui conjunto amplo de permissões operacionais e de aprovação. |
-| **OPERADOR** | Visualização e movimentações rotineiras de insumos, abertura de ocorrências e agendamento de eventos na **Agenda Inteligente** (`eventos.criar`). **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas no banco). No **Dashboard**, o botão "Nova Solicitação" e o atalho de compras permanecem estritamente ocultos e desarmados. | Acesso padrão a módulos operacionais e de eventos; compras e dashboard executivo desarmados. |
-| **ADMINISTRACAO** | Setor administrativo com foco em recebimento de pedidos de compra, baixa de insumos e pré-cadastro de novos colaboradores (sem atribuição de setor/cargo). | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS` (inclui `usuarios.pre_cadastrar`). |
-| **LIMPEZA** | Equipe de serviços gerais com foco em suas solicitações e tarefas de limpeza. | Permissões focadas em suas próprias solicitações de compra e rotinas de higienização. |
-| **VISITANTE (Modo Público)** | Modo de acesso público sem necessidade de cadastro ou conta no banco de dados. Qualquer pessoa acessa livremente a Agenda e os Comunicados sem login. **Cadastro Dispensado:** A opção de cadastrar usuários com o perfil `VISITANTE` foi formalmente descontinuada no sistema, já que o visitante não tem permissões restritas e a plataforma já disponibiliza as informações essenciais livremente sem cadastro. | Acesso livre exclusivamente a `#comunicacao` e `#agenda`. Não requer login nem criação de conta. |
+### 5.1. Matriz de Perfis e Hierarquia de Comando
+
+| Perfil | Nível Hierárquico | Escopo e Responsabilidades | Comportamento de Acesso |
+| :--- | :--- | :--- | :--- |
+| **ADMIN** | Nível 1 - Direção Máxima | Autoridade máxima do sistema. Supervisiona Administradores, Gestores e todos os setores. Acesso irrestrito a Auditoria, aprovações e governança de contas. | Bypass total (`hasPermission` retorna `true`). Apenas ADMIN pode criar, promover ou editar contas ADMIN. |
+| **ADMINISTRADOR** | Nível 2 - Gestão Executiva | Administrador de operações gerais e governança operacional. Supervisiona módulos e colaboradores de todos os setores. | Acesso amplo a relatórios, cadastros, ocorrências e gestão global. |
+| **GESTOR_RH** | Nível 2 - Gestão Setorial | Gestor responsável pelo setor de Recursos Humanos. Supervisiona analistas de RH e colaboradores. | Gestão de equipe, advertências disciplinares, comunicados e relatórios de RH. |
+| **GESTOR_INFRA** | Nível 2 - Gestão Setorial | Gestor responsável pela Infraestrutura, Redes e Suporte Técnico. Comanda a equipe de técnicos N1, N2 e N3. | Gestão de ocorrências técnicas, equipamentos, almoxarifado técnico e escalonamento. |
+| **GESTOR_OPERADOR** | Nível 2 - Gestão Setorial | Gestor responsável pela coordenação de operadores e atendimento de ponta. Comanda operadores. | Gestão de turnos, escalas, insumos operacionais e eventos. |
+| **GESTOR** | Nível 2 - Gestão Geral | Gestor operacional multissetorial (compras, ocorrências, limpeza, insumos, documentos e agenda). | Conjunto amplo de permissões operacionais e de aprovação de compras. |
+| **TECNICO_N3** | Nível 3 - Suporte Especialista | Suporte Técnico Nível 3 (Infraestrutura Crítica, Redes, Servidores e Segurança). | Acesso total a ocorrências técnicas, manutenção preventiva e equipamentos. |
+| **TECNICO_N2** | Nível 4 - Suporte Laboratório | Suporte Técnico Nível 2 (Bancada, Hardware, Eletrônica e Manutenção Físico-Lógica). | Diagnóstico avançado, pareceres técnicos e encaminhamento N3. |
+| **TECNICO_N1** | Nível 5 - Suporte de Campo | Suporte Técnico Nível 1 (Triagem, Atendimento em Campo e Chamados Rápidos). | Abertura, triagem, atendimento inicial e escalonamento para N2/N3. |
+| **ANALISTA_RH / RH** | Nível 3 - Operacional RH | Analistas e assistentes de Recursos Humanos. | Acesso setorial de RH, informativos internos, e acesso a documentos caso concedido via permissão granular. |
+| **OPERADOR** | Nível 5 - Operacional Ponta | Colaborador operacional. Abertura de ocorrências, consulta de insumos diários e reservas de salas. **Restrição de Compras:** Sem acesso a compras. | Acesso padrão a módulos operacionais e de eventos; compras e dashboard executivo desarmados. |
+| **ADMINISTRACAO** | Nível 3 - Administrativo | Setor administrativo com foco em recebimento de pedidos de compra, baixa de insumos e pré-cadastro de colaboradores. | Permissões fixas específicas em `FIXED_PROFILE_PERMISSIONS` (inclui `usuarios.pre_cadastrar`). |
+| **LIMPEZA** | Nível 5 - Serviços Gerais | Equipe de higienização com foco em rotinas de limpeza e seus pedidos de insumos. | Acesso a checklists de limpeza e solicitações de materiais de limpeza. |
+| **VISITANTE (Modo Público)**| Público / Externo | Modo público sem necessidade de cadastro ou login. | Acesso livre exclusivamente a `#comunicacao` e `#agenda`. Não requer login. |
+
+### 5.2. Permissões Granulares / Adicionais por Usuário (`usuario_permissoes`)
+O sistema adota um modelo híbrido de **Herança por Perfil + Concessão Granular Específica**:
+- **Baseline por Perfil:** Cada cargo recebe automaticamente o conjunto de páginas e ações do seu perfil (`perfil_permissoes` ou `FIXED_PROFILE_PERMISSIONS`).
+- **Concessão Granular Sob Demanda:** O Administrador pode conceder permissões avulsas a qualquer usuário na tabela `usuario_permissoes` sem alterar seu cargo ou perfil.
+- **Caso Prático (RH e Documentos):** Um colaborador com perfil `GESTOR_RH` ou `RH` pode receber pontualmente as permissões `documentos.visualizar` e `documentos.enviar` no modal de edição/aprovação de usuário. Com isso, o menu e a página `#documentos` tornam-se imediatamente acessíveis para ele consultar e anexar folhas, atestados e contratos.
+- **Invalidação e Atualização Imediata:** A função `clearUserPermCache(userId)` limpa o cache em memória no instante da concessão, propagando os novos acessos na sessão sem necessidade de logout do colaborador.
+
+### 5.3. Fluxo de Suporte Técnico em 3 Níveis (N1 / N2 / N3) e Escalonamento
+Para garantir um fluxo profissional de atendimento de chamados técnicos no módulo Ocorrências (`#ocorrencias`):
+1. **Triagem e Abertura:** O chamado é aberto por qualquer colaborador e pode ser vinculado diretamente ao equipamento patrimonial defeituoso (`equipamento_id`).
+2. **Níveis de Atendimento:**
+   - **N1 (Atendimento Básico / Campo):** Triagem rápida, falhas de conectividade de ponta, cabos e periféricos.
+   - **N2 (Laboratório / Bancada):** Troca de peças, formatação, diagnóstico de placas, periféricos avançados e testes de hardware.
+   - **N3 (Infraestrutura / Redes / Especialista):** Switches centrais, servidores, roteadores, quedas de link, segurança e problemas sistêmicos graves.
+3. **Assumir Chamado:** Técnicos autorizados clicam no botão "Assumir Chamado", gravando `tecnico_id = req.usuario.id` e mudando o status para `EM_ANDAMENTO`.
+4. **Escalonamento Profissional:** Ao transferir o chamado entre níveis (ex: N1 para N2 ou N2 para N3), o sistema exige a digitação do **Parecer Técnico Circunstanciado** (`parecer_tecnico`), que é anexado ao chamado e registrado na trilha de auditoria (`ESCALONAR_OCORRENCIA`), informando os diagnósticos já realizados e a justificativa técnica da transferência.
+5. **Integração com Patrimônio:** A ocorrência vinculada ao equipamento alimenta o histórico de manutenções corretivas do ativo no módulo Patrimônio (`#equipamentos`).
 
 ### Regras do Modo Público / Visitante
 - **Quem é considerado Visitante:** Qualquer pessoa acessando o SPA sem efetuar login (`!estaLogado()`). O cadastro de usuários com o perfil `VISITANTE` foi formalmente dispensado no sistema, eliminando a criação de contas desnecessárias no banco de dados.
@@ -246,6 +278,9 @@ npm install
 
 # Execução das migrações e seed inicial
 npm run migrate
+
+# Geração do Manual Executivo Oficial em PDF (PDFKit)
+npm run gerar-manual
 
 # Inicialização em modo desenvolvimento
 npm run dev

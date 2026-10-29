@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { 
+  limits: {
     fileSize: 25 * 1024 * 1024,  // 25MB para arquivos
     fieldSize: 25 * 1024 * 1024  // 25MB para campos de texto (foto em Base64 via webcam)
   },
@@ -148,8 +148,8 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
 
   if (!local || String(local).trim().length < 3) {
     if (req.files) {
-      if (req.files.foto) fs.unlink(req.files.foto[0].path, () => {});
-      if (req.files.anexo) fs.unlink(req.files.anexo[0].path, () => {});
+      if (req.files.foto) fs.unlink(req.files.foto[0].path, () => { });
+      if (req.files.anexo) fs.unlink(req.files.anexo[0].path, () => { });
     }
     return res.status(422).json({
       success: false,
@@ -200,7 +200,7 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
       await pool.query(
         `UPDATE equipamentos SET estado = 'manutencao', updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
         [equipamentoIdFinal]
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
     const descAuditoria = `Ocorrência #${result.insertId} registrada no nível ${nivelFinal} no local "${String(local).trim()}".${foto_url ? ' [Com Foto]' : ''}${equipamentoIdFinal ? ` [Equipamento #${equipamentoIdFinal}]` : ''}`;
@@ -228,8 +228,8 @@ router.post('/', requirePermission('ocorrencias.criar'), (req, res, next) => {
     });
   } catch (err) {
     if (req.files) {
-      if (req.files.foto) fs.unlink(req.files.foto[0].path, () => {});
-      if (req.files.anexo) fs.unlink(req.files.anexo[0].path, () => {});
+      if (req.files.foto) fs.unlink(req.files.foto[0].path, () => { });
+      if (req.files.anexo) fs.unlink(req.files.anexo[0].path, () => { });
     }
     console.error('[OCORRENCIAS] POST:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao criar ocorrência.' });
@@ -275,7 +275,7 @@ router.put('/:id', requirePermission('ocorrencias.editar'), async (req, res) => 
       await pool.query(
         `UPDATE equipamentos SET estado = 'bom', updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
         [equipamentoIdFinal]
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
     await registrarAuditoria({
@@ -388,8 +388,7 @@ router.patch('/:id/escalonar', requireAnyPermission('ocorrencias.escalonar', 'oc
     return res.status(500).json({ success: false, message: 'Erro ao escalonar chamado.' });
   }
 });
-  }
-});
+
 
 // ─── PATCH /api/v1/ocorrencias/:id/status ───────────────────────────────────
 router.patch('/:id/status', requirePermission('ocorrencias.editar'), async (req, res) => {
@@ -435,11 +434,11 @@ router.delete('/:id', requirePermission('ocorrencias.excluir'), async (req, res)
     const uploadBase = path.join(__dirname, '..', '..');
     if (rows[0]?.foto_url) {
       const arqFoto = path.join(uploadBase, rows[0].foto_url.replace('/uploads/', (process.env.UPLOAD_DIR || 'uploads') + '/'));
-      fs.unlink(arqFoto, () => {});
+      fs.unlink(arqFoto, () => { });
     }
     if (rows[0]?.anexo_url) {
       const arqAnexo = path.join(uploadBase, rows[0].anexo_url.replace('/uploads/', (process.env.UPLOAD_DIR || 'uploads') + '/'));
-      fs.unlink(arqAnexo, () => {});
+      fs.unlink(arqAnexo, () => { });
     }
 
     await registrarAuditoria({

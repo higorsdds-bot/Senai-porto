@@ -131,40 +131,68 @@ A aplicação foi projetada para execução em nuvem moderna (PaaS/DBaaS) com su
 
 ---
 
-## 4. Atores do Sistema & Matriz de Perfis (RBAC)
+## 4. Atores do Sistema & Matriz de Perfis (RBAC) e Hierarquia Setorial
 
-O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Access Control - RBAC)** com 6 perfis padronizados:
+O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Access Control - RBAC)** com governança hierárquica por níveis de comando e concessão granular complementar:
 
 ```
-┌───────────────────────────────────────────────────────────────────────┐
-│                                ADMIN                                  │
-│         (Acesso Irrestrito + Auditoria + Governança de Acessos)       │
-└───────────────────────────────────┬───────────────────────────────────┘
-                                    │
-       ┌────────────────────────────┼────────────────────────────┐
-       ▼                            ▼                            ▼
-   ┌───────┐                   ┌──────────┐                ┌───────────┐
-   │GESTOR │                   │ OPERADOR │                │ ADMINIST. │
-   └───┬───┘                   └────┬─────┘                └─────┬─────┘
-       │                            │                            │
-       └────────────────────────────┼────────────────────────────┘
-                                    ▼
-                             ┌─────────────┐
-                             │   LIMPEZA   │
-                             └──────┬──────┘
-                                    ▼
-                             ┌─────────────┐
-                             │  VISITANTE  │
-                             └─────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       ADMIN                                             │
+│               (Super Administrador Geral • Autoridade Máxima • Bypass Total)            │
+└───────────────────────────────────────────┬─────────────────────────────────────────────┘
+                                            │
+                     ┌──────────────────────┴──────────────────────┐
+                     ▼                                             ▼
+          ┌─────────────────────┐                       ┌─────────────────────┐
+          │    ADMINISTRADOR    │                       │       GESTOR        │
+          │(Gestão Operac. Geral│                       │(Gestor Multissetor) │
+          └──────────┬──────────┘                       └──────────┬──────────┘
+                     │                                             │
+      ┌──────────────┼──────────────────────────────┐              │
+      ▼              ▼                              ▼              │
+┌───────────┐  ┌──────────────┐              ┌──────────────┐      │
+│ GESTOR_RH │  │ GESTOR_INFRA │              │GESTOR_OPERAD.│      │
+└─────┬─────┘  └──────┬───────┘              └──────┬───────┘      │
+      │               │                             │              │
+      ▼               ├──────────────┬──────────────┤              ▼
+┌───────────┐         ▼              ▼              ▼       ┌─────────────┐
+│ANALISTA_RH│   ┌───────────┐  ┌───────────┐  ┌───────────┐ │ADMINISTRACAO│
+│   e RH    │   │TECNICO_N3 │  │TECNICO_N2 │  │TECNICO_N1 │ └─────────────┘
+└───────────┘   └───────────┘  └───────────┘  └───────────┘        │
+                                                    │              ▼
+                                                    ▼       ┌─────────────┐
+                                              ┌───────────┐ │   LIMPEZA   │
+                                              │ OPERADOR  │ └─────────────┘
+                                              └───────────┘        │
+                                                    │              ▼
+                                                    ▼       ┌─────────────┐
+                                              ┌───────────┐ │  VISITANTE  │
+                                              │(Sem Login)│ │(Modo Público│
+                                              └───────────┘ └─────────────┘
 ```
 
-### 4.1. Descrição dos Atores
-1. **ADMIN (Administrador Geral):** Possui autoridade máxima. Visualiza e manipula auditoria, logs de governança, aprova solicitações de novos colaboradores, reenvia links de ativação, cadastra setores e configurações centrais.
-2. **GESTOR (Gestor Operacional):** Responsável pela aprovação de requisições de compras, validação de cronogramas, visualização executiva do dashboard e indicadores de SLA.
-3. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário, agenda salas/laboratórios na Agenda Inteligente e visualiza comunicados. **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas) e o botão "Nova Solicitação" no Dashboard permanece oculto para este perfil.
-4. **ADMINISTRACAO (Setor Administrativo):** Responsável direto pelo almoxarifado, entradas/baixas de insumos, cotação de compras e gestão patrimonial de equipamentos.
-5. **LIMPEZA (Equipe de Higienização):** Focado exclusivamente na visualização e execução de checklists de limpeza, registro de higienização de ambientes e baixa de insumos de limpeza.
-6. **VISITANTE (Modo Público / Consulta Aberta):** Modo de acesso livre destinado à comunidade e visitantes do espaço. Permite consultar livremente os eventos da agenda pública e comunicados institucionais sem necessidade de login ou criação de conta no banco de dados. A funcionalidade de cadastrar novos usuários com o perfil `VISITANTE` foi formalmente dispensada do sistema.
+### 4.1. Descrição dos Atores e Níveis de Autoridade
+1. **ADMIN (Super Administrador Geral):** Possui autoridade máxima irrestrita. Supervisiona os Administradores e todos os setores. Visualiza e manipula auditoria em tempo real, aprova ou rejeita novos cadastros, atribui cargos, revoga acessos e define permissões adicionais. **Regra de Governança Estrita:** Apenas usuários com perfil `ADMIN` podem criar, promover ou editar outras contas de perfil `ADMIN`.
+2. **ADMINISTRADOR (Administrador de Gestão Geral):** Responsável pela governança operacional dos módulos, aprovações administrativas gerais, relatórios consolidados e supervisão de rotinas cotidianas.
+3. **GESTOR_RH (Gestor de Recursos Humanos):** Comanda o setor de Recursos Humanos. Supervisiona analistas de RH (`ANALISTA_RH` / `RH`), emite pareceres em advertências disciplinares, gerencia comunicados internos e relatórios de colaboradores.
+4. **GESTOR_INFRA (Gestor de Infraestrutura & Redes):** Comanda o suporte técnico e a infraestrutura física/lógica do HUB ES+. Lidera os técnicos Nível 1, 2 e 3, gerencia o inventário patrimonial de equipamentos e coordena o fluxo de escalonamento técnico.
+5. **GESTOR_OPERADOR (Gestor de Linha de Frente):** Comanda os operadores de atendimento e infraestrutura operacional direta, escalas de trabalho, controle de turnos e insumos operacionais.
+6. **GESTOR (Gestor Operacional Multissetorial):** Atua na coordenação geral de suprimentos, compras, eventos e limpeza com ampla autonomia operacional.
+7. **TECNICO_N3 (Suporte Especialista - Nível 3):** Suporte de infraestrutura crítica, segurança de redes, switches centrais, servidores e casos de alta complexidade.
+8. **TECNICO_N2 (Suporte de Bancada / Laboratório - Nível 2):** Diagnóstico eletrônico de hardware, manutenção corretiva de computadores/impressoras 3D, formatação e encaminhamento de laudos.
+9. **TECNICO_N1 (Suporte de Campo / Triagem - Nível 1):** Atendimento inicial rápido a chamados de usuários, testes de cabos, conectividade básica e triagem com escalonamento formal para N2/N3.
+10. **ANALISTA_RH / RH (Recursos Humanos):** Analistas e assistentes de RH. Gerenciam dados funcionais, ocorrências disciplinares e, quando autorizado via permissão granular, documentos de colaboradores.
+11. **OPERADOR (Operador Padrão):** Colaborador de linha de frente. Abre chamados técnicos de ocorrência com fotos, consulta insumos para trabalho diário, agenda salas/laboratórios na Agenda Inteligente e visualiza comunicados. **Restrição de Compras:** Não possui acesso ao módulo de compras (`compras.visualizar` e `compras.criar` revogadas).
+12. **ADMINISTRACAO (Setor Administrativo):** Responsável direto pelo almoxarifado, entradas/baixas de insumos, recebimento de compras e pré-cadastro de colaboradores.
+13. **LIMPEZA (Equipe de Higienização):** Focado exclusivamente na visualização e execução de checklists de limpeza, registro de higienização de ambientes e solicitações de materiais de limpeza.
+14. **VISITANTE (Modo Público / Consulta Aberta):** Modo de acesso livre destinado à comunidade e visitantes do espaço. Consulta livremente eventos da agenda pública e comunicados institucionais sem necessidade de login. Cadastro descontinuado no banco.
+
+### 4.2. Modelo de Permissões Granulares (`usuario_permissoes`)
+O sistema combina a herança por perfis nativos (`perfil_permissoes` e `FIXED_PROFILE_PERMISSIONS`) com a concessão granular de permissões adicionais por usuário (`usuario_permissoes`):
+- **Isolamento de Base:** Cada setor/perfil acessa exclusivamente suas telas de trabalho estabelecidas por padrão.
+- **Concessão Flexível Sob Demanda:** O Administrador Geral pode conceder permissões avulsas de outros módulos a qualquer usuário sem trocar seu cargo.
+- **Caso Prático (RH com Acesso a Documentos):** Um colaborador do perfil `GESTOR_RH` ou `RH` pode receber seletivamente as permissões `documentos.visualizar` e `documentos.enviar`. Imediatamente, o roteador SPA libera o módulo `#documentos` e o usuário pode consultar regulamentos, enviar atestados e anexar folhas contratuais sem elevar seu perfil global.
+- **Sincronização em Tempo Real:** O middleware invalida o cache (`clearUserPermCache`) instantaneamente, refletindo as novas permissões tanto nas validações de API quanto nos menus e botões da interface.
 
 ---
 
@@ -182,9 +210,10 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 - Gráficos Chart.js demonstrando consumo de materiais por setor e tempo médio de atendimento (SLA) de ocorrências.
 - **Controle Visual de Acesso:** O botão "Nova Solicitação" e o card rápido de Compras são renderizados condicionalmente à permissão `compras.criar`. Para perfis não autorizados (como `OPERADOR`), o botão é removido e o card é desarmado visual e funcionalmente.
 
-### Módulo 3: Gestão Documental
-- Repositório central de arquivos categorizados (Regulamentos, Editais, Modelos de Termos, Atas de Reunião).
-- Suporte a download direto, filtragem por categoria e upload seguro com metadados de quem postou.
+### Módulo 3: Gestão Documental & Acesso Setorial Customizado
+- Repositório central de arquivos categorizados (Regulamentos, Editais, Modelos de Termos, Atas de Reunião, Documentos de RH e Contratos).
+- Suporte a download direto, filtragem por categoria e upload seguro com metadados do remetente.
+- **Concessão Granular Setorial:** Permite que setores como Recursos Humanos (`GESTOR_RH`, `ANALISTA_RH` ou `RH`) tenham acesso liberado ao repositório documental via permissões pontuais (`documentos.visualizar` e `documentos.enviar`) sem necessidade de promoção a Administrador Geral.
 
 ### Módulo 4: Controle de Insumos & Almoxarifado
 - Cadastro de materiais com código interno, unidade de medida, quantidade atual e quantidade mínima de segurança.
@@ -202,9 +231,16 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 - Validação no banco de dados contra conflitos de horário (double-booking) para um mesmo espaço.
 - Separação entre eventos públicos (exibidos no portal) e reuniões internas restritas.
 
-### Módulo 7: Ocorrências Técnicas & Manutenção
+### Módulo 7: Ocorrências Técnicas, Suporte N1/N2/N3 & Manutenção
 - Abertura de chamados com título, descrição, categoria (Elétrica, Hidráulica, TI, Estrutural), localização exata e prioridade (Baixa, Média, Alta, Urgente).
+- **Vínculo Patrimonial de Equipamento:** Seleção direta do equipamento cadastrado no centro (`equipamento_id`), permitindo rastrear o histórico de falhas e manutenções do patrimônio.
 - **Recurso de Câmera/Webcam:** Permite ao colaborador capturar a evidência fotográfica da avaria diretamente pelo navegador no smartphone ou notebook, ou anexar foto da galeria.
+- **Fluxo de Atendimento em 3 Níveis (N1/N2/N3):**
+  * **N1 (Campo/Triagem):** Atendimento inicial, verificação de cabos, periféricos e diagnóstico básico.
+  * **N2 (Bancada/Hardware):** Troca de componentes, conserto eletrônico, manutenção de impressoras 3D e notebooks.
+  * **N3 (Infraestrutura/Redes):** Servidores, infraestrutura de fibra, balanceamento de rede, switches gerenciáveis e segurança lógica.
+- **Assumir Chamado:** Técnicos autorizados assumem a responsabilidade do ticket (`tecnico_id = req.usuario.id`), alterando o status para `EM_ANDAMENTO`.
+- **Escalonamento com Parecer Técnico Obrigatório:** Ao transferir o ticket para outro nível, o sistema exige um parecer técnico detalhado (`parecer_tecnico`), que fica gravado no chamado e auditado (`ESCALONAR_OCORRENCIA`).
 - Fluxo de status: `ABERTO` $\rightarrow$ `EM_ANDAMENTO` $\rightarrow$ `RESOLVIDO` $\rightarrow$ `CANCELADO`.
 
 ### Módulo 8: Central de Comunicação
@@ -215,8 +251,9 @@ O sistema implementa **Controle de Acesso Baseado em Funções (Role-Based Acces
 - Cronograma diário/semanal de setores a serem higienizados (banheiros, salas, áreas comuns, copa).
 - Checklist dinâmico com confirmação de realização, horário e operador responsável.
 
-### Módulo 10: Controle Patrimonial de Equipamentos
+### Módulo 10: Controle Patrimonial de Equipamentos & Integração com Ocorrências
 - Cadastro de equipamentos (computadores, projetores, impressoras 3D, câmeras, ferramentas) com número de patrimônio e status (Em Uso, Disponível, Em Manutenção, Baixado).
+- **Histórico Integrado de Manutenções:** Equipamentos com ocorrências técnicas vinculadas exibem a rastreabilidade completa das falhas e manutenções realizadas pelas equipes N1, N2 e N3.
 
 ### Módulo 11: Auditoria, Monitoramento & Governança (Admin Only)
 - **Heartbeat em Tempo Real:** A cada 2 minutos, o frontend envia um sinal assíncrono para o backend atualizando o timestamp de presença do usuário. O painel exibe se o operador está "Online" ou o horário do último acesso.
@@ -353,21 +390,21 @@ O banco de dados utiliza a engine relacional padrão do MySQL 8.0 / TiDB. Todas 
 ├──────────────────┤      ├──────────────────┤       ├──────────────────┤
 │ id (PK)          │      │ id (PK)          │       │ id (PK)          │
 │ usuario_id (FK)  │      │ nome             │       │ usuario_id (FK)  │
-│ titulo           │      │ categoria        │       │ titulo           │
-│ descricao        │      │ quantidade_atual │       │ espaco_nome      │
-│ categoria        │      │ estoque_minimo   │       │ data_inicio      │
-│ prioridade       │      │ unidade_medida   │       │ data_fim         │
-│ status           │      │ deleted_at       │       │ status           │
-│ foto_url         │      └────────┬─────────┘       │ deleted_at       │
-│ deleted_at       │               │                 └──────────────────┘
-└──────────────────┘               ▼
-                          ┌──────────────────┐
-                          │   MOVIMENTACOES  │
-                          ├──────────────────┤
-                          │ id (PK)          │
-                          │ insumo_id (FK)   │
-                          │ usuario_id (FK)  │
-                          │ tipo (E/S/B)     │
+│ equipamento_id(FK│      │ categoria        │       │ titulo           │
+│ tecnico_id (FK)  │      │ quantidade_atual │       │ espaco_nome      │
+│ nivel_atendiment │      │ estoque_minimo   │       │ data_inicio      │
+│ titulo           │      │ unidade_medida   │       │ data_fim         │
+│ descricao        │      │ deleted_at       │       │ status           │
+│ parecer_tecnico  │      └────────┬─────────┘       │ deleted_at       │
+│ categoria        │               │                 └──────────────────┘
+│ prioridade       │               ▼
+│ status           │      ┌──────────────────┐       ┌──────────────────┐
+│ foto_url         │      │   MOVIMENTACOES  │       │USUARIO_PERMISSOES│
+│ deleted_at       │      ├──────────────────┤       ├──────────────────┤
+└──────────────────┘      │ id (PK)          │       │ usuario_id (PK)  │
+                          │ insumo_id (FK)   │       │ permissao_id(PK) │
+                          │ usuario_id (FK)  │       │ created_at       │
+                          │ tipo (E/S/B)     │       └──────────────────┘
                           │ quantidade       │
                           │ motivo           │
                           │ created_at       │
@@ -376,15 +413,16 @@ O banco de dados utiliza a engine relacional padrão do MySQL 8.0 / TiDB. Todas 
 
 ### 7.1. Principais Tabelas:
 - **`usuarios`**: Armazena as contas, hashes bcrypt de senha, vínculos com setores, status (`PENDENTE`, `AGUARDANDO_ATIVACAO`, `ATIVO`, `INATIVO`) e timestamp do heartbeat.
-- **`setores`**: Unidades organizacionais do HUB ES+ (Direção, Almoxarifado, TI, Comunicação, Operações, etc.).
+- **`usuario_permissoes`**: Permissões granulares adicionais concedidas pontualmente a colaboradores específicos (ex: liberação de documentos para o RH).
+- **`setores`**: Unidades organizacionais do HUB ES+ (Direção, Recursos Humanos, Infraestrutura & Redes, Almoxarifado, TI, Comunicação, Operações, etc.).
 - **`tokens_ativacao`**: Armazena os hashes SHA-256 dos links de ativação, validade e flag de utilização (`usado_em`).
 - **`auditoria`**: Registra permanentemente todas as operações administrativas, alterações cadastrais e acessos.
-- **`ocorrencias`**: Chamados de manutenção corretiva e preventiva com URLs das fotos capturadas.
+- **`ocorrencias`**: Chamados de manutenção com suporte a fotos, nível de atendimento (`N1`, `N2`, `N3`), equipamento vinculado (`equipamento_id`), técnico responsável (`tecnico_id`) e parecer técnico (`parecer_tecnico`).
 - **`insumos` & `movimentacoes_insumos`**: Saldo de almoxarifado e kardex eletrônico de movimentações.
 - **`compras` & `itens_compra`**: Requisições de suprimentos, cotações e status de pedidos.
 - **`eventos`**: Calendário de reservas e utilização de salas e auditório.
 - **`limpeza_registros`**: Logs de checklists de higienização de ambientes.
-- **`equipamentos`**: Inventário patrimonial de ativos do centro.
+- **`equipamentos`**: Inventário patrimonial de ativos do centro com integração de histórico de ocorrências técnicas.
 - **`comunicados`**: Mural eletrônico de avisos e comunicados institucionais.
 - **`documentos`**: Repositório indexado de manuais, atas e resoluções.
 
@@ -403,17 +441,20 @@ Todas as rotas estão montadas sob o prefixo `/api/v1/`.
 | `POST` | `/api/v1/auth/heartbeat` | Autenticado | Sinal de presença assíncrono para status online no monitor de auditoria. |
 | `GET` | `/api/v1/dashboard/metricas` | Autenticado | Retorna totais consolidados de insumos, ocorrências, agenda e alertas. |
 | `GET` | `/api/v1/usuarios` | `usuarios.visualizar` | Listagem paginada e filtrada de usuários do sistema. |
-| `POST` | `/api/v1/usuarios` | `usuarios.criar` | Cadastro direto de colaborador pelo administrador. |
-| `PUT` | `/api/v1/usuarios/:id` | `usuarios.editar` | Atualização cadastral de colaborador. |
+| `GET` | `/api/v1/usuarios/permissoes-disponiveis` | Autenticado | Lista o catálogo de permissões para concessão granular. |
+| `POST` | `/api/v1/usuarios` | `usuarios.criar` | Cadastro direto de colaborador pelo administrador (com permissões granulares). |
+| `PUT` | `/api/v1/usuarios/:id` | `usuarios.editar` | Atualização cadastral de colaborador e suas permissões adicionais. |
 | `DELETE`| `/api/v1/usuarios/:id` | `usuarios.excluir` | Exclusão lógica (`soft delete`) de usuário. |
 | `GET` | `/api/v1/auditoria` | `ADMIN` / `auditoria.visualizar` | Listagem geral da trilha de logs e eventos auditados. |
 | `GET` | `/api/v1/auditoria/solicitacoes-pendentes` | `ADMIN` / `auditoria.visualizar` | Lista solicitações de cadastro aguardando parecer. |
-| `POST` | `/api/v1/auditoria/solicitacoes/:id/aprovar`| `ADMIN` / `auditoria.aprovar` | Aprova acesso, gera token SHA-256 e envia e-mail de ativação. |
+| `POST` | `/api/v1/auditoria/solicitacoes/:id/aprovar`| `ADMIN` / `auditoria.aprovar` | Aprova acesso, perfil, setor e permissões adicionais, gerando token SHA-256. |
 | `POST` | `/api/v1/auditoria/solicitacoes/:id/rejeitar`| `ADMIN` / `auditoria.aprovar` | Rejeita pedido com justificativa e notifica por e-mail. |
 | `POST` | `/api/v1/auditoria/usuarios/:id/reenviar-ativacao`| `ADMIN` / `auditoria.aprovar` | Invalida token anterior e gera novo link de ativação. |
 | `POST` | `/api/v1/auditoria/testar-email` | `ADMIN` / `auditoria.visualizar` | Dispara diagnóstico em tempo real via Brevo API HTTPS. |
-| `GET` | `/api/v1/ocorrencias` | `ocorrencias.visualizar` | Listagem de ocorrências técnicas e manutenções. |
-| `POST` | `/api/v1/ocorrencias` | `ocorrencias.criar` | Abertura de ocorrência com upload ou captura de imagem. |
+| `GET` | `/api/v1/ocorrencias` | `ocorrencias.visualizar` | Listagem de ocorrências técnicas, níveis e equipamentos. |
+| `POST` | `/api/v1/ocorrencias` | `ocorrencias.criar` | Abertura de ocorrência com upload/câmera, equipamento e nível inicial. |
+| `PATCH`| `/api/v1/ocorrencias/:id/assumir` | `ocorrencias.atender` | Técnico assume formalmente a responsabilidade do ticket. |
+| `PATCH`| `/api/v1/ocorrencias/:id/escalonar` | `ocorrencias.atender` | Escalonamento entre níveis N1/N2/N3 com parecer técnico obrigatório. |
 | `PUT` | `/api/v1/ocorrencias/:id/status` | `ocorrencias.atender` | Atualização de status da ocorrência (Em andamento / Resolvido). |
 | `GET` | `/api/v1/insumos` | `insumos.visualizar` | Catálogo de materiais e saldos de almoxarifado. |
 | `POST` | `/api/v1/insumos/:id/movimentar` | `insumos.movimentar` | Registro de entrada, saída ou baixa de estoque. |
@@ -435,7 +476,9 @@ Todas as rotas estão montadas sob o prefixo `/api/v1/`.
 5. **Prevenção contra XSS e CSRF:** Tokens JWT trafegam exclusivamente nos cabeçalhos `Authorization: Bearer`, neutralizando ataques comuns de CSRF baseados em cookies.
 6. **Integridade de Auditoria:** Registros da tabela `auditoria` são estritamente de escrita (`INSERT-only`). Nenhuma rota da aplicação permite alteração ou exclusão de registros auditados.
 7. **Isolamento de Sessão Multi-Aba (Anti-Contaminação):** Priorização de `sessionStorage` para segregação de tokens e perfis entre abas do mesmo navegador, prevenindo que recarregamentos com F5 sobrescrevam a conta ativa com outra sessão em testes simultâneos ou cenários multiusuário.
-8. **Resiliência a Concorrência & Cache de Autorização:** Cache em memória de 30 segundos (`_userAuthCache`) para autorizações em rotas de alto tráfego e dimensionamento do pool MySQL2 com 40 conexões e keep-alive preventivo, garantindo estabilidade e fluidez durante requisições simultâneas de múltiplas contas sem sobrecarga no TiDB Cloud.
+8. **Resiliência a Concorrência & Cache de Autorização:** Cache em memória de 30 segundos (`_userAuthCache`) e de permissões com TTL de 5 minutos, e dimensionamento do pool MySQL2 com 40 conexões e keep-alive preventivo, garantindo estabilidade e fluidez durante requisições simultâneas de múltiplas contas sem sobrecarga no TiDB Cloud.
+9. **Governança Estrita de Contas Master:** Apenas o perfil `ADMIN` tem prerrogativa para cadastrar, editar, promover ou alterar outros usuários com o perfil `ADMIN`, impedindo que perfis intermediários (`ADMINISTRADOR`, `GESTOR`) elevem privilégios indevidamente.
+10. **Concessão Granular Dinâmica e Cache Invalidation:** Concessões pontuais em `usuario_permissoes` contam com invalidação imediata de cache (`clearUserPermCache`), propagando os novos acessos setoriais (ex: RH em Documentos) instantaneamente.
 
 ---
 

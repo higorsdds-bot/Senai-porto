@@ -15,6 +15,7 @@ Este documento contém o guia prático de todas as **skills** (habilidades técn
 7. [Skill 7: Design System, Modo Escuro e Componentes de UI](#skill-7-design-system-modo-escuro-e-componentes-de-ui)
 8. [Skill 8: Diagnóstico, Teste e Validação da Aplicação](#skill-8-diagnóstico-teste-e-validação-da-aplicação)
 9. [Skill 9: Fluxo de Advertências Disciplinares e Homologação pelo Administrador Geral](#skill-9-fluxo-de-advertências-disciplinares-e-homologação-pelo-administrador-geral)
+10. [Skill 10: Gestão de Hierarquia Setorial, Permissões Granulares e Suporte N1/N2/N3](#skill-10-gestão-de-hierarquia-setorial-permissões-granulares-e-suporte-n1n2n3)
 
 ---
 
@@ -450,3 +451,29 @@ Garantir o fluxo disciplinar institucional correto onde qualquer advertência re
 3. **Auditoria e Efeitos:**
    - Ao aceitar, o status é atualizado para `APLICADA`, registrando `homologador_id`, `motivo_decisao` e `data_decisao`, com log de auditoria `ACEITAR_ADVERTENCIA`.
    - Apenas o Administrador Geral tem competência para revogar advertências vigentes (`REVOGAR_ADVERTENCIA`).
+
+---
+
+### Skill 10: Gestão de Hierarquia Setorial, Permissões Granulares e Suporte N1/N2/N3
+
+#### Objetivo
+Operar e evoluir os fluxos de governança hierárquica (`ADMIN`, `ADMINISTRADOR`, `GESTOR_RH`, `GESTOR_INFRA`, `GESTOR_OPERADOR`, `GESTOR`, `TECNICO_N3`, `TECNICO_N2`, `TECNICO_N1`, `ANALISTA_RH`, `RH`), conceder permissões avulsas por usuário (`usuario_permissoes`), gerenciar o escalonamento em 3 níveis de suporte técnico com parecer obrigatório e gerar documentação oficial em PDF.
+
+#### Procedimento Passo a Passo
+1. **Atribuição de Permissões Granulares no Cadastro e Edição:**
+   - O backend expõe o catálogo de permissões ativas em `GET /api/v1/usuarios/permissoes-disponiveis`.
+   - Nos formulários e modais de criação/edição (`assets/js/modules/usuarios.js` e `assets/js/modules/auditoria.js`), as permissões adicionais são enviadas no array `permissoes_adicionais: ['documentos.visualizar', 'documentos.enviar']`.
+   - Ao salvar, o backend insere os registros na tabela `usuario_permissoes` e invoca `clearUserPermCache(userId)` para invalidar a memória imediatamente.
+2. **Validação de Governança Estrita:**
+   - Apenas usuários com `req.usuario.perfil === 'ADMIN'` podem cadastrar ou editar contas cujo perfil seja `ADMIN`.
+   - Tentativas por outros perfis retornam HTTP 403 com `Apenas Administradores Gerais podem gerenciar contas do perfil ADMIN`.
+3. **Fluxo de Ocorrências Técnicas e Escalonamento:**
+   - **Assumir Chamado:** Técnicos autorizados executam `PATCH /api/v1/ocorrencias/:id/assumir`. O backend grava `tecnico_id = req.usuario.id`, `status = 'EM_ANDAMENTO'` e gera log de auditoria.
+   - **Escalonar Chamado:** Quando um chamado requer nível superior (`N1 -> N2` ou `N2 -> N3`), executa-se `PATCH /api/v1/ocorrencias/:id/escalonar` enviando `{ nivel_atendimento: 'N2', parecer_tecnico: 'Diagnóstico...' }`. O parecer é obrigatório e fica registrado no histórico do chamado.
+   - **Vínculo com Equipamento:** Toda ocorrência pode referenciar `equipamento_id`, integrando o histórico de manutenções corretivas no módulo Patrimônio.
+4. **Geração do Manual Oficial em PDF:**
+   - Para gerar ou atualizar o manual oficial impresso, execute no terminal:
+     ```bash
+     npm run gerar-manual
+     ```
+   - O script `scripts/gerar-pdf-manual-hierarquia.js` gera o arquivo `MANUAL_HIERARQUIA_E_PERMISSOES_HUB_ES.pdf` na raiz do projeto com layout profissional, tipografia corporativa e paleta de cores oficial do HUB ES+.
