@@ -344,3 +344,21 @@ INSERT OR IGNORE INTO permissoes (chave, nome, descricao) VALUES
 -- ============================================================
 INSERT OR IGNORE INTO usuarios (id, nome, email, senha, perfil, setor_id, status) VALUES
   (1, 'Administrador do Sistema', 'admin@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'ADMIN', 1, 'ATIVO');
+-- ============================================================
+-- SEED DE HOMOLOGAÇÃO: CONTAS DE TESTE DOS 15 CARGOS
+-- ============================================================
+INSERT OR IGNORE INTO usuarios (id, nome, email, senha, perfil, setor_id, status) VALUES
+  (3, 'Administrador Executivo', 'administrador@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'ADMINISTRADOR', 1, 'ATIVO'),
+  (4, 'Operador Administrativo', 'administracao@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'ADMINISTRACAO', 1, 'ATIVO'),
+  (5, 'Gestor Geral', 'gestor@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'GESTOR', 1, 'ATIVO'),
+  (6, 'Gestor de RH', 'gestor.rh@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'GESTOR_RH', 1, 'ATIVO'),
+  (7, 'Gestor de Infra & TI', 'gestor.infra@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'GESTOR_INFRA', 1, 'ATIVO'),
+  (8, 'Gestor Operacional', 'gestor.operador@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'GESTOR_OPERADOR', 1, 'ATIVO'),
+  (9, 'Analista de RH', 'analista.rh@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'ANALISTA_RH', 1, 'ATIVO'),
+  (10, 'Assistente de RH', 'rh@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'RH', 1, 'ATIVO'),
+  (11, 'Técnico Suporte N3', 'tecnico.n3@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'TECNICO_N3', 1, 'ATIVO'),
+  (12, 'Técnico Suporte N2', 'tecnico.n2@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'TECNICO_N2', 1, 'ATIVO'),
+  (13, 'Técnico Suporte N1', 'tecnico.n1@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'TECNICO_N1', 1, 'ATIVO'),
+  (14, 'Técnico Operacional', 'tecnico@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'TECNICO', 1, 'ATIVO'),
+  (15, 'Operador de Atendimento', 'operador@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'OPERADOR', 1, 'ATIVO'),
+  (16, 'Equipe de Limpeza', 'limpeza@secult.es.gov.br', '$2b$12$6/YQYgL6eE5R06rBfK65oeq1PshjXlB9x0L17G0uN7U7E49t11vOq', 'LIMPEZA', 1, 'ATIVO');

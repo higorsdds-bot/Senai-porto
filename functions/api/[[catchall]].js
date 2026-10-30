@@ -33,6 +33,24 @@ function normalizeProfile(perfil) {
   return aliases[raw] || raw;
 }
 
+const CONTAS_TESTE_D1 = [
+  { cargo: 'ADMIN', nome: 'Administrador Geral', emails: ['admin@secult.es.gov.br', 'admin.geral@hubes.gov.br'], senha: 'Admin@Secult2026!' },
+  { cargo: 'ADMINISTRADOR', nome: 'Administrador Institucional', emails: ['administrador@secult.es.gov.br', 'admin@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'ADMINISTRACAO', nome: 'Operador Administrativo', emails: ['administracao@secult.es.gov.br', 'administracao@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'GESTOR', nome: 'Gestor Geral', emails: ['gestor@secult.es.gov.br', 'gestor@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'GESTOR_RH', nome: 'Gestor de Recursos Humanos', emails: ['gestor.rh@secult.es.gov.br', 'gestor.rh@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'GESTOR_INFRA', nome: 'Gestor de Infraestrutura e TI', emails: ['gestor.infra@secult.es.gov.br', 'gestor.infra@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'GESTOR_OPERADOR', nome: 'Gestor Operacional', emails: ['gestor.operador@secult.es.gov.br', 'gestor.operador@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'ANALISTA_RH', nome: 'Analista de RH', emails: ['analista.rh@secult.es.gov.br', 'analista.rh@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'RH', nome: 'Assistente de RH', emails: ['rh@secult.es.gov.br', 'rh@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'TECNICO_N3', nome: 'Técnico de Suporte N3', emails: ['tecnico.n3@secult.es.gov.br', 'tecnico.n3@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'TECNICO_N2', nome: 'Técnico de Suporte N2', emails: ['tecnico.n2@secult.es.gov.br', 'tecnico.n2@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'TECNICO_N1', nome: 'Técnico de Suporte N1', emails: ['tecnico.n1@secult.es.gov.br', 'tecnico.n1@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'TECNICO', nome: 'Técnico Geral', emails: ['tecnico@secult.es.gov.br', 'tecnico@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'OPERADOR', nome: 'Operador de Atendimento', emails: ['operador@secult.es.gov.br', 'operador@hubes.gov.br'], senha: 'Teste@2026!' },
+  { cargo: 'LIMPEZA', nome: 'Equipe de Limpeza', emails: ['limpeza@secult.es.gov.br', 'limpeza@hubes.gov.br'], senha: 'Teste@2026!' }
+];
+
 const MODULE_PERMISSIONS = {
   dashboard: ['dashboard.visualizar'],
   compras: [
