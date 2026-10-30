@@ -47,4 +47,8 @@ Sempre que implementar uma nova funcionalidade ou corrigir um bug, certifique-se
 - [ ] O isolamento de sessão por aba (`sessionStorage` > `localStorage`) é respeitado para garantir a integridade de testes simultâneos multi-conta no F5.
 - [ ] Ações que alterem o status, perfil ou permissões de usuários invocam `clearUserAuthCache(userId)` para atualizar imediatamente as permissões em memória.
 - [ ] O perfil OPERADOR não possui permissões nem botões de compras expostos no Dashboard ou módulos operacionais.
+- [ ] Os 15 cargos possuem paridade exata de permissões entre `FIXED_PROFILE_PERMISSIONS` (backend), `PERFIL_PERMISSOES` (seed) e `FALLBACK_PROFILE_PERMISSIONS` (frontend).
+- [ ] As contas de teste dos 15 cargos (`USUARIOS_TESTE_POR_CARGO`) e o seletor de "Login Rápido por Cargo" em `assets/js/auth.js` estão funcionais e sincronizados.
+- [ ] Listagens auxiliares básicas (`GET /api/v1/usuarios` e `GET /api/v1/setores`) permanecem acessíveis a qualquer usuário logado para popular dropdowns sem erro 403.
+- [ ] A resolução de ocorrência (`status = 'resolvido'`) restaura automaticamente o equipamento vinculado para `estado = 'bom'`.
 - [ ] O layout suporta tema Claro e tema Escuro (`dark:`).

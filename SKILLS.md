@@ -16,6 +16,7 @@ Este documento contém o guia prático de todas as **skills** (habilidades técn
 8. [Skill 8: Diagnóstico, Teste e Validação da Aplicação](#skill-8-diagnóstico-teste-e-validação-da-aplicação)
 9. [Skill 9: Fluxo de Advertências Disciplinares e Homologação pelo Administrador Geral](#skill-9-fluxo-de-advertências-disciplinares-e-homologação-pelo-administrador-geral)
 10. [Skill 10: Gestão de Hierarquia Setorial, Permissões Granulares e Suporte N1/N2/N3](#skill-10-gestão-de-hierarquia-setorial-permissões-granulares-e-suporte-n1n2n3)
+11. [Skill 11: Testes de Coesão, Fluxos entre Cargos e Login Rápido por Perfil](#skill-11-testes-de-coesão-fluxos-entre-cargos-e-login-rápido-por-perfil)
 
 ---
 
@@ -477,3 +478,46 @@ Operar e evoluir os fluxos de governança hierárquica (`ADMIN`, `ADMINISTRADOR`
      npm run gerar-manual
      ```
    - O script `scripts/gerar-pdf-manual-hierarquia.js` gera o arquivo `MANUAL_HIERARQUIA_E_PERMISSOES_HUB_ES.pdf` na raiz do projeto com layout profissional, tipografia corporativa e paleta de cores oficial do HUB ES+.
+---
+
+### Skill 11: Testes de Coesão, Fluxos entre Cargos e Login Rápido por Perfil
+
+#### Objetivo
+Padronizar a rotina de auditoria e validação de fluxos ponta a ponta (E2E) entre os 15 perfis do sistema HUB ES+, garantindo coesão entre permissões de backend, permissões de frontend, disponibilidade de endpoints auxiliares e integridade visual dos módulos para cada cargo, prevenindo regressões, erros 403 indevidos e botões inacessíveis.
+
+#### Estrutura das Contas de Teste por Cargo
+Todas as contas de teste possuem a senha padrão `Teste@123` e são auto-provisionadas dinamicamente no banco ou seed:
+- `ADMIN`: `admin.geral@hubes.gov.br` (Acesso irrestrito a governança e homologações)
+- `ADMINISTRADOR`: `admin@hubes.gov.br` (Gestão institucional ampla)
+- `ADMINISTRACAO`: `administracao@hubes.gov.br` (Rotinas administrativas)
+- `GESTOR`: `gestor@hubes.gov.br` (Supervisão operacional e aprovações)
+- `GESTOR_RH`: `gestor.rh@hubes.gov.br` (Liderança de Recursos Humanos)
+- `ANALISTA_RH`: `analista.rh@hubes.gov.br` (Operações avançadas de RH)
+- `RH`: `rh@hubes.gov.br` (Rotinas básicas de RH)
+- `GESTOR_INFRA`: `gestor.infra@hubes.gov.br` (Coordenação de infraestrutura e TI)
+- `TECNICO_N3`: `tecnico.n3@hubes.gov.br` (Suporte de infraestrutura N3)
+- `TECNICO_N2`: `tecnico.n2@hubes.gov.br` (Suporte de infraestrutura N2)
+- `TECNICO_N1`: `tecnico.n1@hubes.gov.br` (Suporte de infraestrutura N1)
+- `TECNICO`: `tecnico@hubes.gov.br` (Técnico de campo / TI)
+- `GESTOR_OPERADOR`: `gestor.operador@hubes.gov.br` (Coordenação operacional)
+- `OPERADOR`: `operador@hubes.gov.br` (Operador de base - sem acesso a compras)
+- `LIMPEZA`: `limpeza@hubes.gov.br` (Execução de check-lists e manutenções)
+
+#### Procedimento Passo a Passo
+1. **Utilização do Seletor de Login Rápido (Interface):**
+   - Na tela de login (`#login`), utilize o componente seletor no card lateral de testes.
+   - Selecione o cargo desejado no dropdown e clique em **"Testar Cargo"**.
+   - O sistema preenche as credenciais automaticamente e autentica o perfil com isolamento de sessão (`sessionStorage`).
+2. **Auto-Provisionamento e Tolerância a Falhas:**
+   - Em caso de base de dados recém-iniciada ou resets de banco, o endpoint `POST /api/v1/auth/login` e a rotina `initSchemaExtensions` em `src/config/database.js` recriam automaticamente a conta de teste requisitada caso ela ainda não exista, evitando erros de teste offline.
+3. **Validação da Tríplice Camada de Permissões (RBAC):**
+   - Sempre que uma nova permissão ou cargo for introduzido, valide a sincronização simultânea nos 3 pontos de controle:
+     1. `src/middleware/permissions.js` (`ALL_SYSTEM_PERMISSIONS` e `FIXED_PROFILE_PERMISSIONS`)
+     2. `src/database/seed.js` (`PERMISSOES` e `PERFIL_PERMISSOES`)
+     3. `assets/js/auth.js` (`FALLBACK_ALL_PERMISSIONS` e `FALLBACK_PROFILE_PERMISSIONS`)
+4. **Regras de Coesão de Fluxo Obrigatórias:**
+   - **Endpoints Auxiliares de Consulta:** Rotas que alimentam `<select>` em formulários (ex: `GET /api/v1/usuarios` e `GET /api/v1/setores`) devem permitir leitura básica (`id, nome`) a qualquer usuário autenticado (`authMiddleware`) para que formulários operacionais não quebrem com HTTP 403.
+   - **Ciclo de Vida de Equipamentos em Ocorrências:** Quando uma ocorrência técnica vinculada a um patrimônio for resolvida (`status === 'resolvido'`), o backend deve restaurar o estado operacional do equipamento para `'bom'` automaticamente.
+   - **Restrição Estrita de Compras para OPERADOR:** O perfil `OPERADOR` não deve ter permissões `compras.*` concedidas em nenhuma camada e botões de requisição/cotação devem permanecer ocultos.
+5. **Execução de Script de Validação Sintática e Coesão:**
+   - O repositório conta com rotinas de teste sintático e validação cruzada para garantir que nenhum arquivo JavaScript possua erros de sintaxe ou chamadas de API quebradas.

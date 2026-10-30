@@ -16,6 +16,8 @@
 5. [Fluxo Profissional de Suporte Técnico (N1, N2, N3)](#5-fluxo-profissional-de-suporte-técnico-n1-n2-n3)
 6. [Integração de Ocorrências com Inventário de Equipamentos](#6-integração-de-ocorrências-com-inventário-de-equipamentos)
 7. [Diretrizes de Segurança, Auditoria e Governança](#7-diretrizes-de-segurança-auditoria-e-governança)
+8. [Scripts e Manutenção](#8-scripts-e-manutenção)
+9. [Ambiente de Homologação, Contas de Teste e Login Rápido](#9-ambiente-de-homologação-contas-de-teste-e-login-rápido)
 
 ---
 
@@ -214,3 +216,33 @@ npm run gerar-manual
 
 O arquivo compilado será gerado em:
 `MANUAL_HIERARQUIA_E_PERMISSOES_HUB_ES.pdf`
+---
+
+## 9. Ambiente de Homologação, Contas de Teste e Login Rápido
+
+Para acelerar a homologação integrada e garantir que cada perfil hierárquico acesse estritamente os seus módulos sem falhas de permissão ou telas congeladas, o sistema disponibiliza um **Seletor de Login Rápido por Cargo** na tela inicial de login e contas de teste dedicadas para cada uma das 15 funções.
+
+### Contas Pré-configuradas (Senha Padrão: `Teste@123`)
+
+| Cargo / Perfil | E-mail de Teste | Papel Operacional |
+|---|---|---|
+| `ADMIN` | `admin.geral@hubes.gov.br` | Super Administrador Geral do HUB ES+ |
+| `ADMINISTRADOR` | `admin@hubes.gov.br` | Administrador Institucional Executivo |
+| `ADMINISTRACAO` | `administracao@hubes.gov.br` | Operador Administrativo e de Compras |
+| `GESTOR` | `gestor@hubes.gov.br` | Gestor Geral de Operações e Aprovações |
+| `GESTOR_RH` | `gestor.rh@hubes.gov.br` | Liderança de Recursos Humanos |
+| `ANALISTA_RH` | `analista.rh@hubes.gov.br` | Analista Sênior de RH |
+| `RH` | `rh@hubes.gov.br` | Assistente / Operador de RH |
+| `GESTOR_INFRA` | `gestor.infra@hubes.gov.br` | Coordenador de Infraestrutura e TI |
+| `TECNICO_N3` | `tecnico.n3@hubes.gov.br` | Suporte Especializado N3 (Sistemas/Redes) |
+| `TECNICO_N2` | `tecnico.n2@hubes.gov.br` | Suporte de Bancada N2 (Hardware/Elétrica) |
+| `TECNICO_N1` | `tecnico.n1@hubes.gov.br` | Suporte de Triagem e Campo N1 (Helpdesk) |
+| `TECNICO` | `tecnico@hubes.gov.br` | Técnico Operacional de Campo |
+| `GESTOR_OPERADOR` | `gestor.operador@hubes.gov.br` | Supervisor de Operações do Hub |
+| `OPERADOR` | `operador@hubes.gov.br` | Operador de Atendimento (Sem compras) |
+| `LIMPEZA` | `limpeza@hubes.gov.br` | Higienização e Check-lists |
+
+### Mecanismos de Tolerância e Auto-Provisionamento
+1. **Provisionamento Automático:** Caso a base de dados seja reiniciada ou limpa, a autenticação em `POST /api/v1/auth/login` provisiona instantaneamente a conta de teste selecionada com hash `bcryptjs`, setor padrão e permissões completas sincronizadas.
+2. **Sincronização RBAC em Três Níveis:** Todas as regras e permissões estão perfeitamente espelhadas no Middleware (`permissions.js`), no Banco (`seed.js`) e no Frontend (`auth.js`).
+3. **Isolamento de Sessão por Aba:** O uso de `sessionStorage` garante que o avaliador possa testar múltiplos perfis em abas distintas simultaneamente sem contaminação de sessão após recarregamentos (F5).

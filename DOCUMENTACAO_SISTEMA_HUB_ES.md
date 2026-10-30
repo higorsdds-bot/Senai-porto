@@ -24,6 +24,7 @@ Serviço Nacional de Aprendizagem Industrial (SENAI)
 7. [Modelo de Dados & Banco Relacional (TiDB / MySQL)](#7-modelo-de-dados--banco-relacional)
 8. [Dicionário de Endpoints da API REST](#8-dicionário-de-endpoints-da-api-rest)
 9. [Segurança, Auditoria e Governança](#9-segurança-auditoria-e-governança)
+10. [Ambiente de Teste, Validação de Cargos e Contas Demonstrativas](#10-ambiente-de-teste-validação-de-cargos-e-contas-demonstrativas)
 
 ---
 
@@ -479,6 +480,23 @@ Todas as rotas estão montadas sob o prefixo `/api/v1/`.
 8. **Resiliência a Concorrência & Cache de Autorização:** Cache em memória de 30 segundos (`_userAuthCache`) e de permissões com TTL de 5 minutos, e dimensionamento do pool MySQL2 com 40 conexões e keep-alive preventivo, garantindo estabilidade e fluidez durante requisições simultâneas de múltiplas contas sem sobrecarga no TiDB Cloud.
 9. **Governança Estrita de Contas Master:** Apenas o perfil `ADMIN` tem prerrogativa para cadastrar, editar, promover ou alterar outros usuários com o perfil `ADMIN`, impedindo que perfis intermediários (`ADMINISTRADOR`, `GESTOR`) elevem privilégios indevidamente.
 10. **Concessão Granular Dinâmica e Cache Invalidation:** Concessões pontuais em `usuario_permissoes` contam com invalidação imediata de cache (`clearUserPermCache`), propagando os novos acessos setoriais (ex: RH em Documentos) instantaneamente.
+
+---
+
+## 10. Ambiente de Teste, Validação de Cargos e Contas Demonstrativas
+
+Para viabilizar baterias abrangentes de homologação de fluxos, validação de transições hierárquicas e inspeção de telas por cargo, a plataforma incorpora ferramentas dedicadas a testes e controle de qualidade:
+
+1. **Seletor de Login Rápido por Cargo:** Na interface de autenticação, um painel lateral permite selecionar qualquer um dos 15 cargos ativos do HUB ES+ e autenticar em um único clique sem necessidade de digitação manual de credenciais.
+2. **Matriz de Contas de Teste Padronizadas:**
+   - Senha universal de homologação: `Teste@123`
+   - 15 contas ativas cobrindo toda a pirâmide organizacional:
+     - Governança: `admin.geral@hubes.gov.br`, `admin@hubes.gov.br`, `administracao@hubes.gov.br`
+     - Gestão: `gestor@hubes.gov.br`, `gestor.rh@hubes.gov.br`, `gestor.infra@hubes.gov.br`, `gestor.operador@hubes.gov.br`
+     - Suporte Especializado: `tecnico.n3@hubes.gov.br`, `tecnico.n2@hubes.gov.br`, `tecnico.n1@hubes.gov.br`, `tecnico@hubes.gov.br`
+     - Especialistas e Apoio: `analista.rh@hubes.gov.br`, `rh@hubes.gov.br`, `operador@hubes.gov.br`, `limpeza@hubes.gov.br`
+3. **Auto-Provisionamento no Backend:** Caso os registros de teste ainda não existam no TiDB Cloud, o manipulador de login cria a conta sob demanda em tempo de execução, garantindo testes contínuos sem bloqueios.
+4. **Resiliência a Auditorias Massivas:** O rate limit da rota de login foi ajustado para tolerar até 60 requisições a cada 15 minutos, permitindo alternância ágil entre múltiplos cargos sem bloqueios por falso positivo.
 
 ---
 

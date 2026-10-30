@@ -244,7 +244,7 @@ Para garantir um fluxo profissional de atendimento de chamados técnicos no mód
    - **N3 (Infraestrutura / Redes / Especialista):** Switches centrais, servidores, roteadores, quedas de link, segurança e problemas sistêmicos graves.
 3. **Assumir Chamado:** Técnicos autorizados clicam no botão "Assumir Chamado", gravando `tecnico_id = req.usuario.id` e mudando o status para `EM_ANDAMENTO`.
 4. **Escalonamento Profissional:** Ao transferir o chamado entre níveis (ex: N1 para N2 ou N2 para N3), o sistema exige a digitação do **Parecer Técnico Circunstanciado** (`parecer_tecnico`), que é anexado ao chamado e registrado na trilha de auditoria (`ESCALONAR_OCORRENCIA`), informando os diagnósticos já realizados e a justificativa técnica da transferência.
-5. **Integração com Patrimônio:** A ocorrência vinculada ao equipamento alimenta o histórico de manutenções corretivas do ativo no módulo Patrimônio (`#equipamentos`).
+5. **Integração com Patrimônio:** A ocorrência vinculada ao equipamento altera automaticamente o estado do ativo para `manutencao` na abertura do chamado. Ao resolver a ocorrência (`status = 'resolvido'`), o backend restaura o equipamento automaticamente para `estado = 'bom'`, alimentando o histórico de manutenções corretivas do ativo no módulo Patrimônio (`#equipamentos`).
 
 ### Regras do Modo Público / Visitante
 - **Quem é considerado Visitante:** Qualquer pessoa acessando o SPA sem efetuar login (`!estaLogado()`). O cadastro de usuários com o perfil `VISITANTE` foi formalmente dispensado no sistema, eliminando a criação de contas desnecessárias no banco de dados.
@@ -266,6 +266,36 @@ Para garantir um fluxo profissional de atendimento de chamados técnicos no mód
 ### Regras de Edição de Solicitações e Pedidos de Compra
 - **Edição pelo Solicitante:** Qualquer colaborador que enviou uma solicitação de materiais ou compra (`compras`) tem a opção de editar os dados da sua solicitação já pedida enquanto o status estiver como `pendente` (`PUT /api/v1/compras/:id`).
 - **Edição Irrestrita com Digitação pelo Administrador:** O perfil Administrador tem acesso a todos os campos editáveis por digitação direta (produto, descrição, quantidade, valor estimado, setor, status e parecer/justificativa administrativa).
+
+### 5.4. Contas de Teste por Cargo e Login Rápido (Ambiente de Testes)
+Para facilitar testes internos, homologações de novas funcionalidades e detecção precoce de inconsistências de fluxo entre diferentes perfis, o sistema disponibiliza um painel de **Login Rápido por Cargo (Teste)** diretamente na tela de login (`assets/js/auth.js`).
+
+#### Tabela Oficial de Contas de Teste por Cargo:
+
+| Cargo / Perfil | Nível / Setor | E-mail de Teste | Senha Padrão | Módulo Inicial |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ADMIN`** | Nível 1 • Direção Máxima | `admin@secult.es.gov.br` | `Admin@Secult2026!` | `#dashboard` |
+| **`ADMINISTRADOR`** | Nível 2 • Gestão Executiva | `administrador@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`ADMINISTRACAO`** | Nível 3 • Administrativo & Pedidos | `administracao@secult.es.gov.br` | `Teste@2026!` | `#compras` |
+| **`GESTOR`** | Nível 2 • Gestão Operacional Geral | `gestor@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`GESTOR_RH`** | Nível 2 • Gestão de RH | `gestor.rh@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`ANALISTA_RH`** | Nível 3 • Analista de RH | `analista.rh@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`RH`** | Nível 3 • Assistente de RH | `rh@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`GESTOR_INFRA`** | Nível 2 • Gestão de Infra & TI | `gestor.infra@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`TECNICO_N3`** | Nível 3 • Infra Crítica & Servidores | `tecnico.n3@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`TECNICO_N2`** | Nível 4 • Laboratório & Hardware | `tecnico.n2@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`TECNICO_N1`** | Nível 5 • Suporte de Campo / Helpdesk | `tecnico.n1@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`TECNICO`** | Nível 5 • Técnico Geral | `tecnico@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`GESTOR_OPERADOR`** | Nível 2 • Coordenação de Operações | `gestor.operador@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`OPERADOR`** | Nível 5 • Operação de Ponta | `operador@secult.es.gov.br` | `Teste@2026!` | `#dashboard` |
+| **`LIMPEZA`** | Nível 5 • Zeladoria & Higiene | `limpeza@secult.es.gov.br` | `Teste@2026!` | `#limpeza` |
+| **`VISITANTE`** *(Público)* | Público / Sem Conta (`!estaLogado()`) | *Botão "Continuar como Visitante"* | *Sem senha* | `#comunicacao` / `#agenda` |
+
+#### Mecanismos de Auto-Provisionamento e Resiliência:
+1. **Seed Idempotente:** Todas as 15 contas e a matriz de permissões (`PERFIL_PERMISSOES`) são geradas por `src/database/seed.js` e executadas na inicialização de extensões de schema (`src/config/database.js`).
+2. **Auto-Provisionamento no Login (`src/routes/auth.js`):** Caso o login seja efetuado com qualquer um dos 15 e-mails de teste e a conta ainda não exista no banco (ex.: ambiente recém-criado), o próprio endpoint `POST /api/v1/auth/login` provisiona a conta com `status = 'ATIVO'` na hora.
+3. **Rate Limiting Dimensionado:** O rate limit de tentativas de login suporta até 60 requisições a cada 15 minutos, viabilizando a alternância ágil entre contas e a execução de testes automatizados ponta a ponta sem bloqueio acidental.
+4. **Listagens Auxiliares Abertas:** `GET /api/v1/usuarios` e `GET /api/v1/setores` respondem com status 200 para qualquer usuário autenticado (`authMiddleware`), garantindo que formulários com `<select>` de responsáveis ou setores não quebrem com erro 403 para cargos operacionais (`OPERADOR`, `LIMPEZA`, `ADMINISTRACAO`).
 
 ---
 
