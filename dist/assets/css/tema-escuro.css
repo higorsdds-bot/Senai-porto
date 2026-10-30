@@ -1,0 +1,268 @@
+/* ==============================================================================
+   HUB ES+ / SECULT — TEMA ESCURO PROFISSIONAL
+   Governo do Estado do Espírito Santo | SECULT & SENAI
+   Ativado quando <html class="dark">
+   ============================================================================== */
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* ─── Fundo & Tipografia Base ──────────────────────────────────────────────── */
+html.dark body {
+  background-color: #080e18 !important;
+  color: #f1f5f9 !important;
+}
+
+/* ─── Superfícies (Cards, Painéis, Sidebar, Header) ────────────────────────── */
+html.dark .bg-white {
+  background-color: #0f172a !important;
+  color: #f1f5f9;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50 {
+  background-color: #0a101d !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+  background-color: #162235 !important;
+}
+
+html.dark .bg-slate-200,
+html.dark .bg-gray-200 {
+  background-color: #1e293b !important;
+}
+
+html.dark [class*="bg-white/"] {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+}
+
+html.dark [class*="bg-slate-50/"],
+html.dark [class*="bg-slate-100/"] {
+  background-color: rgba(22, 34, 53, 0.75) !important;
+}
+
+/* Header & Sidebar no Modo Escuro */
+html.dark header:not(.hub-top-navbar),
+html.dark aside {
+  background-color: #0b1320 !important;
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+html.dark .hub-top-navbar {
+  background-color: #071529 !important;
+  border-bottom: 2px solid #ffffff !important; /* Branco no dark mode */
+}
+
+html.dark #mobile-drawer {
+  background-color: #0b1320 !important;
+  border-color: rgba(148, 163, 184, 0.15) !important;
+}
+
+html.dark .glass-header {
+  background-color: rgba(11, 19, 32, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+/* ─── Tipografia Nítida no Tema Escuro ─────────────────────────────────────── */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-slate-800,
+html.dark .text-gray-800 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-gray-700,
+html.dark .text-slate-600,
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500,
+html.dark .text-slate-400,
+html.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* ─── Bordas & Linhas Divisórias ───────────────────────────────────────────── */
+html.dark .border,
+html.dark .border-slate-200,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-gray-100,
+html.dark .border-l,
+html.dark .border-b,
+html.dark .border-t,
+html.dark .border-r {
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+html.dark .divide-slate-100 > * + *,
+html.dark .divide-slate-200 > * + * {
+  border-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+/* ─── Formulários e Inputs no Escuro ───────────────────────────────────────── */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0b1320 !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
+  color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* ─── Botões no Tema Escuro ────────────────────────────────────────────────── */
+html.dark .btn-primary,
+html.dark .bg-blue-600 {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+html.dark .btn-primary:hover,
+html.dark .bg-blue-600:hover,
+html.dark .hover\:bg-blue-700:hover {
+  background: linear-gradient(135deg, #0073e6 0%, #0396dc 100%) !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35) !important;
+}
+
+/* Links de Navegação na Sidebar */
+html.dark .nav-link {
+  color: #94a3b8;
+}
+
+html.dark .nav-link:hover {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+  color: #f8fafc !important;
+}
+
+html.dark .nav-link.bg-blue-600,
+html.dark .nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3) !important;
+}
+
+/* ─── Tabelas no Tema Escuro ───────────────────────────────────────────────── */
+html.dark thead {
+  background-color: #0b1320 !important;
+  color: #94a3b8 !important;
+}
+
+html.dark tbody tr:hover,
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-50\/60:hover {
+  background-color: rgba(30, 41, 59, 0.45) !important;
+}
+
+/* ─── Badges no Tema Escuro (Contraste Aprimorado) ─────────────────────────── */
+html.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark .bg-rose-50,
+html.dark .bg-red-50 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-sky-50 {
+  background-color: rgba(2, 132, 199, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+}
+
+html.dark .bg-indigo-50,
+html.dark .bg-purple-50 {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  color: #c084fc !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ─── Botão de Alternância de Tema ─────────────────────────────────────────── */
+#btn-tema {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#btn-tema:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+html.dark #btn-tema {
+  background-color: #1e293b;
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #fbbf24;
+}
+
+html.dark #btn-tema:hover {
+  background-color: #334155;
+  color: #fef08a;
+  transform: scale(1.05);
+}
+
+/* Ícones de Sol / Lua */
+.icone-lua,
+.icone-sol {
+  transition: transform 0.2s ease;
+}
+
+html.dark .icone-lua {
+  display: none !important;
+}
+
+html.dark .icone-sol {
+  display: block !important;
+}
+
+html:not(.dark) .icone-lua {
+  display: block !important;
+}
+
+html:not(.dark) .icone-sol {
+  display: none !important;
+}

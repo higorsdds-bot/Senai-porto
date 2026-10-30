@@ -1,0 +1,686 @@
+/* ==========================================================================
+   HUB ES+ - Design System & Custom Styling Extensions
+   Governo do Estado do Espírito Santo | SECULT & SENAI
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Paleta Corporativa HUB ES+ */
+  --hub-navy-950: #060d17;
+  --hub-navy-900: #0a192f;
+  --hub-navy-800: #0f2b48;
+  --hub-blue-700: #004d99;
+  --hub-blue-600: #0066cc;
+  --hub-blue-500: #0080ff;
+  --hub-cyan-500: #0284c7;
+  --hub-cyan-400: #38bdf8;
+  --hub-teal-500: #0d9488;
+  --hub-coral: #ff5722;
+  --hub-emerald: #10b981;
+  --hub-amber: #f59e0b;
+  --hub-rose: #f43f5e;
+  --hub-purple: #8b5cf6;
+
+  /* Superfícies & Bordas */
+  --hub-bg-light: #f8fafc;
+  --hub-surface-light: #ffffff;
+  --hub-border-light: #e2e8f0;
+  --hub-border-subtle: rgba(226, 232, 240, 0.8);
+  
+  /* Sombras */
+  --shadow-subtle: 0 1px 3px rgba(10, 25, 47, 0.05), 0 1px 2px rgba(10, 25, 47, 0.03);
+  --shadow-card: 0 4px 16px -2px rgba(10, 25, 47, 0.06), 0 2px 6px -1px rgba(10, 25, 47, 0.03);
+  --shadow-elevated: 0 12px 32px -4px rgba(10, 25, 47, 0.12), 0 4px 12px -2px rgba(10, 25, 47, 0.04);
+  --shadow-modal: 0 25px 50px -12px rgba(10, 25, 47, 0.25), 0 0 0 1px rgba(10, 25, 47, 0.05);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Customizada Suave */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ==========================================================================
+   GLASSMORPHISM & SUPERFÍCIES REFINADAS
+   ========================================================================== */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--hub-border-subtle);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-header {
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Cards com elevação e microinteração */
+.hub-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.hub-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ==========================================================================
+   BOTÕES PROFISSIONAIS (DESIGN SYSTEM)
+   ========================================================================== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0052a3 0%, #0369a1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 102, 204, 0.32);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 102, 204, 0.2);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-secondary:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.dark .btn-secondary {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+.dark .btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
+}
+
+.btn-danger:active {
+  transform: translateY(1px);
+}
+
+/* Botões de Ação em Tabelas */
+.btn-action-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.btn-action-table:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: scale(1.08);
+}
+
+.btn-action-table.action-edit:hover {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.btn-action-table.action-success:hover {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.btn-action-table.action-delete:hover {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.btn-action-table.action-primary:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.dark .btn-action-table:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+/* ==========================================================================
+   INPUTS E FORMULÁRIOS MODERNOS
+   ========================================================================== */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+}
+
+/* ==========================================================================
+   MODAIS E ANIMAÇÕES EXECUTIVAS
+   ========================================================================== */
+@keyframes modalSlideUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-enter {
+  animation: modalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Shimmer Loading Animation para Skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* ==========================================================================
+   TOASTS E NOTIFICAÇÕES
+   ========================================================================== */
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-exit {
+  animation: toastSlideOut 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Pulse sutil para status ativos */
+.status-ping {
+  position: relative;
+}
+.status-ping::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: inherit;
+  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  background-color: currentColor;
+  opacity: 0.4;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   TOP NAVBAR (PADRÃO DESKTOP & MOBILE COM DESTAQUE INFERIOR VERMELHO)
+   ========================================================================== */
+.hub-top-navbar {
+  background-color: #0a192f;
+  border-bottom: 2px solid #000000; /* Preto no light mode */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Links de Navegação Desktop (Estilo Pílula Horizontal) */
+.desktop-nav-link {
+  color: #cbd5e1;
+  background: transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.desktop-nav-link:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-nav-link.active-route {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+/* Gatilho de Grupo Desktop (Hover Dropdowns) */
+.desktop-group-trigger {
+  color: #cbd5e1;
+  background: transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.desktop-group-trigger:hover,
+.desktop-group-trigger.active-parent {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+/* Ponte de Hover para evitar fechamento acidental */
+.desktop-flyout-menu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+/* Sub-links dentro do flyout dropdown */
+.desktop-subnav-link {
+  transition: all 0.15s ease;
+}
+
+.desktop-subnav-link.active-route {
+  background-color: rgba(2, 132, 199, 0.08) !important;
+  border-left: 3px solid #0284c7;
+}
+
+.dark .desktop-subnav-link.active-route {
+  background-color: rgba(56, 189, 248, 0.12) !important;
+  border-left: 3px solid #38bdf8;
+}
+
+/* Links de Navegação no Menu Lateral Hambúrguer (Mobile) */
+.drawer-nav-link {
+  color: #475569;
+  transition: all 0.18s ease;
+}
+
+.drawer-nav-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.drawer-nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.25) !important;
+}
+
+.dark .drawer-nav-link {
+  color: #94a3b8;
+}
+
+.dark .drawer-nav-link:hover {
+  background-color: rgba(30, 41, 59, 0.6);
+  color: #f8fafc;
+}
+
+.dark .drawer-nav-link.active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3) !important;
+}
+
+/* Ocultar barra de rolagem horizontal mantendo fluidez de scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Efeito de destaque legado para rotas ativas */
+.nav-link:not(.desktop-nav-link).active-route {
+  background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 204, 0.28) !important;
+}
+
+/* Estilo de tabela refinada com alto contraste no Tema Claro */
+.hub-table-row {
+  transition: background-color 0.15s ease;
+}
+
+/* Tabelas no Tema Claro: Linhas divisórias em cinza claro e efeito zebrado intercalado */
+html:not(.dark) table thead tr {
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+html:not(.dark) table thead th {
+  color: #334155 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em;
+}
+
+html:not(.dark) table tbody tr {
+  border-bottom: 1px solid #e2e8f0 !important;
+  transition: background-color 0.12s ease;
+}
+
+html:not(.dark) table tbody tr:nth-child(even) {
+  background-color: rgba(248, 250, 252, 0.75);
+}
+
+html:not(.dark) table tbody tr:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.dark .hub-table-row:hover {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+/* ==========================================================================
+   STRIPE / VERCEL STYLE - BENTO GRID & TELEMETRY SYSTEM
+   ========================================================================== */
+.bento-surface {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .bento-surface {
+  background-color: #0b1320;
+  border-color: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.bento-surface-subtle {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+}
+
+.dark .bento-surface-subtle {
+  background-color: rgba(15, 23, 42, 0.6);
+  border-color: rgba(30, 41, 59, 0.6);
+}
+
+.telemetry-strip {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 640px) {
+  .telemetry-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .telemetry-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dark .telemetry-strip {
+  background-color: #0b1320;
+  border-color: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.telemetry-cell {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.telemetry-cell .label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.375rem;
+}
+
+.dark .telemetry-cell .label {
+  color: #94a3b8;
+}
+
+.telemetry-cell .value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.telemetry-cell .subtext {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  margin-top: 0.375rem;
+  font-weight: 500;
+}
+
+.dark .telemetry-cell .subtext {
+  color: #64748b;
+}
+
+@media (min-width: 640px) {
+  .telemetry-cell {
+    border-bottom: none;
+    border-right: 1px solid #f1f5f9;
+  }
+  .telemetry-cell:nth-child(2n) {
+    border-right: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .telemetry-cell {
+    border-right: 1px solid #f1f5f9;
+  }
+  .telemetry-cell:last-child {
+    border-right: none;
+  }
+}
+
+.dark .telemetry-cell {
+  border-color: rgba(30, 41, 59, 0.8);
+}
+
+.telemetry-cell:hover {
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+.dark .telemetry-cell:hover {
+  background-color: rgba(30, 41, 59, 0.35);
+}
+
+/* Timeline e Feed de Atividades Vercel Style */
+.feed-node {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.feed-node::before {
+  content: '';
+  position: absolute;
+  left: 0.375rem;
+  top: 1.25rem;
+  bottom: -0.75rem;
+  width: 1.5px;
+  background-color: #e2e8f0;
+}
+
+.dark .feed-node::before {
+  background-color: rgba(51, 65, 85, 0.8);
+}
+
+.feed-node:last-child::before {
+  display: none;
+}
+
+.feed-node-dot {
+  position: absolute;
+  left: 0;
+  top: 0.375rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  border: 2px solid #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+.dark .feed-node-dot {
+  background-color: #0b1320;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+
+

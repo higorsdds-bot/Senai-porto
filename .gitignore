@@ -3,5 +3,4 @@ node_modules/
 uploads/
 *.log
 .wrangler/
-dist/
 _worker.bundle
