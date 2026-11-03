@@ -520,7 +520,7 @@ class AuthManager {
 
     verificarRotaAtivacao() {
         const hash = window.location.hash || '';
-        if (hash.toLowerCase().includes('ativar-conta')) {
+        if (hash.toLowerCase().includes('ativar-conta') || hash.toLowerCase().includes('redefinir-senha')) {
             if (hash.includes('token=')) {
                 const raw = hash.split('token=')[1];
                 return raw.split('&')[0].trim();
@@ -659,7 +659,12 @@ class AuthManager {
                 placeholder="seu.email@secult.es.gov.br">
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1.5">Senha</label>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-bold text-slate-500">Senha</label>
+                <button type="button" id="btn-esqueci-senha" class="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer">
+                  Esqueci minha senha
+                </button>
+              </div>
               <input id="login-senha" type="password" required autocomplete="current-password"
                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
                 placeholder="••••••••">
@@ -697,6 +702,32 @@ class AuthManager {
             </button>
           </form>
 
+          <!-- FORMULÁRIO 3: RECUPERAR SENHA -->
+          <form id="form-esqueci-senha" class="space-y-4 hidden" novalidate>
+            <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-slate-600 leading-relaxed flex items-start gap-2.5">
+              <i data-lucide="key-round" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-blue-900 block font-bold mb-0.5">Recuperação de Acesso</strong>
+                Informe seu e-mail corporativo. Enviaremos um link seguro para você redefinir sua senha de acesso.
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">E-mail Cadastrado *</label>
+              <input id="recup-email" type="email" required
+                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                placeholder="seu.email@secult.es.gov.br">
+            </div>
+            <button type="submit" id="btn-enviar-recuperacao"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md shadow-blue-600/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+              Enviar Link de Recuperação
+            </button>
+            <button type="button" id="btn-voltar-login"
+              class="w-full text-xs font-bold text-slate-500 hover:text-slate-800 text-center py-2 flex items-center justify-center gap-1.5 cursor-pointer">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              Voltar para o Login
+            </button>
+          </form>
+
           <!-- BOTÃO VOLTAR AO MODO VISITANTE -->
           <button type="button" id="btn-voltar-visitante"
             class="w-full mt-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
@@ -730,6 +761,77 @@ class AuthManager {
             };
 
             const limparFeedback = () => feedbackEl.classList.add('hidden');
+
+            const formEsqueci = tela.querySelector('#form-esqueci-senha');
+            const btnEsqueciSenha = tela.querySelector('#btn-esqueci-senha');
+            const btnVoltarLogin = tela.querySelector('#btn-voltar-login');
+            const abasNavegacao = tela.querySelector('.flex.p-1.bg-slate-100');
+
+            if (btnEsqueciSenha) {
+              btnEsqueciSenha.addEventListener('click', () => {
+                limparFeedback();
+                formLogin.classList.add('hidden');
+                formCadastro.classList.add('hidden');
+                formEsqueci?.classList.remove('hidden');
+                abasNavegacao?.classList.add('hidden');
+                const recEmail = tela.querySelector('#recup-email');
+                if (recEmail) {
+                  recEmail.value = tela.querySelector('#login-email')?.value || '';
+                  recEmail.focus();
+                }
+                if (window.lucide) lucide.createIcons();
+              });
+            }
+
+            if (btnVoltarLogin) {
+              btnVoltarLogin.addEventListener('click', () => {
+                limparFeedback();
+                formEsqueci?.classList.add('hidden');
+                formCadastro.classList.add('hidden');
+                formLogin.classList.remove('hidden');
+                abasNavegacao?.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+              });
+            }
+
+            if (formEsqueci) {
+              formEsqueci.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                limparFeedback();
+                const email = tela.querySelector('#recup-email')?.value.trim();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                  mostrarFeedback('Informe um e-mail válido.', 'erro');
+                  return;
+                }
+                const btnSubmit = tela.querySelector('#btn-enviar-recuperacao');
+                const textoOriginal = btnSubmit ? btnSubmit.innerHTML : 'Enviar Link de Recuperação';
+                if (btnSubmit) {
+                  btnSubmit.disabled = true;
+                  btnSubmit.innerHTML = 'Enviando link...';
+                }
+                try {
+                  const res = (typeof window.API?.esqueciSenha === 'function')
+                    ? await window.API.esqueciSenha({ email })
+                    : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
+                  const linkAtivacao = res?.data?.linkAtivacao;
+                  const msg = res?.message || 'Link seguro de recuperação enviado!';
+                  if (linkAtivacao) {
+                    feedbackEl.innerHTML = `<div>${msg}</div><div class="mt-2 pt-2 border-t border-emerald-200/60"><a href="${linkAtivacao}" class="font-bold underline text-emerald-800">Clique aqui para redefinir a senha agora</a></div>`;
+                    feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
+                    feedbackEl.classList.remove('hidden');
+                  } else {
+                    mostrarFeedback(msg, 'sucesso');
+                  }
+                } catch (err) {
+                  mostrarFeedback(err.message || 'Erro ao processar recuperação de senha.', 'erro');
+                } finally {
+                  if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = textoOriginal;
+                  }
+                }
+              });
+            }
 
             tabLogin.addEventListener('click', () => {
                 limparFeedback();

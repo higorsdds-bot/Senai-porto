@@ -29,18 +29,28 @@ window.EquipamentosModule = {
         : window.API.getUsuarios().catch(() => []);
 
       const [equipamentos, usuarios] = await Promise.all([
-        window.API.getEquipamentos(),
+        window.API.getEquipamentos().catch(e => {
+          console.warn('[EQUIPAMENTOS] Falha ao carregar ativos:', e);
+          return null;
+        }),
         fetchUsuarios
       ]);
 
-      this.items = Array.isArray(equipamentos) ? equipamentos : (equipamentos?.data || []);
+      if (equipamentos !== null) {
+        this.items = Array.isArray(equipamentos) ? equipamentos : (equipamentos?.data || []);
+      }
       this.usuarios = Array.isArray(usuarios) ? usuarios : (usuarios?.data || []);
+
+      if (equipamentos === null && (!this.items || this.items.length === 0)) {
+        throw new Error('Não foi possível conectar ao catálogo de patrimônio. Tente novamente em instantes.');
+      }
+
       this._renderView(container);
     } catch (err) {
       console.error('[EQUIPAMENTOS] Erro ao carregar ativos:', err);
       container.innerHTML = window.UI.renderEmptyState({
         title: 'Inventário Indisponível',
-        description: 'Não foi possível carregar os equipamentos cadastrados.',
+        description: err.message || 'Não foi possível carregar os equipamentos cadastrados.',
         actionLabel: 'Tentar novamente',
         onActionClick: () => this.render(container)
       });

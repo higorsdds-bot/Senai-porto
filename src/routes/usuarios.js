@@ -17,7 +17,10 @@ const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   notificarNovoCadastroAdmin,
   buscarEmailsAdministradoresGerais,
-  enviarEmailCredenciaisCriacaoDireta
+  enviarEmailCredenciaisCriacaoDireta,
+  enviarEmailAtivacaoConta,
+  gerarTokenAtivacao,
+  gerarHashToken
 } = require('../services/email');
 
 // Perfis válidos na hierarquia do HUB ES+
@@ -366,12 +369,13 @@ router.get('/:id', requirePermission('usuarios.visualizar'), async (req, res) =>
 
 // ─── POST /api/v1/usuarios ───────────────────────────────────────────────────
 router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
-  const { nome, email, senha, perfil, setor_id, status, permissoes_adicionais } = req.body;
+  const { nome, email, senha, perfil, setor_id, status, permissoes_adicionais, modo_senha, enviar_email_ativacao } = req.body;
+  const porEmail = (modo_senha === 'email' || enviar_email_ativacao === true || !senha);
   const erros = {};
 
   if (!nome || nome.trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = 'Email inválido.';
-  if (!senha || senha.length < 8) erros.senha = 'Senha precisa ter pelo menos 8 caracteres.';
+  if (!porEmail && (!senha || senha.length < 8)) erros.senha = 'Senha precisa ter pelo menos 8 caracteres.';
   if (!perfil || !PERFIS_VALIDOS.includes(perfil)) erros.perfil = 'Perfil inválido.';
 
   // Regra de Governança: Somente Admin Geral pode criar contas ADMIN

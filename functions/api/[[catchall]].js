@@ -591,6 +591,56 @@ async function registrarAuditoria(db, { usuario_id = null, acao, entidade = null
   }
 }
 
+async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
+  try {
+    const resendKey = (env?.RESEND_API_KEY || '').trim();
+    const brevoKey = (env?.BREVO_API_KEY || '').trim();
+    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <noreply@hubes.secult.es.gov.br>';
+
+    if (resendKey) {
+      const resp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendKey}`
+        },
+        body: JSON.stringify({
+          from: fromStr,
+          to: [para],
+          subject: assunto,
+          html: html,
+          text: texto || html.replace(/<[^>]+>/g, '')
+        })
+      });
+      return resp.ok;
+    }
+
+    if (brevoKey) {
+      const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'api-key': brevoKey
+        },
+        body: JSON.stringify({
+          sender: { name: 'HUB ES+', email: fromStr.includes('<') ? fromStr.match(/<([^>]+)>/)[1] : fromStr },
+          to: [{ email: para }],
+          subject: assunto,
+          htmlContent: html,
+          textContent: texto || html.replace(/<[^>]+>/g, '')
+        })
+      });
+      return resp.ok;
+    }
+  } catch (err) {
+    console.warn('[D1 EMAIL] Erro ao despachar e-mail:', err.message);
+  }
+  return false;
+}
+
+
 // ─── Permissões e Módulos do Usuário no D1 ───────────────────────────────────
 async function obterPermissoesEModulos(db, usuario) {
   const perfilNorm = normalizeProfile(usuario.perfil);
@@ -1006,6 +1056,52 @@ export async function onRequest(context) {
       }, 201);
     }
 
+    if (route === '/auth/esqueci-senha' && method === 'POST') {
+      const { email } = await getBodyData(request);
+      if (!email || !String(email).includes('@')) {
+        return jsonResponse({ success: false, message: 'Informe um e-mail válido.' }, 422);
+      }
+      const cleanEmail = String(email).toLowerCase().trim();
+      const user = await d1First(db, `SELECT id, nome, email, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
+      
+      const msgGenerica = 'Se o e-mail informado estiver cadastrado em nossa base, um link seguro de recuperação foi enviado.';
+      if (!user) {
+        return jsonResponse({ success: true, message: msgGenerica });
+      }
+
+      const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+      const tokenHash = await sha256Hex(rawToken);
+      await d1Run(
+        db,
+        `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+24 hours'), ?)`,
+        [user.id, tokenHash, ip]
+      );
+
+      const linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+      await enviarEmailGenericoD1(env, {
+        para: user.email,
+        assunto: 'Recuperação de Acesso - HUB ES+',
+        html: `<p>Olá <strong>${user.nome}</strong>,</p><p>Recebemos uma solicitação para redefinir a senha da sua conta no <strong>HUB ES+</strong>.</p><p><a href="${linkAtivacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Redefinir Minha Senha</a></p><p>Ou copie e cole no navegador: <br><code>${linkAtivacao}</code></p><p style="font-size:12px;color:#64748b;">Este link expira em 24 horas.</p>`
+      });
+
+      await registrarAuditoria(db, {
+        usuario_id: user.id,
+        acao: 'SOLICITAR_RECUPERACAO_SENHA',
+        entidade: 'usuarios',
+        entidade_id: user.id,
+        descricao: `Solicitação de recuperação de senha para ${user.email}.`,
+        ip,
+        user_agent: userAgent
+      });
+
+      return jsonResponse({
+        success: true,
+        message: msgGenerica,
+        data: { linkAtivacao }
+      });
+    }
+
+
     if (route === '/auth/verificar-token-ativacao' && method === 'GET') {
       const token = url.searchParams.get('token') || '';
       if (!token || token.length < 10) {
@@ -1352,7 +1448,7 @@ export async function onRequest(context) {
       if (!hasAnyPerm(auth, ['usuarios.criar', 'usuarios.pre_cadastrar'])) {
         return jsonResponse({ success: false, message: 'Sem permissão para criar usuário.' }, 403);
       }
-      const { nome, email, senha, perfil, setor_id, status, permissoes_adicionais } = await getBodyData(request);
+      const { nome, email, senha, perfil, setor_id, status, permissoes_adicionais, modo_senha, enviar_email_ativacao } = await getBodyData(request);
       if (!nome || !email) {
         return jsonResponse({ success: false, message: 'Nome e e-mail são obrigatórios.' }, 422);
       }
@@ -1361,8 +1457,10 @@ export async function onRequest(context) {
       if (dup) {
         return jsonResponse({ success: false, message: 'E-mail já cadastrado no sistema.' }, 422);
       }
-      const senhaHash = await bcrypt.hash(String(senha || 'Secult@2026!'), 10);
-      const statusFinal = isUserAdmin(usuario) ? (status || 'ATIVO') : 'PENDENTE';
+
+      const porEmail = (modo_senha === 'email' || enviar_email_ativacao === true || !senha);
+      const senhaHash = await bcrypt.hash(porEmail ? crypto.randomUUID() : String(senha), 10);
+      const statusFinal = porEmail ? 'AGUARDANDO_ATIVACAO' : (isUserAdmin(usuario) ? (status || 'ATIVO') : 'PENDENTE');
       const perfilFinal = perfil || 'OPERADOR';
       const res = await d1Run(
         db,
@@ -1372,16 +1470,43 @@ export async function onRequest(context) {
       if (Array.isArray(permissoes_adicionais)) {
         await syncPermissoesExtrasUsuarioD1(db, res.insertId, permissoes_adicionais);
       }
+
+      let linkAtivacao = null;
+      if (porEmail) {
+        const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+        const tokenHash = await sha256Hex(rawToken);
+        await d1Run(
+          db,
+          `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)`,
+          [res.insertId, tokenHash, ip]
+        );
+        linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+        await enviarEmailGenericoD1(env, {
+          para: cleanEmail,
+          assunto: 'Ativação de Acesso - HUB ES+',
+          html: `<p>Olá <strong>${String(nome).trim()}</strong>,</p><p>Seu acesso ao <strong>HUB ES+</strong> foi cadastrado. Clique no link abaixo para criar sua senha confidencial e ativar sua conta:</p><p><a href="${linkAtivacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Ativar Minha Conta</a></p><p>Ou copie e cole: <br><code>${linkAtivacao}</code></p><p style="font-size:12px;color:#64748b;">Este link é seguro e expira em 48 horas.</p>`
+        });
+      }
+
       await registrarAuditoria(db, {
         usuario_id: usuario.id,
         acao: 'CRIAR_USUARIO',
         entidade: 'usuarios',
         entidade_id: res.insertId,
-        descricao: `Usuário "${nome}" (${cleanEmail}) criado com perfil ${perfilFinal}.`,
+        descricao: porEmail
+          ? `Usuário "${nome}" (${cleanEmail}) cadastrado com envio de link de ativação.`
+          : `Usuário "${nome}" (${cleanEmail}) criado com perfil ${perfilFinal}.`,
         ip,
         user_agent: userAgent
       });
-      return jsonResponse({ success: true, message: 'Usuário cadastrado com sucesso.', data: { id: res.insertId } }, 201);
+
+      return jsonResponse({
+        success: true,
+        message: porEmail
+          ? 'Usuário cadastrado com sucesso! Link seguro de ativação enviado para o colaborador.'
+          : 'Usuário cadastrado com sucesso.',
+        data: { id: res.insertId, linkAtivacao }
+      }, 201);
     }
 
     if (matchUsuarioId && method === 'PUT') {

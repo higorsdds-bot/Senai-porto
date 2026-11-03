@@ -612,14 +612,17 @@ window.UsuariosModule = {
     });
   },
 
-  _openNovoUsuarioModal(container) {
+    _openNovoUsuarioModal(container) {
     const setoresOptions = (this.setores || []).map(s => `<option value="${s.id}">${this._esc(s.nome)}</option>`).join('');
 
     const modalContent = `
       <form id="form-novo-usuario-modal" class="space-y-4">
+        <!-- ALERTA INLINE DE VALIDAÇÃO (SEMPRE VISÍVEL EM CASO DE ERRO) -->
+        <div id="novo-user-alerta" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2"></div>
+
         <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center gap-2">
           <i data-lucide="user-plus" class="w-4 h-4 text-blue-600 shrink-0"></i>
-          <span>Cadastre um novo usuário com acesso direto ao sistema (status <strong>ATIVO</strong>).</span>
+          <span>Cadastre um novo usuário com acesso direto ou via link de ativação por e-mail.</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -703,22 +706,53 @@ window.UsuariosModule = {
           </div>
         </div>
 
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-xs font-bold text-slate-700">Senha de Acesso *</label>
-            <button type="button" id="btn-gerar-senha-novo-user" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
-              <i data-lucide="sparkles" class="w-3 h-3"></i>
-              <span>Gerar Senha</span>
-            </button>
+        <!-- OPÇÃO DE DEFINIÇÃO DE SENHA -->
+        <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/80 space-y-3">
+          <label class="block text-xs font-bold text-slate-800">Definição de Senha e Ativação *</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <label id="label-opcao-senha-direta" class="flex items-start gap-2.5 p-3 rounded-xl border-2 border-blue-600 bg-white cursor-pointer transition-all shadow-sm">
+              <input type="radio" name="opcao_senha_usuario" id="opcao-senha-direta" value="direta" checked class="mt-0.5 text-blue-600 focus:ring-blue-500">
+              <div>
+                <strong class="text-xs text-slate-800 block">Definir senha agora</strong>
+                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">Definir ou gerar a senha manualmente agora (acesso imediato).</span>
+              </div>
+            </label>
+            <label id="label-opcao-senha-email" class="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 bg-white/70 hover:bg-white cursor-pointer transition-all">
+              <input type="radio" name="opcao_senha_usuario" id="opcao-senha-email" value="email" class="mt-0.5 text-blue-600 focus:ring-blue-500">
+              <div>
+                <strong class="text-xs text-slate-800 block">Enviar link por e-mail</strong>
+                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">O colaborador recebe um link seguro para criar sua senha e autenticar.</span>
+              </div>
+            </label>
           </div>
-          <input 
-            type="password" 
-            id="novo-user-senha" 
-            required 
-            minlength="8" 
-            placeholder="Mínimo de 8 caracteres"
-            class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
-          />
+
+          <!-- Bloco: Campo de Senha Manual -->
+          <div id="bloco-senha-manual" class="space-y-1.5 pt-1">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-700">Senha de Acesso *</label>
+              <button type="button" id="btn-gerar-senha-novo-user" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Gerar Senha</span>
+              </button>
+            </div>
+            <input 
+              type="password" 
+              id="novo-user-senha" 
+              minlength="8" 
+              placeholder="Mínimo de 8 caracteres"
+              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
+            />
+            <p class="text-[10px] text-slate-500" id="novo-user-senha-help">A senha de acesso é obrigatória caso escolha definir agora (mínimo de 8 caracteres).</p>
+          </div>
+
+          <!-- Bloco: Aviso informativo do link por e-mail -->
+          <div id="bloco-senha-email-info" class="hidden p-3 bg-blue-50 border border-blue-200/80 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2">
+            <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="block text-blue-950 font-bold mb-0.5">Ativação segura pelo colaborador:</strong>
+              Não é necessário preencher senha agora. Será gerado um token exclusivo com validade e enviado para o e-mail corporativo para que o usuário cadastre sua senha e autentique a conta.
+            </div>
+          </div>
         </div>
       </form>
     `;
@@ -734,53 +768,112 @@ window.UsuariosModule = {
         const email = document.getElementById('novo-user-email')?.value.trim();
         const perfil = document.getElementById('novo-user-perfil')?.value;
         const setor_id = document.getElementById('novo-user-setor')?.value;
+        const isPorEmail = document.getElementById('opcao-senha-email')?.checked;
         const senha = document.getElementById('novo-user-senha')?.value;
         const permissoes_adicionais = Array.from(document.querySelectorAll('.perm-extra-cb:checked')).map(cb => cb.value);
 
+        const mostrarErro = (campoId, mensagem) => {
+          const alertaEl = document.getElementById('novo-user-alerta');
+          if (alertaEl) {
+            alertaEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i><span>${mensagem}</span>`;
+            alertaEl.classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons({ root: alertaEl });
+          }
+          if (campoId) {
+            const input = document.getElementById(campoId);
+            if (input) {
+              input.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
+              input.focus();
+              input.addEventListener('input', () => {
+                input.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                alertaEl?.classList.add('hidden');
+              }, { once: true });
+            }
+          }
+          window.UI.toast({ title: 'Atenção', message: mensagem, type: 'warning' });
+        };
+
         if (!nome || nome.length < 3) {
-          window.UI.toast({ title: 'Atenção', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
+          mostrarErro('novo-user-nome', 'O nome completo deve ter no mínimo 3 caracteres.');
           return false;
         }
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail corporativo válido.', type: 'warning' });
+          mostrarErro('novo-user-email', 'Informe um e-mail corporativo válido.');
           return false;
         }
-        if (!senha || senha.length < 8) {
-          window.UI.toast({ title: 'Atenção', message: 'A senha de acesso precisa ter pelo menos 8 caracteres.', type: 'warning' });
+
+        // Validação de senha: obrigatória apenas quando a opção for "Definir senha agora"
+        if (!isPorEmail && (!senha || senha.length < 8)) {
+          mostrarErro('novo-user-senha', 'A senha de acesso é obrigatória caso escolha definir agora (mínimo de 8 caracteres). Digite uma senha ou selecione "Enviar link por e-mail".');
           return false;
         }
 
         try {
-          await window.API.createUsuario({
+          const payload = {
             nome,
             email,
-            senha,
             perfil,
             setor_id: setor_id ? Number(setor_id) : null,
-            status: 'ATIVO',
-            permissoes_adicionais
-          });
+            status: isPorEmail ? 'AGUARDANDO_ATIVACAO' : 'ATIVO',
+            permissoes_adicionais,
+            modo_senha: isPorEmail ? 'email' : 'direta',
+            enviar_email_ativacao: isPorEmail
+          };
+          if (!isPorEmail && senha) {
+            payload.senha = senha;
+          }
+
+          const res = await window.API.createUsuario(payload);
+
+          const msgSucesso = isPorEmail
+            ? `Colaborador "${nome}" cadastrado com sucesso! Um link seguro de ativação foi enviado para o e-mail ${email}.`
+            : `O colaborador "${nome}" foi cadastrado com sucesso com a senha informada!`;
 
           window.UI.toast({
             title: 'Usuário Criado',
-            message: `O colaborador "${nome}" foi cadastrado com sucesso!`,
-            type: 'success'
+            message: msgSucesso,
+            type: 'success',
+            duration: 5000
           });
 
           if (container) await this.render(container);
           return true;
         } catch (err) {
-          window.UI.toast({
-            title: 'Erro ao Cadastrar',
-            message: err.message || 'Não foi possível cadastrar o usuário.',
-            type: 'error'
-          });
+          mostrarErro(null, err.message || 'Não foi possível cadastrar o usuário.');
           return false;
         }
       }
     });
 
     setTimeout(() => {
+      const radDireta = document.getElementById('opcao-senha-direta');
+      const radEmail = document.getElementById('opcao-senha-email');
+      const blocoManual = document.getElementById('bloco-senha-manual');
+      const blocoEmail = document.getElementById('bloco-senha-email-info');
+      const lblDireta = document.getElementById('label-opcao-senha-direta');
+      const lblEmail = document.getElementById('label-opcao-senha-email');
+
+      const atualizarOpcaoSenha = () => {
+        if (radEmail?.checked) {
+          blocoManual?.classList.add('hidden');
+          blocoEmail?.classList.remove('hidden');
+          lblEmail?.classList.add('border-2', 'border-blue-600');
+          lblEmail?.classList.remove('border-slate-200');
+          lblDireta?.classList.remove('border-2', 'border-blue-600');
+          lblDireta?.classList.add('border-slate-200');
+        } else {
+          blocoManual?.classList.remove('hidden');
+          blocoEmail?.classList.add('hidden');
+          lblDireta?.classList.add('border-2', 'border-blue-600');
+          lblDireta?.classList.remove('border-slate-200');
+          lblEmail?.classList.remove('border-2', 'border-blue-600');
+          lblEmail?.classList.add('border-slate-200');
+        }
+      };
+
+      radDireta?.addEventListener('change', atualizarOpcaoSenha);
+      radEmail?.addEventListener('change', atualizarOpcaoSenha);
+
       document.getElementById('btn-gerar-senha-novo-user')?.addEventListener('click', () => {
         const input = document.getElementById('novo-user-senha');
         if (input) {
@@ -789,11 +882,14 @@ window.UsuariosModule = {
           for (let i = 0; i < 10; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
           input.value = pass;
           input.type = 'text';
+          input.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+          document.getElementById('novo-user-alerta')?.classList.add('hidden');
           window.UI.toast({ title: 'Senha Gerada', message: `Senha gerada: ${pass}`, type: 'info' });
         }
       });
+
       if (window.lucide) {
-        const modalContainer = document.getElementById('modal-container');
+        const modalContainer = document.getElementById('hub-modal-container') || document.getElementById('modal-container');
         if (modalContainer) window.lucide.createIcons({ root: modalContainer });
       }
     }, 50);

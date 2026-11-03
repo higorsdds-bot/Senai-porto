@@ -42,7 +42,9 @@ window.DashboardModule = {
         insumos,
         comunicados,
         advertencias,
-        usuarios
+        usuarios,
+        documentos,
+        setores
       ] = await Promise.all([
         window.API.getDashboardStats().catch(() => ({})),
         hasPerm('ocorrencias.visualizar') ? window.API.getOcorrencias().catch(() => []) : Promise.resolve([]),
@@ -50,7 +52,9 @@ window.DashboardModule = {
         hasPerm('insumos.visualizar') ? window.API.getInsumos().catch(() => []) : Promise.resolve([]),
         hasPerm('comunicados.visualizar') ? window.API.getComunicados().catch(() => []) : Promise.resolve([]),
         hasPerm('advertencias.visualizar') ? window.API.getAdvertencias().catch(() => []) : Promise.resolve([]),
-        window.API.getUsuarios().catch(() => [])
+        window.API.getUsuarios().catch(() => []),
+        hasPerm('documentos.visualizar') ? window.API.getDocumentos().catch(() => []) : Promise.resolve([]),
+        window.API.getSetores().catch(() => [])
       ]);
 
       const stats = statsRes?.data || statsRes || {};
@@ -61,6 +65,10 @@ window.DashboardModule = {
       const listaComunicados = Array.isArray(comunicados) ? comunicados : [];
       const listaAdvertencias = Array.isArray(advertencias) ? advertencias : (advertencias?.data || []);
       const listaAuditoria = Array.isArray(stats.ultimas_acoes) ? stats.ultimas_acoes : [];
+      const listaDocumentos = Array.isArray(documentos) ? documentos : [];
+      const listaSetores = Array.isArray(setores) ? setores : [];
+      const totalDocs = Number(stats.documentos?.total ?? listaDocumentos.length);
+      const totalEquipamentos = Number(stats.equipamentos?.total ?? 0);
 
       // Verificação de comunicados urgentes não vistos
       const usuarioLogado = window.Auth?.getUsuario();
@@ -232,8 +240,8 @@ window.DashboardModule = {
         eventosAgendados,
         insumosCriticos,
         advertenciasPendentes,
-        totalDocs: listaDocumentos.length,
-        totalEquipamentos: listaEquipamentos.length,
+        totalDocs,
+        totalEquipamentos,
         temAltaNaoVisto,
         comunicadosAltaNaoVistos,
         eventosFeed,

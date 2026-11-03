@@ -206,6 +206,13 @@ class ApiService {
     });
   }
 
+  async esqueciSenha(dados) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/esqueci-senha`, {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    });
+  }
+
   async heartbeat() {
     try {
       return await this.request(`${CONFIG.ENDPOINTS.AUTH}/heartbeat`, { method: 'POST' });

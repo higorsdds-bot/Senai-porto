@@ -635,6 +635,75 @@ router.get('/verificar-token-ativacao', async (req, res) => {
   }
 });
 
+// ─── POST /api/v1/auth/esqueci-senha ──────────────────────────────────────────
+router.post('/esqueci-senha', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(422).json({ success: false, message: 'Informe um e-mail válido.' });
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const msgGenerica = 'Se o e-mail informado estiver cadastrado em nossa base, um link seguro de recuperação foi enviado.';
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT id, nome, email, perfil, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
+      [cleanEmail]
+    );
+
+    if (!rows.length) {
+      return res.json({ success: true, message: msgGenerica });
+    }
+
+    const usuario = rows[0];
+    const rawToken = gerarTokenAtivacao();
+    const tokenHash = gerarHashToken(rawToken);
+
+    await pool.query(
+      `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR), ?)`,
+      [usuario.id, tokenHash, getClientIp(req)]
+    );
+
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const linkRecuperacao = `${baseUrl}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+
+    let emailStatus = null;
+    try {
+      emailStatus = await enviarEmail({
+        para: usuario.email,
+        assunto: 'Recuperação de Acesso - HUB ES+',
+        texto: `Olá ${usuario.nome},\n\nRecebemos uma solicitação de redefinição de senha para sua conta no HUB ES+.\n\nAcesse o link abaixo para criar uma nova senha:\n${linkRecuperacao}\n\nEste link é válido por 24 horas.`,
+        html: `<p>Olá <strong>${usuario.nome}</strong>,</p><p>Recebemos uma solicitação de redefinição de senha para sua conta no <strong>HUB ES+</strong>.</p><p><a href="${linkRecuperacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Redefinir Minha Senha</a></p><p>Ou copie e cole no navegador: <br><code>${linkRecuperacao}</code></p><p style="font-size:12px;color:#64748b;">Este link é válido por 24 horas.</p>`
+      });
+    } catch (e) {
+      console.warn('[AUTH] Falha ao enviar email de recuperação:', e.message);
+    }
+
+    await registrarAuditoria({
+      usuario_id: usuario.id,
+      acao: 'SOLICITAR_RECUPERACAO_SENHA',
+      entidade: 'usuarios',
+      entidade_id: usuario.id,
+      descricao: `Solicitação de recuperação de senha para ${usuario.email}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: msgGenerica,
+      data: {
+        linkAtivacao: (!emailStatus || !emailStatus.success) ? linkRecuperacao : null
+      }
+    });
+  } catch (err) {
+    console.error('[AUTH] esqueci-senha:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao processar recuperação de senha.' });
+  }
+});
+
 // ─── POST /api/v1/auth/ativar-conta ──────────────────────────────────────────
 // Conclui a ativação da conta, definindo a própria senha do usuário com link de uso único
 router.post('/ativar-conta', async (req, res) => {

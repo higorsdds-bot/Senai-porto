@@ -16,7 +16,7 @@ class UIManager {
     if (!document.getElementById('hub-toast-container')) {
       const tc = document.createElement('div');
       tc.id = 'hub-toast-container';
-      tc.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+      tc.className = 'fixed bottom-5 right-5 z-[10000] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
       document.body.appendChild(tc);
       this.toastContainer = tc;
     } else {
