@@ -17,7 +17,9 @@ const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   notificarNovoCadastroAdmin,
   buscarEmailsAdministradoresGerais,
-  gerarHashToken
+  gerarHashToken,
+  gerarTokenAtivacao,
+  enviarEmailRedefinicaoSenha
 } = require('../services/email');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
@@ -671,11 +673,10 @@ router.post('/esqueci-senha', async (req, res) => {
 
     let emailStatus = null;
     try {
-      emailStatus = await enviarEmail({
-        para: usuario.email,
-        assunto: 'Recuperação de Acesso - HUB ES+',
-        texto: `Olá ${usuario.nome},\n\nRecebemos uma solicitação de redefinição de senha para sua conta no HUB ES+.\n\nAcesse o link abaixo para criar uma nova senha:\n${linkRecuperacao}\n\nEste link é válido por 24 horas.`,
-        html: `<p>Olá <strong>${usuario.nome}</strong>,</p><p>Recebemos uma solicitação de redefinição de senha para sua conta no <strong>HUB ES+</strong>.</p><p><a href="${linkRecuperacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Redefinir Minha Senha</a></p><p>Ou copie e cole no navegador: <br><code>${linkRecuperacao}</code></p><p style="font-size:12px;color:#64748b;">Este link é válido por 24 horas.</p>`
+      emailStatus = await enviarEmailRedefinicaoSenha({
+        usuarioNome: usuario.nome,
+        usuarioEmail: usuario.email,
+        linkRecuperacao
       });
     } catch (e) {
       console.warn('[AUTH] Falha ao enviar email de recuperação:', e.message);

@@ -855,6 +855,64 @@ async function enviarEmailCredenciaisCriacaoDireta({
   });
 }
 
+/**
+ * 4. Envia e-mail de recuperação de acesso com link para redefinição de senha.
+ */
+async function enviarEmailRedefinicaoSenha({ usuarioNome, usuarioEmail, linkRecuperacao }) {
+  const dest = (usuarioEmail || '').trim();
+  if (!dest || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest)) {
+    return { success: false, error: 'E-mail de destinatário inválido.' };
+  }
+
+  const assunto = `[HUB ES+] Recuperação de Acesso — Redefinição de Senha`;
+  const texto = `Olá, ${usuarioNome}!\n\n` +
+    `Recebemos uma solicitação de redefinição de senha para a sua conta no HUB ES+.\n\n` +
+    `Acesse o link abaixo para criar sua nova senha de acesso:\n` +
+    `${linkRecuperacao}\n\n` +
+    `Este link é confidencial e possui validade de 24 horas.\n` +
+    `Se você não solicitou a redefinição de senha, desconsidere esta mensagem.\n\n` +
+    `Atenciosamente,\nEquipe de Gestão e Tecnologia HUB ES+`;
+
+  const conteudoHtml = `
+    <div style="display:inline-block; padding: 4px 12px; background-color: #dbeafe; color: #1d4ed8; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">
+      Recuperação de Acesso
+    </div>
+    <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0;">Redefinição da Senha de Acesso</h2>
+    <p style="font-size: 14px; color: #334155; line-height: 1.6;">
+      Olá, <strong>${usuarioNome}</strong>. Recebemos uma solicitação para redefinir a senha vinculada à sua conta corporativa no <strong>HUB ES+</strong>.
+    </p>
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${linkRecuperacao}" target="_blank" style="background: linear-gradient(135deg, #0066cc 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 13px; display: inline-block; box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3);">
+        Redefinir Minha Senha &rarr;
+      </a>
+    </div>
+
+    <p style="font-size: 12px; color: #64748b; margin-top: 20px;">
+      Ou se preferir, copie e cole o endereço abaixo no seu navegador:<br>
+      <a href="${linkRecuperacao}" style="color: #0284c7; word-break: break-all;">${linkRecuperacao}</a>
+    </p>
+
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 0 10px 10px 0; margin-top: 24px;">
+      <p style="font-size: 12px; color: #92400e; margin: 0; line-height: 1.5;">
+        ⚠️ <strong>Atenção:</strong> Este link é confidencial, de uso único e expira em 24 horas. Se você não solicitou a troca de senha, sua conta permanece segura e nenhuma ação adicional é necessária.
+      </p>
+    </div>
+  `;
+
+  const html = aplicarTemplateBaseHtml({
+    titulo: 'HUB ES+ • Redefinição de Senha',
+    conteudoHtml
+  });
+
+  return await enviarEmail({
+    para: dest,
+    assunto,
+    texto,
+    html
+  });
+}
+
 module.exports = {
   enviarEmail,
   getProvedorEmail,
@@ -865,6 +923,7 @@ module.exports = {
   enviarEmailAtivacaoConta,
   enviarEmailRejeicaoCadastro,
   enviarEmailCredenciaisCriacaoDireta,
+  enviarEmailRedefinicaoSenha,
   buscarEmailsAdministradoresGerais,
   ACTIVATION_TOKEN_EXPIRES_HOURS
 };

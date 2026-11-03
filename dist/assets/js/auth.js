@@ -813,12 +813,25 @@ class AuthManager {
                   const res = (typeof window.API?.esqueciSenha === 'function')
                     ? await window.API.esqueciSenha({ email })
                     : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
-                  const linkAtivacao = res?.data?.linkAtivacao;
-                  const msg = res?.message || 'Link seguro de recuperação enviado!';
+                  const linkAtivacao = res?.linkAtivacao || res?.data?.linkAtivacao;
+                  const emailEnviado = res?.emailEnviado ?? res?.data?.emailEnviado;
+                  const msg = res?.message || (emailEnviado ? 'Link seguro enviado para o seu e-mail!' : 'Link seguro de redefinição gerado com sucesso!');
                   if (linkAtivacao) {
-                    feedbackEl.innerHTML = `<div>${msg}</div><div class="mt-2 pt-2 border-t border-emerald-200/60"><a href="${linkAtivacao}" class="font-bold underline text-emerald-800">Clique aqui para redefinir a senha agora</a></div>`;
+                    feedbackEl.innerHTML = `
+                      <div class="font-semibold text-emerald-900">${msg}</div>
+                      <div class="mt-2.5 p-3 bg-white rounded-xl border border-emerald-300 shadow-sm text-left">
+                        <div class="text-[11px] text-slate-500 font-bold mb-1 flex items-center gap-1.5">
+                          <i data-lucide="link" class="w-3.5 h-3.5 text-blue-600"></i>
+                          <span>Link Direto de Redefinição:</span>
+                        </div>
+                        <a href="${linkAtivacao}" class="font-bold underline text-blue-700 break-all text-xs hover:text-blue-900 block">
+                          Clique aqui para redefinir sua senha agora
+                        </a>
+                      </div>
+                    `;
                     feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
                     feedbackEl.classList.remove('hidden');
+                    if (window.lucide) lucide.createIcons();
                   } else {
                     mostrarFeedback(msg, 'sucesso');
                   }

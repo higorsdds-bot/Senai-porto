@@ -595,9 +595,10 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
   try {
     const resendKey = (env?.RESEND_API_KEY || '').trim();
     const brevoKey = (env?.BREVO_API_KEY || '').trim();
-    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <noreply@hubes.secult.es.gov.br>';
+    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <notificacoes@secult.es.gov.br>';
 
     if (resendKey) {
+      const fromSender = (env?.RESEND_SENDER_EMAIL || fromStr || 'onboarding@resend.dev').trim();
       const resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -606,17 +607,24 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
           'Authorization': `Bearer ${resendKey}`
         },
         body: JSON.stringify({
-          from: fromStr,
+          from: fromSender.includes('<') ? fromSender : `HUB ES+ <${fromSender}>`,
           to: [para],
           subject: assunto,
           html: html,
           text: texto || html.replace(/<[^>]+>/g, '')
         })
       });
-      return resp.ok;
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        console.warn(`[RESEND API ERROR ${resp.status}]:`, errText);
+        return false;
+      }
+      return true;
     }
 
     if (brevoKey) {
+      const senderEmail = (env?.BREVO_SENDER_EMAIL || (fromStr.includes('<') ? fromStr.match(/<([^>]+)>/)[1] : fromStr)).trim();
+      const senderName = env?.BREVO_SENDER_NAME || 'HUB ES+ | SECULT';
       const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -625,15 +633,22 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
           'api-key': brevoKey
         },
         body: JSON.stringify({
-          sender: { name: 'HUB ES+', email: fromStr.includes('<') ? fromStr.match(/<([^>]+)>/)[1] : fromStr },
+          sender: { name: senderName, email: senderEmail },
           to: [{ email: para }],
           subject: assunto,
           htmlContent: html,
           textContent: texto || html.replace(/<[^>]+>/g, '')
         })
       });
-      return resp.ok;
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        console.warn(`[BREVO API ERROR ${resp.status}]:`, errText);
+        return false;
+      }
+      return true;
     }
+
+    console.warn('[D1 EMAIL] Nenhum provedor (BREVO_API_KEY ou RESEND_API_KEY) configurado no Cloudflare Pages.');
   } catch (err) {
     console.warn('[D1 EMAIL] Erro ao despachar e-mail:', err.message);
   }
@@ -1078,7 +1093,7 @@ export async function onRequest(context) {
       );
 
       const linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
-      await enviarEmailGenericoD1(env, {
+      const emailEnviado = await enviarEmailGenericoD1(env, {
         para: user.email,
         assunto: 'Recuperação de Acesso - HUB ES+',
         html: `<p>Olá <strong>${user.nome}</strong>,</p><p>Recebemos uma solicitação para redefinir a senha da sua conta no <strong>HUB ES+</strong>.</p><p><a href="${linkAtivacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Redefinir Minha Senha</a></p><p>Ou copie e cole no navegador: <br><code>${linkAtivacao}</code></p><p style="font-size:12px;color:#64748b;">Este link expira em 24 horas.</p>`
@@ -1089,15 +1104,17 @@ export async function onRequest(context) {
         acao: 'SOLICITAR_RECUPERACAO_SENHA',
         entidade: 'usuarios',
         entidade_id: user.id,
-        descricao: `Solicitação de recuperação de senha para ${user.email}.`,
+        descricao: `Solicitação de recuperação de senha para ${user.email}. (Email enviado: ${emailEnviado ? 'SIM' : 'NÃO/Sem provedor'})`,
         ip,
         user_agent: userAgent
       });
 
       return jsonResponse({
         success: true,
-        message: msgGenerica,
-        data: { linkAtivacao }
+        message: emailEnviado
+          ? 'Link de recuperação enviado com sucesso para seu e-mail!'
+          : msgGenerica,
+        data: { linkAtivacao, emailEnviado }
       });
     }
 
