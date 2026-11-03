@@ -33,44 +33,34 @@ window.DashboardModule = {
       const hasPerm = (p) => isAdm || window.Auth?.hasPermission(p);
       const hasAny = (arr) => isAdm || window.Auth?.hasAnyPermission(arr);
 
-      // Carrega dados concorrentes apenas dos módulos permitidos para o perfil ativo
+      // Otimização: Estatísticas agregadas do banco (1 requisição rápida com cache)
+      // e busca paralela apenas das demandas necessárias para a fila operacional crítica.
       const [
+        statsRes,
         ocorrencias,
         compras,
-        eventos,
-        documentos,
-        equipamentos,
         insumos,
-        setores,
-        usuarios,
         comunicados,
         advertencias,
-        auditoriaLogs
+        usuarios
       ] = await Promise.all([
+        window.API.getDashboardStats().catch(() => ({})),
         hasPerm('ocorrencias.visualizar') ? window.API.getOcorrencias().catch(() => []) : Promise.resolve([]),
         hasAny(['compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar']) ? window.API.getCompras().catch(() => []) : Promise.resolve([]),
-        hasPerm('eventos.visualizar') ? window.API.getEventos().catch(() => []) : Promise.resolve([]),
-        hasPerm('documentos.visualizar') ? window.API.getDocumentos().catch(() => []) : Promise.resolve([]),
-        hasPerm('equipamentos.visualizar') ? window.API.getEquipamentos().catch(() => []) : Promise.resolve([]),
         hasPerm('insumos.visualizar') ? window.API.getInsumos().catch(() => []) : Promise.resolve([]),
-        window.API.getSetores().catch(() => []),
-        window.API.getUsuarios().catch(() => []),
         hasPerm('comunicados.visualizar') ? window.API.getComunicados().catch(() => []) : Promise.resolve([]),
         hasPerm('advertencias.visualizar') ? window.API.getAdvertencias().catch(() => []) : Promise.resolve([]),
-        (hasPerm('auditoria.visualizar') && window.API.getAuditoriaLogs) ? window.API.getAuditoriaLogs({ limit: 12 }).catch(() => []) : Promise.resolve([])
+        window.API.getUsuarios().catch(() => [])
       ]);
 
+      const stats = statsRes?.data || statsRes || {};
       const listaOcorrencias = Array.isArray(ocorrencias) ? ocorrencias : [];
       const listaCompras = Array.isArray(compras) ? compras : [];
-      const listaEventos = Array.isArray(eventos) ? eventos : [];
-      const listaDocumentos = Array.isArray(documentos) ? documentos : [];
-      const listaEquipamentos = Array.isArray(equipamentos) ? equipamentos : [];
       const listaInsumos = Array.isArray(insumos) ? insumos : [];
-      const listaSetores = Array.isArray(setores) ? setores : [];
       const listaUsuarios = Array.isArray(usuarios) ? usuarios : [];
       const listaComunicados = Array.isArray(comunicados) ? comunicados : [];
       const listaAdvertencias = Array.isArray(advertencias) ? advertencias : (advertencias?.data || []);
-      const listaAuditoria = Array.isArray(auditoriaLogs) ? auditoriaLogs : (auditoriaLogs?.data || []);
+      const listaAuditoria = Array.isArray(stats.ultimas_acoes) ? stats.ultimas_acoes : [];
 
       // Verificação de comunicados urgentes não vistos
       const usuarioLogado = window.Auth?.getUsuario();
@@ -185,15 +175,20 @@ window.DashboardModule = {
       fila.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
       this.demandasConsolidadas = fila;
 
-      // Métricas da Telemetria
-      const ocorrenciasAbertas = listaOcorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
-      const ocorrenciasResolvidas = listaOcorrencias.filter(o => o.status === 'resolvido').length;
-      const totalOcorrencias = listaOcorrencias.length || 1;
+      // Métricas da Telemetria (calculadas via stats agregadas com fallback)
+      const stOc = stats.ocorrencias || {};
+      const stCp = stats.compras || {};
+      const stEv = stats.eventos || {};
+      const stIns = stats.insumos || {};
+
+      const ocorrenciasAbertas = (Number(stOc.abertas || 0) + Number(stOc.em_andamento || 0)) || listaOcorrencias.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
+      const ocorrenciasResolvidas = Number(stOc.resolvidas || 0) || listaOcorrencias.filter(o => o.status === 'resolvido').length;
+      const totalOcorrencias = Number(stOc.total || 0) || listaOcorrencias.length || 1;
       const slaOcorrencias = Math.round((ocorrenciasResolvidas / totalOcorrencias) * 100);
 
-      const comprasPendentes = listaCompras.filter(c => c.status === 'pendente').length;
-      const eventosAgendados = listaEventos.filter(e => e.status === 'agendado').length;
-      const insumosCriticos = listaInsumos.filter(i => Number(i.quantidade) <= Number(i.estoque_minimo)).length;
+      const comprasPendentes = Number(stCp.pendentes || 0) || listaCompras.filter(c => c.status === 'pendente').length;
+      const eventosAgendados = Number(stEv.agendados || 0);
+      const insumosCriticos = Number(stIns.baixo_estoque || 0) || listaInsumos.filter(i => Number(i.quantidade) <= Number(i.estoque_minimo)).length;
       const advertenciasPendentes = listaAdvertencias.filter(a => a.status === 'PENDENTE').length;
 
       // Eventos Recentes para o Feed de Inteligência
@@ -213,7 +208,7 @@ window.DashboardModule = {
         // Fallback de feed com dados reais consolidados caso a tabela de auditoria ainda não tenha registros
         eventosFeed = [
           ...listaOcorrencias.slice(0, 3).map(o => ({
-            autor: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Operador',
+            autor: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Colaborador',
             acao: 'Ocorrência Técnica Registrada',
             descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado' }...`,
             hora: this._formatTimeAgo(new Date(o.created_at || Date.now())),

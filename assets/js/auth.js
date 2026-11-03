@@ -364,6 +364,7 @@ class AuthManager {
         document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = 'V');
         document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
+        document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => el.textContent = 'Visitante');
 
         // Mostra o botão de login na topbar
         this._criarBotaoLoginTopbar();
@@ -560,6 +561,18 @@ class AuthManager {
         }
     }
 
+        getStandardCargo(perfil) {
+        if (!perfil) return 'Visitante';
+        const p = this._normalizeProfile(perfil);
+        if (['ADMIN', 'ADMIN_GERAL', 'SUPERADMIN'].includes(p)) return 'Admin Geral';
+        if (['ADMINISTRADOR', 'ADMINISTRACAO'].includes(p)) return 'Administrador';
+        if (['GESTOR', 'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'ANALISTA_RH', 'RH', 'TECNICO_N3', 'TECNICO_N2', 'TECNICO_N1', 'TECNICO'].includes(p)) return 'Gestor';
+        if (p === 'OPERADOR') return 'Operador';
+        if (p === 'LIMPEZA') return 'Limpeza';
+        if (p === 'VISITANTE') return 'Visitante';
+        return 'Operador';
+    }
+
     preencherInfoUsuario() {
         const u = this.getUsuario();
         if (!u) return;
@@ -575,27 +588,13 @@ class AuthManager {
             : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
         document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
 
-        const nomesPerfil = {
-            ADMIN: 'Super Administrador (Admin)',
-            ADMINISTRADOR: 'Administrador Institucional',
-            ADMINISTRACAO: 'Administração',
-            GESTOR_RH: 'Gestor de Recursos Humanos',
-            GESTOR_INFRA: 'Gestor de Infra & TI',
-            GESTOR_OPERADOR: 'Gestor Operacional',
-            GESTOR: 'Gestor Geral',
-            ANALISTA_RH: 'Analista de RH',
-            RH: 'Recursos Humanos',
-            TECNICO_N3: 'Técnico N3 (Avançado)',
-            TECNICO_N2: 'Técnico N2 (Hardware/Redes)',
-            TECNICO_N1: 'Técnico N1 (Helpdesk)',
-            TECNICO: 'Técnico',
-            OPERADOR: 'Operador',
-            LIMPEZA: 'Limpeza',
-            VISITANTE: 'Visitante'
-        };
-        const perfilNorm = this._normalizeProfile(u.perfil);
+        const cargoPadronizado = this.getStandardCargo(u.perfil);
         document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
-            el.textContent = nomesPerfil[perfilNorm] || u.perfil || '';
+            el.textContent = cargoPadronizado;
+        });
+        document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => {
+            el.textContent = cargoPadronizado;
+            el.classList.remove('hidden');
         });
         this._removerBotaoLoginTopbar();
         this.atualizarVisibilidadeAdmin();

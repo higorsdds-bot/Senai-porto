@@ -8,6 +8,35 @@ class ApiService {
     this.baseUrl = window.CONFIG?.API_BASE_URL || '/api/v1';
     this.useMock = window.CONFIG?.USE_MOCK ?? false;
     this.delayMs = window.CONFIG?.MOCK_DELAY_MS || 300;
+    this._cache = new Map();
+  }
+
+  /**
+   * Limpa chaves do cache em memória (ou todas se pattern for omitido).
+   */
+  clearCache(pattern = null) {
+    if (!pattern) {
+      this._cache.clear();
+      return;
+    }
+    for (const key of this._cache.keys()) {
+      if (key.includes(pattern)) {
+        this._cache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Executa requisição GET com cache em memória (TTL em milissegundos).
+   */
+  async cachedGet(endpoint, ttlMs = 25000, mockHandler = null) {
+    const cached = this._cache.get(endpoint);
+    if (cached && (Date.now() - cached.time < ttlMs)) {
+      return cached.data;
+    }
+    const data = await this.request(endpoint, { method: 'GET' }, mockHandler);
+    this._cache.set(endpoint, { time: Date.now(), data });
+    return data;
   }
 
   getToken() {
@@ -81,9 +110,8 @@ class ApiService {
         const errBody = await response.json().catch(() => ({}));
         const msg = errBody.message || 'Sessão expirada. Faça login novamente.';
 
-        // Só força logout se o erro for inequivocamente expiração real de token ou conta inexistente/bloqueada
-        const isFatalAuth = msg.includes('expirada') || msg.includes('Token inválido') || msg.includes('não encontrado');
-        if (isFatalAuth && !window.Auth?.isVisitante()) {
+        // Qualquer 401 em endpoint autenticado indica sessão inválida ou ausente
+        if (!window.Auth?.isVisitante()) {
           window.Auth?.forcarLogout();
         }
         throw new Error(msg);
@@ -191,7 +219,7 @@ class ApiService {
   // USUÁRIOS
   // =========================================================================
   async getUsuarios() {
-    return this.request(CONFIG.ENDPOINTS.USUARIOS, { method: 'GET' }, () => window.MockDB.getAll('usuarios'));
+    return this.cachedGet(CONFIG.ENDPOINTS.USUARIOS, 20000, () => window.MockDB.getAll('usuarios'));
   }
 
   async getUsuarioById(id) {
@@ -204,6 +232,7 @@ class ApiService {
   }
 
   async createUsuario(data) {
+    this.clearCache('usuarios');
     return this.request(CONFIG.ENDPOINTS.USUARIOS, {
       method: 'POST',
       body: JSON.stringify(data)
@@ -211,6 +240,7 @@ class ApiService {
   }
 
   async updateUsuario(id, data) {
+    this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -218,6 +248,7 @@ class ApiService {
   }
 
   async updateUsuarioStatus(id, status) {
+    this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status })
@@ -225,12 +256,14 @@ class ApiService {
   }
 
   async deleteUsuario(id) {
+    this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
       method: 'DELETE'
     }, () => window.MockDB.delete('usuarios', id));
   }
 
   async preCadastrarUsuario(data) {
+    this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastro`, {
       method: 'POST',
       body: JSON.stringify(data)
@@ -242,6 +275,7 @@ class ApiService {
   }
 
   async updatePreCadastro(id, data) {
+    this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/pre-cadastro/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -249,14 +283,14 @@ class ApiService {
   }
 
   async getPermissoesDisponiveis() {
-    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/permissoes-disponiveis`, { method: 'GET' });
+    return this.cachedGet(`${CONFIG.ENDPOINTS.USUARIOS}/permissoes-disponiveis`, 60000);
   }
 
   // =========================================================================
   // SETORES
   // =========================================================================
   async getSetores() {
-    return this.request(CONFIG.ENDPOINTS.SETORES, { method: 'GET' }, () => window.MockDB.getAll('setores'));
+    return this.cachedGet(CONFIG.ENDPOINTS.SETORES, 30000, () => window.MockDB.getAll('setores'));
   }
 
   // =========================================================================
@@ -716,11 +750,11 @@ class ApiService {
   // DASHBOARD & INDICADORES
   // =========================================================================
   async getDashboardStats() {
-    return this.request(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/stats`, { method: 'GET' });
+    return this.cachedGet(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/stats`, 15000);
   }
 
   async getIndicadores(periodoDias = 30) {
-    return this.request(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/indicadores?periodo_dias=${periodoDias}`, { method: 'GET' });
+    return this.cachedGet(`${CONFIG.ENDPOINTS.DASHBOARD || '/dashboard'}/indicadores?periodo_dias=${periodoDias}`, 25000);
   }
 }
 
