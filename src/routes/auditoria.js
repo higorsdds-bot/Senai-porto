@@ -711,6 +711,15 @@ router.post('/testar-email', async (req, res) => {
     `
   });
 
+  await registrarAuditoria({
+    usuario_id: req.usuario.id,
+    acao: 'TESTAR_EMAIL',
+    entidade: 'configuracao',
+    descricao: `Teste de e-mail disparado para ${emailDestino} via ${provedor}. Resultado: ${resultado.success ? 'SUCESSO' : 'FALHA'}.`,
+    ip: getClientIp(req),
+    user_agent: req.headers['user-agent']
+  });
+
   if (resultado.success) {
     return res.json({
       success: true,

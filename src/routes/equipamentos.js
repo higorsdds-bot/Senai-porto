@@ -80,7 +80,14 @@ router.get('/', requirePermission('equipamentos.visualizar'), async (req, res) =
        ORDER BY e.nome ASC`,
       params
     );
-    return res.json({ success: true, data: rows });
+    const data = rows.map(r => {
+      let imagem_url = r.imagem_url;
+      if (imagem_url && imagem_url.startsWith('data:')) {
+        imagem_url = `/api/v1/equipamentos/${r.id}/foto`;
+      }
+      return { ...r, imagem_url };
+    });
+    return res.json({ success: true, data });
   } catch (err) {
     console.error('[EQUIPAMENTOS] GET:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao listar equipamentos.' });

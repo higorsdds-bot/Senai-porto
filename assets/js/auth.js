@@ -183,17 +183,22 @@ class AuthManager {
             .replace(/[\s-]+/g, '_')
             .replace(/[^A-Z0-9_]/g, '');
         const aliases = {
-            ADMINGERAL: 'ADMIN',
-            ADMIN_GERAL: 'ADMIN',
-            SUPERADMIN: 'ADMIN',
-            GESTORRH: 'GESTOR_RH',
-            ANALISTARH: 'ANALISTA_RH',
-            GESTORINFRA: 'GESTOR_INFRA',
-            GESTOROPERADOR: 'GESTOR_OPERADOR',
-            TECNICON1: 'TECNICO_N1',
-            TECNICON2: 'TECNICO_N2',
-            TECNICON3: 'TECNICO_N3'
-        };
+    ADMINGERAL: 'ADMIN',
+    ADMIN_GERAL: 'ADMIN',
+    GESTORRH: 'GESTOR_RH',
+    GESTOR_DE_RH: 'GESTOR_RH',
+    ANALISTARH: 'ANALISTA_RH',
+    ANALISTA_DE_RH: 'ANALISTA_RH',
+    GESTORINFRA: 'GESTOR_INFRA',
+    GESTOR_DE_INFRA: 'GESTOR_INFRA',
+    GESTOR_INFRAESTRUTURA: 'GESTOR_INFRA',
+    TECNICON1: 'TECNICO_N1',
+    TECNICON2: 'TECNICO_N2',
+    TECNICON3: 'TECNICO_N3',
+    GESTOROPERADOR: 'GESTOR_OPERADOR',
+    GESTOR_DE_OPERADOR: 'GESTOR_OPERADOR',
+    GESTOR_DE_OPERADORES: 'GESTOR_OPERADOR'
+  };
         return aliases[raw] || raw;
     }
 

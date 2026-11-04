@@ -23,12 +23,18 @@ function normalizeProfile(perfil) {
     ADMINGERAL: 'ADMIN',
     ADMIN_GERAL: 'ADMIN',
     GESTORRH: 'GESTOR_RH',
+    GESTOR_DE_RH: 'GESTOR_RH',
     ANALISTARH: 'ANALISTA_RH',
+    ANALISTA_DE_RH: 'ANALISTA_RH',
     GESTORINFRA: 'GESTOR_INFRA',
+    GESTOR_DE_INFRA: 'GESTOR_INFRA',
+    GESTOR_INFRAESTRUTURA: 'GESTOR_INFRA',
     TECNICON1: 'TECNICO_N1',
     TECNICON2: 'TECNICO_N2',
     TECNICON3: 'TECNICO_N3',
-    GESTOROPERADOR: 'GESTOR_OPERADOR'
+    GESTOROPERADOR: 'GESTOR_OPERADOR',
+    GESTOR_DE_OPERADOR: 'GESTOR_OPERADOR',
+    GESTOR_DE_OPERADORES: 'GESTOR_OPERADOR'
   };
   return aliases[raw] || raw;
 }
@@ -857,6 +863,25 @@ async function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
+function parseDataUrl(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return null;
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  const mime = match[1];
+  const b64 = match[2];
+  try {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return { mime, bytes };
+  } catch {
+    return null;
+  }
+}
+
+
 async function getBodyData(request) {
   const contentType = (request.headers.get('content-type') || '').toLowerCase();
   if (contentType.includes('multipart/form-data')) {
@@ -1233,6 +1258,54 @@ export async function onRequest(context) {
     }
 
     // ─── A partir daqui todas as rotas exigem JWT válido ─────────────────────
+    
+    // ─── Streaming de Fotos / Imagens Binárias com Cache HTTP de 24h ─────────────
+    const matchOcorrenciaFoto = route.match(/^\/ocorrencias\/(\d+)\/foto$/);
+    if (matchOcorrenciaFoto && method === 'GET') {
+      const id = matchOcorrenciaFoto[1];
+      const row = await d1First(db, 'SELECT foto_url FROM ocorrencias WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+      if (!row || !row.foto_url) {
+        return new Response('Foto não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+      if (row.foto_url.startsWith('http://') || row.foto_url.startsWith('https://')) {
+        return Response.redirect(row.foto_url, 302);
+      }
+      const parsed = parseDataUrl(row.foto_url);
+      if (!parsed) {
+        return new Response('Formato inválido.', { status: 400 });
+      }
+      return new Response(parsed.bytes, {
+        headers: {
+          'Content-Type': parsed.mime,
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    const matchEquipamentoFoto = route.match(/^\/equipamentos\/(\d+)\/foto$/);
+    if (matchEquipamentoFoto && method === 'GET') {
+      const id = matchEquipamentoFoto[1];
+      const row = await d1First(db, 'SELECT imagem_url FROM equipamentos WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+      if (!row || !row.imagem_url) {
+        return new Response('Imagem não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+      if (row.imagem_url.startsWith('http://') || row.imagem_url.startsWith('https://')) {
+        return Response.redirect(row.imagem_url, 302);
+      }
+      const parsed = parseDataUrl(row.imagem_url);
+      if (!parsed) {
+        return new Response('Formato inválido.', { status: 400 });
+      }
+      return new Response(parsed.bytes, {
+        headers: {
+          'Content-Type': parsed.mime,
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     const auth = await autenticarRequest(request, db, jwtSecret);
     if (auth.erro) return auth.erro;
     const { usuario, permissoes, modulos } = auth;
@@ -1692,7 +1765,14 @@ export async function onRequest(context) {
          ORDER BY o.created_at DESC`,
         params
       );
-      return jsonResponse({ success: true, data: rows });
+      const data = rows.map(r => {
+        let foto_url = r.foto_url;
+        if (foto_url && foto_url.startsWith('data:')) {
+          foto_url = `/api/v1/ocorrencias/${r.id}/foto`;
+        }
+        return { ...r, foto_url };
+      });
+      return jsonResponse({ success: true, data });
     }
 
     const matchOcorrenciaId = route.match(/^\/ocorrencias\/(\d+)$/);
@@ -1877,6 +1957,9 @@ export async function onRequest(context) {
     }
 
     if (route === '/compras' && method === 'POST') {
+      if (!hasPerm(auth, 'compras.criar')) {
+        return jsonResponse({ success: false, message: 'Sem permissão para solicitar compras.' }, 403);
+      }
       const { produto, descricao, quantidade, valor_estimado, setor_id, justificativa } = await getBodyData(request);
       if (!produto || String(produto).trim().length < 2) {
         return jsonResponse({ success: false, message: 'Informe o produto.' }, 422);
@@ -2108,7 +2191,14 @@ export async function onRequest(context) {
          ORDER BY e.nome ASC`,
         params
       );
-      return jsonResponse({ success: true, data: rows });
+      const data = rows.map(r => {
+        let imagem_url = r.imagem_url;
+        if (imagem_url && imagem_url.startsWith('data:')) {
+          imagem_url = `/api/v1/equipamentos/${r.id}/foto`;
+        }
+        return { ...r, imagem_url };
+      });
+      return jsonResponse({ success: true, data });
     }
 
     const matchEqId = route.match(/^\/equipamentos\/(\d+)$/);
@@ -2991,10 +3081,9 @@ export async function onRequest(context) {
     }
 
     return jsonResponse({
-      success: true,
-      data: [],
-      message: `Endpoint ${method} ${route} processado.`
-    });
+      success: false,
+      message: `Recurso ou rota '${method} ${route}' não encontrada.`
+    }, 404);
   } catch (err) {
     console.error(`[API D1 ERROR] ${method} ${route}:`, err);
     return jsonResponse({
