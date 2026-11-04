@@ -743,6 +743,10 @@ window.UsuariosModule = {
               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
             />
             <p class="text-[10px] text-slate-500" id="novo-user-senha-help">A senha de acesso é obrigatória caso escolha definir agora (mínimo de 8 caracteres).</p>
+            <div id="novo-user-senha-error" class="hidden mt-1.5 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+              <span id="novo-user-senha-error-msg"></span>
+            </div>
           </div>
 
           <!-- Bloco: Aviso informativo do link por e-mail -->
@@ -783,10 +787,21 @@ window.UsuariosModule = {
             const input = document.getElementById(campoId);
             if (input) {
               input.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
+              try { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
               input.focus();
+              if (campoId === 'novo-user-senha') {
+                const errBox = document.getElementById('novo-user-senha-error');
+                const errMsg = document.getElementById('novo-user-senha-error-msg');
+                if (errBox && errMsg) {
+                  errMsg.textContent = mensagem;
+                  errBox.classList.remove('hidden');
+                  if (window.lucide) window.lucide.createIcons({ root: errBox });
+                }
+              }
               input.addEventListener('input', () => {
                 input.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
                 alertaEl?.classList.add('hidden');
+                document.getElementById('novo-user-senha-error')?.classList.add('hidden');
               }, { once: true });
             }
           }

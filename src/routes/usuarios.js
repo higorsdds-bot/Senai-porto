@@ -407,6 +407,344 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
       });
     }
 
+    const crypto = require('crypto');
+    const senhaHash = await bcrypt.hash(porEmail ? crypto.randomBytes(32).toString('hex') : senha, 12);
+    const statusFinal = porEmail ? 'AGUARDANDO_ATIVACAO' : (status || 'ATIVO');
+
+    const [result] = await pool.query(
+      `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        nome.trim(),
+        email.toLowerCase().trim(),
+        senhaHash,
+        perfil,
+        setor_id || null,
+        statusFinal
+      ]
+    );
+
+    const novoId = result.insertId;
+
+    // Conceder permissões granulares adicionais
+    if (Array.isArray(permissoes_adicionais) && permissoes_adicionais.length > 0) {
+      await syncPermissoesExtrasUsuario(pool, novoId, permissoes_adicionais);
+    }
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'CRIAR_USUARIO',
+      entidade: 'usuarios',
+      entidade_id: novoId,
+      descricao: `Usuário "${nome.trim()}" (${email}) criado com perfil ${perfil}.${porEmail ? ' Modo: Envio de link por e-mail.' : ' Modo: Senha direta.'}`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    // Busca nome do setor para inclusão no e-mail
+    let setorNome = null;
+    if (setor_id) {
+      try {
+        const [setorRows] = await pool.query('SELECT nome FROM setores WHERE id = ? LIMIT 1', [setor_id]);
+        if (setorRows.length) setorNome = setorRows[0].nome;
+      } catch (_) {}
+    }
+
+    let linkAtivacao = null;
+    let emailStatus = null;
+
+    if (porEmail) {
+      const rawToken = gerarTokenAtivacao();
+      const tokenHash = gerarHashToken(rawToken);
+      await pool.query(
+        `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+         VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 48 HOUR), ?)`,
+        [novoId, tokenHash, getClientIp(req)]
+      );
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+      linkAtivacao = `${baseUrl}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+
+      try {
+        emailStatus = await enviarEmailAtivacaoConta({
+          usuarioNome: nome.trim(),
+          usuarioEmail: email.toLowerCase().trim(),
+          linkAtivacao,
+          setorNome,
+          perfil,
+          criadoPorNome: req.usuario?.nome || 'Administrador Geral'
+        });
+      } catch (mailErr) {
+        console.error('[USUARIOS] Erro ao enviar e-mail de ativação:', mailErr.message);
+        emailStatus = { success: false, error: mailErr.message };
+      }
+    } else {
+      try {
+        emailStatus = await enviarEmailCredenciaisCriacaoDireta({
+          usuarioNome: nome.trim(),
+          usuarioEmail: email.toLowerCase().trim(),
+          senhaProvisoria: senha,
+          perfil,
+          setorNome,
+          criadoPorNome: req.usuario?.nome || 'Administrador Geral'
+        });
+      } catch (mailErr) {
+        console.error('[USUARIOS] Erro ao enviar e-mail de boas-vindas com credenciais:', mailErr.message);
+        emailStatus = { success: false, error: mailErr.message };
+      }
+    }
+
+    const emailEnviado = Boolean(emailStatus && emailStatus.success);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Colaborador pré-cadastrado com sucesso! A notificação foi encaminhada ao Administrador Geral para análise e liberação.',
+      data: { id: result.insertId }
+    });
+  } catch (err) {
+    console.error('[USUARIOS] PRE-CADASTRO:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao registrar pré-cadastro.' });
+  }
+});
+
+// ─── GET /api/v1/usuarios/pre-cadastros ──────────────────────────────────────
+router.get('/pre-cadastros', requireAnyPermission('usuarios.pre_cadastrar', 'usuarios.visualizar'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.created_at,
+              s.nome AS setor_nome
+       FROM usuarios u
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE u.deleted_at IS NULL
+       ORDER BY u.created_at DESC
+       LIMIT 50`
+    );
+    await anexarPermissoesAdicionais(pool, rows);
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[USUARIOS] GET pre-cadastros:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao listar pré-cadastros.' });
+  }
+});
+
+// ─── PUT /api/v1/usuarios/pre-cadastro/:id ───────────────────────────────────
+// Permite editar a solicitação de pré-cadastro enquanto o status for PENDENTE
+router.put('/pre-cadastro/:id', requireAnyPermission('usuarios.pre_cadastrar', 'usuarios.editar'), async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, senha } = req.body;
+  const pool = getPool();
+
+  try {
+    const [existing] = await pool.query(
+      `SELECT id, nome, email, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [id]
+    );
+
+    if (!existing.length) {
+      return res.status(404).json({ success: false, message: 'Solicitação de colaborador não encontrada.' });
+    }
+
+    const isAdmin = ['ADMIN', 'ADMINISTRADOR'].includes(String(req.usuario.perfil).toUpperCase());
+    if (!isAdmin && existing[0].status !== 'PENDENTE') {
+      return res.status(403).json({
+        success: false,
+        message: 'Apenas solicitações com status PENDENTE podem ser alteradas.'
+      });
+    }
+
+    const erros = {};
+    if (!nome || String(nome).trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) erros.email = 'E-mail informado é inválido.';
+    if (senha && String(senha).length < 8) erros.senha = 'A senha provisória precisa ter no mínimo 8 caracteres.';
+
+    if (Object.keys(erros).length > 0) {
+      return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const [duplicados] = await pool.query(
+      `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`,
+      [cleanEmail, id]
+    );
+
+    if (duplicados.length > 0) {
+      return res.status(409).json({ success: false, message: 'Já existe outro usuário registrado com este e-mail.' });
+    }
+
+    let sql = 'UPDATE usuarios SET nome = ?, email = ?, updated_at = NOW()';
+    const params = [String(nome).trim(), cleanEmail];
+
+    if (senha && String(senha).trim().length >= 8) {
+      const senhaHash = await bcrypt.hash(String(senha), 12);
+      sql += ', senha = ?';
+      params.push(senhaHash);
+    }
+
+    sql += ' WHERE id = ?';
+    params.push(id);
+
+    await pool.query(sql, params);
+
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'EDITAR_PRE_CADASTRO',
+      entidade: 'usuarios',
+      entidade_id: parseInt(id, 10),
+      descricao: `Solicitação de cadastro #${id} ("${String(nome).trim()}") alterada por ${req.usuario.nome}.`,
+      ip: getClientIp(req),
+      user_agent: req.headers['user-agent']
+    });
+
+    return res.json({
+      success: true,
+      message: 'Solicitação de colaborador atualizada com sucesso!'
+    });
+  } catch (err) {
+    console.error('[USUARIOS] PUT pre-cadastro/:id:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao atualizar solicitação de cadastro.' });
+  }
+});
+
+// ─── GET /api/v1/usuarios ────────────────────────────────────────────────────
+// Acessível a qualquer usuário autenticado para preenchimento de seletores operacionais e listagem
+router.get('/', async (req, res) => {
+  try {
+    const pool = getPool();
+    const { perfil, setor_id, status, q } = req.query;
+
+    let conditions = ['u.deleted_at IS NULL'];
+    let params = [];
+
+    if (perfil) { conditions.push('u.perfil = ?'); params.push(perfil); }
+    if (setor_id) { conditions.push('u.setor_id = ?'); params.push(setor_id); }
+    if (status) { conditions.push('u.status = ?'); params.push(status); }
+    if (q) {
+      conditions.push('(u.nome LIKE ? OR u.email LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
+    const where = conditions.join(' AND ');
+    const ONLINE_THRESHOLD = 5; // minutos
+
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status,
+              u.ultimo_acesso, u.ultimo_heartbeat, u.created_at,
+              s.nome AS setor_nome,
+              CASE WHEN u.ultimo_heartbeat >= NOW() - INTERVAL ${ONLINE_THRESHOLD} MINUTE
+                   THEN 1 ELSE 0 END AS online
+       FROM usuarios u
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE ${where}
+       ORDER BY u.nome ASC`,
+      params
+    );
+
+    await anexarPermissoesAdicionais(pool, rows);
+
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[USUARIOS] GET:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao listar usuários.' });
+  }
+});
+
+// ─── GET /api/v1/usuarios/permissoes-disponiveis ─────────────────────────────
+router.get('/permissoes-disponiveis', requirePermission('usuarios.visualizar'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT id, chave, nome, descricao FROM permissoes ORDER BY chave ASC`
+    );
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[USUARIOS] GET permissoes-disponiveis:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao listar permissões disponíveis.' });
+  }
+});
+
+// ─── GET /api/v1/usuarios/:id ────────────────────────────────────────────────
+router.get('/:id', requirePermission('usuarios.visualizar'), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status,
+              u.ultimo_acesso, u.ultimo_heartbeat, u.created_at,
+              s.nome AS setor_nome,
+              CASE WHEN u.ultimo_heartbeat >= NOW() - INTERVAL 5 MINUTE
+                   THEN 1 ELSE 0 END AS online
+       FROM usuarios u
+       LEFT JOIN setores s ON s.id = u.setor_id
+       WHERE u.id = ? AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [req.params.id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
+    }
+
+    const usuario = rows[0];
+
+    // Busca permissões customizadas adicionais atribuídas ao usuário
+    try {
+      const [extras] = await pool.query(
+        `SELECT p.chave
+         FROM usuario_permissoes up
+         JOIN permissoes p ON p.id = up.permissao_id
+         WHERE up.usuario_id = ? AND up.concedida = 1`,
+        [req.params.id]
+      );
+      usuario.permissoes_adicionais = extras.map(e => e.chave);
+    } catch (_) {
+      usuario.permissoes_adicionais = [];
+    }
+
+    return res.json({ success: true, data: usuario });
+  } catch (err) {
+    console.error('[USUARIOS] GET/:id:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro ao buscar usuário.' });
+  }
+});
+
+// ─── POST /api/v1/usuarios ───────────────────────────────────────────────────
+router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
+  const { nome, email, senha, perfil, setor_id, status, permissoes_adicionais, modo_senha, enviar_email_ativacao } = req.body;
+  const porEmail = (modo_senha === 'email' || enviar_email_ativacao === true || !senha);
+  const erros = {};
+
+  if (!nome || nome.trim().length < 3) erros.nome = 'Nome precisa ter pelo menos 3 caracteres.';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = 'Email inválido.';
+  if (!porEmail && (!senha || senha.length < 8)) erros.senha = 'Senha precisa ter pelo menos 8 caracteres.';
+  if (!perfil || !PERFIS_VALIDOS.includes(perfil)) erros.perfil = 'Perfil inválido.';
+
+  // Regra de Governança: Somente Admin Geral pode criar contas ADMIN
+  const requesterPerfil = String(req.usuario.perfil || '').toUpperCase();
+  if (['ADMIN', 'ADMIN_GERAL'].includes(perfil) && !['ADMIN', 'ADMIN_GERAL'].includes(requesterPerfil)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Apenas o Administrador Geral possui autorização para criar usuários com perfil de Administrador Geral.'
+    });
+  }
+
+  if (Object.keys(erros).length > 0) {
+    return res.status(422).json({ success: false, message: 'Dados inválidos.', errors: erros });
+  }
+
+  try {
+    const pool = getPool();
+
+    // Verificar email duplicado
+    const [existing] = await pool.query(
+      `SELECT id FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
+      [email.toLowerCase().trim()]
+    );
+    if (existing.length > 0) {
+      return res.status(422).json({
+        success: false,
+        message: 'Email já cadastrado.',
+        errors: { email: 'Este email já está em uso.' }
+      });
+    }
+
     const senhaHash = await bcrypt.hash(senha, 12);
     const [result] = await pool.query(
       `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)

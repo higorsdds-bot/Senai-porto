@@ -7,3 +7,6 @@ binding = "DB"
 database_name = "secult_db"
 database_id = "3a5a576c-346d-42fe-a6ca-d23e727e844e"
 migrations_dir = "src/database"
+
+[vars]
+BREVO_SENDER_NAME = "HUB ES+ | SECULT"

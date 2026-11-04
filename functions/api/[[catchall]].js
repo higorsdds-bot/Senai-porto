@@ -593,38 +593,13 @@ async function registrarAuditoria(db, { usuario_id = null, acao, entidade = null
 
 async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
   try {
-    const resendKey = (env?.RESEND_API_KEY || '').trim();
     const brevoKey = (env?.BREVO_API_KEY || '').trim();
-    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <notificacoes@secult.es.gov.br>';
-
-    if (resendKey) {
-      const fromSender = (env?.RESEND_SENDER_EMAIL || fromStr || 'onboarding@resend.dev').trim();
-      const resp = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendKey}`
-        },
-        body: JSON.stringify({
-          from: fromSender.includes('<') ? fromSender : `HUB ES+ <${fromSender}>`,
-          to: [para],
-          subject: assunto,
-          html: html,
-          text: texto || html.replace(/<[^>]+>/g, '')
-        })
-      });
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '');
-        console.warn(`[RESEND API ERROR ${resp.status}]:`, errText);
-        return false;
-      }
-      return true;
-    }
+    const resendKey = (env?.RESEND_API_KEY || '').trim();
+    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <higor.sdds@gmail.com>';
 
     if (brevoKey) {
-      const senderEmail = (env?.BREVO_SENDER_EMAIL || (fromStr.includes('<') ? fromStr.match(/<([^>]+)>/)[1] : fromStr)).trim();
-      const senderName = env?.BREVO_SENDER_NAME || 'HUB ES+ | SECULT';
+      const senderEmail = (env?.BREVO_SENDER_EMAIL || 'higor.sdds@gmail.com').trim();
+      const senderName = (env?.BREVO_SENDER_NAME || 'HUB ES+ | SECULT').trim();
       const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -642,7 +617,32 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
       });
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
-        console.warn(`[BREVO API ERROR ${resp.status}]:`, errText);
+        console.error('[BREVO API ERROR ' + resp.status + ']:', errText);
+        return false;
+      }
+      return true;
+    }
+
+    if (resendKey) {
+      const fromSender = (env?.RESEND_SENDER_EMAIL || fromStr || 'onboarding@resend.dev').trim();
+      const resp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + resendKey
+        },
+        body: JSON.stringify({
+          from: fromSender.includes('<') ? fromSender : 'HUB ES+ <' + fromSender + '>',
+          to: [para],
+          subject: assunto,
+          html: html,
+          text: texto || html.replace(/<[^>]+>/g, '')
+        })
+      });
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        console.error('[RESEND API ERROR ' + resp.status + ']:', errText);
         return false;
       }
       return true;
@@ -650,11 +650,50 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
 
     console.warn('[D1 EMAIL] Nenhum provedor (BREVO_API_KEY ou RESEND_API_KEY) configurado no Cloudflare Pages.');
   } catch (err) {
-    console.warn('[D1 EMAIL] Erro ao despachar e-mail:', err.message);
+    console.error('[D1 EMAIL] Erro ao despachar e-mail:', err.message);
   }
   return false;
 }
 
+function gerarTemplateEmail({ titulo, saudacao, mensagemPrincipal, botaoTexto, botaoUrl, rodapeAviso }) {
+  return '<!DOCTYPE html>' +
+'<html lang="pt-BR">' +
+'<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>' +
+'<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">' +
+'  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f1f5f9;padding:32px 16px;">' +
+'    <tr>' +
+'      <td align="center">' +
+'        <table role="presentation" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);overflow:hidden;border:1px solid #e2e8f0;">' +
+'          <tr>' +
+'            <td style="background:linear-gradient(135deg, #0b1320 0%, #1e293b 100%);padding:28px 32px;text-align:center;">' +
+'              <h1 style="margin:0;color:#38bdf8;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HUB ES+</h1>' +
+'              <p style="margin:4px 0 0 0;color:#94a3b8;font-size:12px;font-weight:500;">SECULT • Governo do Estado do Espírito Santo</p>' +
+'            </td>' +
+'          </tr>' +
+'          <tr>' +
+'            <td style="padding:32px;">' +
+'              <h2 style="margin:0 0 16px 0;color:#0f172a;font-size:18px;font-weight:700;">' + titulo + '</h2>' +
+'              <p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#334155;">Olá <strong>' + saudacao + '</strong>,</p>' +
+'              <div style="font-size:14px;line-height:22px;color:#334155;margin-bottom:24px;">' +
+'                ' + mensagemPrincipal +
+'              </div>' +
+'              ' + (botaoUrl ? '<div style="text-align:center;margin:32px 0;"><a href="' + botaoUrl + '" target="_blank" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;box-shadow:0 2px 4px rgba(37,99,235,0.2);">' + botaoTexto + '</a></div><p style="font-size:12px;line-height:18px;color:#64748b;margin:24px 0 0 0;word-break:break-all;">Se o botão não funcionar, copie e cole o link no navegador:<br><a href="' + botaoUrl + '" style="color:#2563eb;text-decoration:underline;">' + botaoUrl + '</a></p>' : '') +
+'              ' + (rodapeAviso ? '<div style="margin-top:24px;padding:12px 16px;background-color:#f8fafc;border-left:4px solid #3b82f6;border-radius:4px;font-size:12px;color:#64748b;">' + rodapeAviso + '</div>' : '') +
+'            </td>' +
+'          </tr>' +
+'          <tr>' +
+'            <td style="background-color:#f8fafc;padding:20px 32px;text-align:center;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;">' +
+'              <p style="margin:0;">HUB ES+ • Plataforma Integrada de Gestão Administrativa</p>' +
+'              <p style="margin:4px 0 0 0;">Mensagem automática do sistema. Por favor, não responda a este e-mail.</p>' +
+'            </td>' +
+'          </tr>' +
+'        </table>' +
+'      </td>' +
+'    </tr>' +
+'  </table>' +
+'</body>' +
+'</html>';
+}
 
 // ─── Permissões e Módulos do Usuário no D1 ───────────────────────────────────
 async function obterPermissoesEModulos(db, usuario) {
@@ -1077,8 +1116,8 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Informe um e-mail válido.' }, 422);
       }
       const cleanEmail = String(email).toLowerCase().trim();
-      const user = await d1First(db, `SELECT id, nome, email, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
-      
+      const user = await d1First(db, 'SELECT id, nome, email, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1', [cleanEmail]);
+
       const msgGenerica = 'Se o e-mail informado estiver cadastrado em nossa base, um link seguro de recuperação foi enviado.';
       if (!user) {
         return jsonResponse({ success: true, message: msgGenerica });
@@ -1088,15 +1127,24 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(rawToken);
       await d1Run(
         db,
-        `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+24 hours'), ?)`,
+        "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+24 hours'), ?)",
         [user.id, tokenHash, ip]
       );
 
-      const linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+      const linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+      const htmlEmail = gerarTemplateEmail({
+        titulo: 'Recuperação de Acesso',
+        saudacao: user.nome,
+        mensagemPrincipal: 'Recebemos uma solicitação para redefinir a senha da sua conta de acesso ao <strong>HUB ES+</strong>. Clique no botão abaixo para criar sua nova senha com segurança.',
+        botaoTexto: 'Redefinir Minha Senha',
+        botaoUrl: linkAtivacao,
+        rodapeAviso: 'Este link é exclusivo e expira em 24 horas. Se você não solicitou esta alteração, ignore esta mensagem com segurança.'
+      });
+
       const emailEnviado = await enviarEmailGenericoD1(env, {
         para: user.email,
         assunto: 'Recuperação de Acesso - HUB ES+',
-        html: `<p>Olá <strong>${user.nome}</strong>,</p><p>Recebemos uma solicitação para redefinir a senha da sua conta no <strong>HUB ES+</strong>.</p><p><a href="${linkAtivacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Redefinir Minha Senha</a></p><p>Ou copie e cole no navegador: <br><code>${linkAtivacao}</code></p><p style="font-size:12px;color:#64748b;">Este link expira em 24 horas.</p>`
+        html: htmlEmail
       });
 
       await registrarAuditoria(db, {
@@ -1104,20 +1152,20 @@ export async function onRequest(context) {
         acao: 'SOLICITAR_RECUPERACAO_SENHA',
         entidade: 'usuarios',
         entidade_id: user.id,
-        descricao: `Solicitação de recuperação de senha para ${user.email}. (Email enviado: ${emailEnviado ? 'SIM' : 'NÃO/Sem provedor'})`,
+        descricao: 'Solicitação de recuperação de senha para ' + user.email + '. (Email enviado: ' + (emailEnviado ? 'SIM' : 'NÃO') + ')',
         ip,
         user_agent: userAgent
       });
 
       return jsonResponse({
         success: true,
+        emailEnviado,
         message: emailEnviado
           ? 'Link de recuperação enviado com sucesso para seu e-mail!'
           : msgGenerica,
         data: { linkAtivacao, emailEnviado }
       });
     }
-
 
     if (route === '/auth/verificar-token-ativacao' && method === 'GET') {
       const token = url.searchParams.get('token') || '';
@@ -1470,7 +1518,7 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Nome e e-mail são obrigatórios.' }, 422);
       }
       const cleanEmail = String(email).toLowerCase().trim();
-      const dup = await d1First(db, `SELECT id FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
+      const dup = await d1First(db, 'SELECT id FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1', [cleanEmail]);
       if (dup) {
         return jsonResponse({ success: false, message: 'E-mail já cadastrado no sistema.' }, 422);
       }
@@ -1481,7 +1529,7 @@ export async function onRequest(context) {
       const perfilFinal = perfil || 'OPERADOR';
       const res = await d1Run(
         db,
-        `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, ?, ?, ?)`,
+        'INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, ?, ?, ?)',
         [String(nome).trim(), cleanEmail, senhaHash, perfilFinal, setor_id || null, statusFinal]
       );
       if (Array.isArray(permissoes_adicionais)) {
@@ -1489,19 +1537,28 @@ export async function onRequest(context) {
       }
 
       let linkAtivacao = null;
+      let emailEnviado = false;
       if (porEmail) {
         const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
         const tokenHash = await sha256Hex(rawToken);
         await d1Run(
           db,
-          `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)`,
+          "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
           [res.insertId, tokenHash, ip]
         );
-        linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
-        await enviarEmailGenericoD1(env, {
+        linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+        const htmlEmail = gerarTemplateEmail({
+          titulo: 'Ativação de Conta e Definição de Senha',
+          saudacao: String(nome).trim(),
+          mensagemPrincipal: 'Seu cadastro de acesso ao <strong>HUB ES+</strong> foi criado com o cargo <strong>' + perfilFinal + '</strong>. Clique no botão abaixo para definir sua senha de acesso e ativar sua conta.',
+          botaoTexto: 'Criar Minha Senha e Ativar Conta',
+          botaoUrl: linkAtivacao,
+          rodapeAviso: 'Este link é seguro, de uso único e expira em 48 horas.'
+        });
+        emailEnviado = await enviarEmailGenericoD1(env, {
           para: cleanEmail,
           assunto: 'Ativação de Acesso - HUB ES+',
-          html: `<p>Olá <strong>${String(nome).trim()}</strong>,</p><p>Seu acesso ao <strong>HUB ES+</strong> foi cadastrado. Clique no link abaixo para criar sua senha confidencial e ativar sua conta:</p><p><a href="${linkAtivacao}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">Ativar Minha Conta</a></p><p>Ou copie e cole: <br><code>${linkAtivacao}</code></p><p style="font-size:12px;color:#64748b;">Este link é seguro e expira em 48 horas.</p>`
+          html: htmlEmail
         });
       }
 
@@ -1511,18 +1568,21 @@ export async function onRequest(context) {
         entidade: 'usuarios',
         entidade_id: res.insertId,
         descricao: porEmail
-          ? `Usuário "${nome}" (${cleanEmail}) cadastrado com envio de link de ativação.`
-          : `Usuário "${nome}" (${cleanEmail}) criado com perfil ${perfilFinal}.`,
+          ? 'Usuário "' + nome + '" (' + cleanEmail + ') cadastrado com envio de link de ativação. (Email enviado: ' + (emailEnviado ? 'SIM' : 'NÃO') + ')'
+          : 'Usuário "' + nome + '" (' + cleanEmail + ') criado com perfil ' + perfilFinal + '.',
         ip,
         user_agent: userAgent
       });
 
       return jsonResponse({
         success: true,
+        emailEnviado,
         message: porEmail
-          ? 'Usuário cadastrado com sucesso! Link seguro de ativação enviado para o colaborador.'
+          ? (emailEnviado
+            ? 'Usuário cadastrado com sucesso! Link seguro de ativação enviado para o e-mail ' + cleanEmail + '.'
+            : 'Usuário cadastrado com sucesso! O link direto de ativação foi gerado.')
           : 'Usuário cadastrado com sucesso.',
-        data: { id: res.insertId, linkAtivacao }
+        data: { id: res.insertId, linkAtivacao, emailEnviado }
       }, 201);
     }
 
@@ -2783,29 +2843,99 @@ export async function onRequest(context) {
       const matchReenviar = route.match(/^\/auditoria\/usuarios\/(\d+)\/reenviar-ativacao$/);
       if (matchReenviar && method === 'POST') {
         const id = matchReenviar[1];
+        const userTarget = await d1First(db, 'SELECT id, nome, email FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+        if (!userTarget) return jsonResponse({ success: false, message: 'Usuário não encontrado.' }, 404);
+
         const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
         const tokenHash = await sha256Hex(rawToken);
         await d1Run(
           db,
-          `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)`,
+          "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
           [id, tokenHash, ip]
         );
-        const linkAtivacao = `${url.origin}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+        const linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+        const htmlEmail = gerarTemplateEmail({
+          titulo: 'Novo Link de Ativação',
+          saudacao: userTarget.nome,
+          mensagemPrincipal: 'Um novo link de ativação foi gerado para a sua conta de acesso no <strong>HUB ES+</strong>. Clique no botão abaixo para definir sua senha e ativar sua conta.',
+          botaoTexto: 'Ativar Minha Conta',
+          botaoUrl: linkAtivacao,
+          rodapeAviso: 'Este link é seguro, de uso único e expira em 48 horas.'
+        });
+
+        const emailEnviado = await enviarEmailGenericoD1(env, {
+          para: userTarget.email,
+          assunto: 'Novo Link de Ativação - HUB ES+',
+          html: htmlEmail
+        });
+
+        await registrarAuditoria(db, {
+          usuario_id: usuario.id,
+          acao: 'REENVIAR_LINK_ATIVACAO',
+          entidade: 'usuarios',
+          entidade_id: Number(id),
+          descricao: 'Reenvio de link de ativação para ' + userTarget.email + '. (Email enviado: ' + (emailEnviado ? 'SIM' : 'NÃO') + ')',
+          ip,
+          user_agent: userAgent
+        });
+
         return jsonResponse({
           success: true,
-          emailEnviado: false,
+          emailEnviado,
           linkAtivacao,
-          message: 'Novo link de ativação gerado com sucesso! Copie o link abaixo para enviar ao colaborador.'
+          message: emailEnviado
+            ? 'Novo link de ativação enviado com sucesso para ' + userTarget.email + '!'
+            : 'Novo link de ativação gerado com sucesso! Copie o link abaixo para enviar ao colaborador.'
         });
       }
 
       if (route === '/auditoria/testar-email' && method === 'POST') {
+        const body = await getBodyData(request);
+        const destinatario = (body.destinatario || usuario.email || 'higor.sdds@gmail.com').trim();
+        const brevoKey = (env?.BREVO_API_KEY || '').trim();
+        const senderEmail = (env?.BREVO_SENDER_EMAIL || 'higor.sdds@gmail.com').trim();
+        const senderName = (env?.BREVO_SENDER_NAME || 'HUB ES+ | SECULT').trim();
+
+        const htmlTeste = gerarTemplateEmail({
+          titulo: 'Diagnóstico de Envio de E-mail',
+          saudacao: usuario.nome || 'Administrador',
+          mensagemPrincipal: 'Este é um e-mail de diagnóstico enviado em tempo real a partir das Cloudflare Pages Functions utilizando a <strong>Brevo API (HTTPS REST)</strong>.<br><br><strong>Detalhes da Operação:</strong><br>• <strong>Provedor:</strong> Brevo API (HTTPS)<br>• <strong>Remetente:</strong> ' + senderName + ' &lt;' + senderEmail + '&gt;<br>• <strong>Destinatário:</strong> ' + destinatario + '<br>• <strong>Timestamp:</strong> ' + new Date().toISOString(),
+          botaoTexto: 'Acessar Painel HUB ES+',
+          botaoUrl: url.origin,
+          rodapeAviso: 'Operação registrada e auditada nos logs de governança institucional do HUB ES+.'
+        });
+
+        const emailEnviado = await enviarEmailGenericoD1(env, {
+          para: destinatario,
+          assunto: 'Teste de Integração de E-mail - HUB ES+ SECULT',
+          html: htmlTeste
+        });
+
+        await registrarAuditoria(db, {
+          usuario_id: usuario.id,
+          acao: 'TESTAR_EMAIL',
+          entidade: 'configuracao',
+          descricao: 'Teste de envio de e-mail para ' + destinatario + '. Resultado: ' + (emailEnviado ? 'SUCESSO' : 'FALHA') + '.',
+          ip,
+          user_agent: userAgent
+        });
+
+        if (!emailEnviado) {
+          return jsonResponse({
+            success: false,
+            provedor: brevoKey ? 'Brevo API' : 'Nenhum provedor configurado',
+            remetente: senderEmail,
+            destinatario,
+            message: 'Falha ao despachar e-mail via Brevo API. Verifique as credenciais no Cloudflare Pages.'
+          }, 500);
+        }
+
         return jsonResponse({
           success: true,
-          provedor: 'Cloudflare Serverless',
-          remetente: 'noreply@secult.es.gov.br',
-          destinatario: usuario.email,
-          message: 'Ambiente Cloudflare Pages Serverless ativo. Links de ativação são gerados diretamente no painel para envio imediato.'
+          provedor: 'Brevo API (HTTPS)',
+          remetente: senderEmail,
+          destinatario,
+          message: 'E-mail de diagnóstico enviado com sucesso para ' + destinatario + ' via Brevo API!'
         });
       }
 
