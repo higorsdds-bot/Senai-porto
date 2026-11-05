@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   perfil           TEXT NOT NULL DEFAULT 'OPERADOR',
   setor_id         INTEGER,
   status           TEXT NOT NULL DEFAULT 'PENDENTE',
+  foto_url         TEXT,
   ultimo_acesso    DATETIME,
   ultimo_heartbeat DATETIME,
   deleted_at       DATETIME,

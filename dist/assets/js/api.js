@@ -186,6 +186,13 @@ class ApiService {
     });
   }
 
+  async atualizarMeuPerfil(dados) {
+    return this.request(`${CONFIG.ENDPOINTS.AUTH}/perfil`, {
+      method: 'PUT',
+      body: JSON.stringify(dados)
+    });
+  }
+
   async solicitarCadastro(dados) {
     return this.request(`${CONFIG.ENDPOINTS.AUTH}/solicitar-cadastro`, {
       method: 'POST',

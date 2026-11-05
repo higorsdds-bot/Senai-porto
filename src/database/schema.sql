@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   perfil           VARCHAR(50) NOT NULL DEFAULT 'OPERADOR',
   setor_id         BIGINT NULL,
   status           ENUM('ATIVO','INATIVO','BLOQUEADO','PENDENTE','AGUARDANDO_ATIVACAO','REJEITADO') NOT NULL DEFAULT 'PENDENTE',
+  foto_url         LONGTEXT NULL,
   ultimo_acesso    DATETIME NULL,
   ultimo_heartbeat DATETIME NULL,
   deleted_at       DATETIME NULL,

@@ -11,7 +11,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { getPool } = require('../config/database');
-const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
+const { authMiddleware, JWT_SECRET, clearUserAuthCache } = require('../middleware/auth');
 const { getPermissoesDoUsuario, getModulosDoUsuario } = require('../middleware/permissions');
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
@@ -92,7 +92,7 @@ router.post('/login', async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status,
+      `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url,
               s.nome AS setor_nome
        FROM usuarios u
        LEFT JOIN setores s ON s.id = u.setor_id
@@ -246,7 +246,8 @@ router.post('/login', async (req, res) => {
           email: usuario.email,
           perfil: usuario.perfil,
           setor_id: usuario.setor_id,
-          setor_nome: usuario.setor_nome
+          setor_nome: usuario.setor_nome,
+          foto_url: usuario.foto_url || null
         },
         permissoes,
         modulos
@@ -286,7 +287,8 @@ router.get('/me', authMiddleware, async (req, res) => {
         email: req.usuario.email,
         perfil: req.usuario.perfil,
         setor_id: req.usuario.setor_id,
-        setor_nome: req.usuario.setor_nome
+        setor_nome: req.usuario.setor_nome,
+        foto_url: req.usuario.foto_url || null
       },
       permissoes,
       modulos
@@ -399,6 +401,98 @@ router.put('/alterar-senha', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[AUTH] Erro ao alterar senha:', err.message);
     return res.status(500).json({ success: false, message: 'Erro ao alterar senha.' });
+  }
+});
+
+// ─── PUT /api/v1/auth/perfil ────────────────────────────────────────────────
+// Permite ao usuário autenticado atualizar seus próprios dados (nome, email, foto)
+router.put('/perfil', authMiddleware, async (req, res) => {
+  const ip = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || null;
+  const { nome, email, foto_url } = req.body;
+
+  if (!nome || typeof nome !== 'string' || nome.trim().length < 3) {
+    return res.status(422).json({
+      success: false,
+      message: 'O nome deve ter no mínimo 3 caracteres.',
+      errors: { nome: 'Nome deve ter no mínimo 3 caracteres' }
+    });
+  }
+
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(422).json({
+      success: false,
+      message: 'Informe um e-mail válido.',
+      errors: { email: 'E-mail inválido' }
+    });
+  }
+
+  const nomeLimpo = nome.trim();
+  const emailLimpo = email.toLowerCase().trim();
+  const fotoLimpa = foto_url !== undefined ? (foto_url ? String(foto_url).trim() : null) : undefined;
+
+  try {
+    const pool = getPool();
+
+    // Se o email foi alterado, verifica se já pertence a outro usuário
+    if (emailLimpo !== (req.usuario.email || '').toLowerCase()) {
+      const [existentes] = await pool.query(
+        `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`,
+        [emailLimpo, req.usuario.id]
+      );
+      if (existentes && existentes.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: 'Este e-mail já está em uso por outro usuário.',
+          errors: { email: 'E-mail já cadastrado' }
+        });
+      }
+    }
+
+    if (fotoLimpa !== undefined) {
+      await pool.query(
+        `UPDATE usuarios SET nome = ?, email = ?, foto_url = ?, updated_at = NOW() WHERE id = ?`,
+        [nomeLimpo, emailLimpo, fotoLimpa, req.usuario.id]
+      );
+    } else {
+      await pool.query(
+        `UPDATE usuarios SET nome = ?, email = ?, updated_at = NOW() WHERE id = ?`,
+        [nomeLimpo, emailLimpo, req.usuario.id]
+      );
+    }
+
+    // Limpa o cache de autenticação em memória
+    clearUserAuthCache(req.usuario.id);
+
+    // Registra auditoria
+    await registrarAuditoria({
+      usuario_id: req.usuario.id,
+      acao: 'PERFIL_ATUALIZADO',
+      entidade: 'usuarios',
+      entidade_id: req.usuario.id,
+      descricao: `Usuário ${req.usuario.nome} atualizou seu próprio perfil.`,
+      ip,
+      user_agent: userAgent
+    });
+
+    const fotoFinal = fotoLimpa !== undefined ? fotoLimpa : (req.usuario.foto_url || null);
+
+    return res.json({
+      success: true,
+      message: 'Perfil atualizado com sucesso!',
+      data: {
+        id: req.usuario.id,
+        nome: nomeLimpo,
+        email: emailLimpo,
+        perfil: req.usuario.perfil,
+        setor_id: req.usuario.setor_id,
+        setor_nome: req.usuario.setor_nome,
+        foto_url: fotoFinal
+      }
+    });
+  } catch (err) {
+    console.error('[AUTH] Erro ao atualizar perfil:', err.message);
+    return res.status(500).json({ success: false, message: 'Erro interno ao atualizar perfil.' });
   }
 });
 

@@ -457,6 +457,16 @@ class AppRouter {
       this._atualizarLabelTemaDropdown();
     }
 
+    // Botão de Editar Meu Perfil no Dropdown do Usuário
+    const btnDropdownEditarPerfil = document.getElementById('btn-dropdown-editar-perfil');
+    if (btnDropdownEditarPerfil) {
+      btnDropdownEditarPerfil.addEventListener('click', () => {
+        const userMenu = document.getElementById('user-dropdown-menu');
+        if (userMenu) userMenu.classList.add('hidden');
+        this.abrirModalEditarPerfil();
+      });
+    }
+
     // Botão de Alterar Senha no Dropdown do Usuário
     const btnDropdownAlterarSenha = document.getElementById('btn-dropdown-alterar-senha');
     if (btnDropdownAlterarSenha) {
@@ -594,8 +604,17 @@ class AppRouter {
 
       // Verifica se houve novos comunicados após a última abertura do sino PARA ESTE PERFIL/USUÁRIO
       const storageKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_timestamp') : 'hub_notificacoes_lidas_timestamp';
+      const idsKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_ids') : 'hub_notificacoes_lidas_ids';
       const ultimaLeitura = parseInt(localStorage.getItem(storageKey) || '0', 10);
+      let lidosIds = [];
+      try {
+        lidosIds = JSON.parse(localStorage.getItem(idsKey) || '[]');
+      } catch (_) {
+        lidosIds = [];
+      }
+
       const naoLidos = lista.filter(c => {
+        if (lidosIds.includes(c.id)) return false;
         const time = new Date(c.created_at || c.data || 0).getTime();
         return time > ultimaLeitura;
       });
@@ -616,6 +635,7 @@ class AppRouter {
   async abrirCentralComunicadosModal() {
     // Esconde imediatamente o ícone vermelho e registra a leitura para este usuário/perfil
     const storageKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_timestamp') : 'hub_notificacoes_lidas_timestamp';
+    const idsKey = window.Auth ? window.Auth.getUserStorageKey('hub_notificacoes_lidas_ids') : 'hub_notificacoes_lidas_ids';
     localStorage.setItem(storageKey, Date.now().toString());
     const badge = document.getElementById('badge-topbar-notifications');
     if (badge) {
@@ -636,6 +656,10 @@ class AppRouter {
       }
 
       const lista = Array.isArray(comunicados) ? [...comunicados] : [];
+      try {
+        const ids = lista.map(c => c.id).filter(Boolean);
+        localStorage.setItem(idsKey, JSON.stringify(ids));
+      } catch (_) {}
       const prioridadePeso = { alta: 3, media: 2, normal: 1 };
       lista.sort((a, b) => {
         const pesoDiff = (prioridadePeso[b.prioridade] || 1) - (prioridadePeso[a.prioridade] || 1);
@@ -726,6 +750,232 @@ class AppRouter {
       console.error('Erro ao abrir comunicados:', err);
       window.UI.toast({ title: 'Avisos', message: 'Falha ao carregar comunicados.', type: 'error' });
     }
+  }
+
+  abrirModalEditarPerfil() {
+    const u = window.Auth ? window.Auth.getUsuario() : null;
+    if (!u) {
+      window.UI.toast({ title: 'Atenção', message: 'Faça login para editar seu perfil.', type: 'warning' });
+      return;
+    }
+
+    const partes = (u.nome || '').trim().split(/\s+/);
+    const iniciais = partes.length >= 2
+      ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+      : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
+
+    const cargoFormatado = window.Auth ? window.Auth.getStandardCargo(u.perfil) : (u.perfil || 'Usuário');
+    const setorFormatado = u.setor_nome || 'Geral';
+
+    let fotoTemporaria = u.foto_url || null;
+    let fotoRemovida = false;
+
+    const contentHtml = `
+      <form id="form-editar-meu-perfil" class="space-y-4 text-xs" novalidate onsubmit="return false;">
+        <!-- Bloco de Avatar e Fotografia -->
+        <div class="flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+          <div class="relative group">
+            <div id="perfil-avatar-preview"
+              class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-black text-2xl flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-slate-800 overflow-hidden">
+              ${fotoTemporaria ? `<img src="${fotoTemporaria}" alt="${u.nome}" class="w-full h-full object-cover">` : `<span>${iniciais}</span>`}
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center gap-2">
+            <input type="file" id="input-perfil-foto-arquivo" accept="image/png,image/jpeg,image/webp" class="hidden">
+            <button type="button" id="btn-alterar-foto-perfil" class="btn-secondary text-xs py-1.5 px-3">
+              <i data-lucide="camera" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
+              <span>${fotoTemporaria ? 'Trocar Foto' : 'Adicionar Foto'}</span>
+            </button>
+            <button type="button" id="btn-remover-foto-perfil" class="btn-danger text-xs py-1.5 px-3 ${fotoTemporaria ? '' : 'hidden'}">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Remover Foto</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-2 text-center">Formatos suportados: JPG, PNG ou WebP (máx. 5MB).</p>
+        </div>
+
+        <!-- Campos de Edição -->
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+            Nome Completo *
+          </label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="input-perfil-nome" required minlength="3" value="${u.nome || ''}" placeholder="Seu nome completo"
+              class="w-full pl-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+            E-mail Institucional *
+          </label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="email" id="input-perfil-email" required value="${u.email || ''}" placeholder="seu.email@secult.es.gov.br"
+              class="w-full pl-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+          </div>
+        </div>
+
+        <!-- Metadados de Vínculo Corporativo (Informativos) -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+            <span class="block text-[10px] uppercase font-bold text-slate-400">Cargo / Função</span>
+            <span class="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">${cargoFormatado}</span>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+            <span class="block text-[10px] uppercase font-bold text-slate-400">Setor Alocado</span>
+            <span class="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">${setorFormatado}</span>
+          </div>
+        </div>
+      </form>
+    `;
+
+    const modal = window.UI.openModal({
+      title: 'Editar Meu Perfil',
+      subtitle: 'Atualize seus dados pessoais e fotografia corporativa',
+      maxWidth: 'max-w-md',
+      contentHtml,
+      saveLabel: 'Salvar Alterações',
+      cancelLabel: 'Cancelar',
+      onSave: async () => {
+        const nomeVal = document.getElementById('input-perfil-nome')?.value?.trim();
+        const emailVal = document.getElementById('input-perfil-email')?.value?.trim().toLowerCase();
+
+        if (!nomeVal || nomeVal.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'O nome deve ter no mínimo 3 caracteres.', type: 'warning' });
+          return false;
+        }
+
+        if (!emailVal || !emailVal.includes('@') || !emailVal.includes('.')) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe um e-mail válido.', type: 'warning' });
+          return false;
+        }
+
+        try {
+          const payload = {
+            nome: nomeVal,
+            email: emailVal,
+            foto_url: fotoRemovida ? null : fotoTemporaria
+          };
+
+          const res = await window.API.atualizarMeuPerfil(payload);
+
+          if (res?.data && window.Auth?.setUsuario) {
+            window.Auth.setUsuario(res.data);
+          } else if (res?.data && window.Auth) {
+            window.Auth.usuario = { ...window.Auth.usuario, ...res.data };
+            window.Auth.preencherInfoUsuario();
+          }
+
+          window.UI.toast({
+            title: 'Perfil Atualizado',
+            message: res?.message || 'Suas informações foram atualizadas com sucesso!',
+            type: 'success'
+          });
+
+          return true;
+        } catch (err) {
+          window.UI.toast({
+            title: 'Erro ao Atualizar',
+            message: err.message || 'Não foi possível salvar as alterações.',
+            type: 'error'
+          });
+          return false;
+        }
+      }
+    });
+
+    // Configura os ouvintes de foto com redimensionamento inteligente via Canvas
+    setTimeout(() => {
+      const fileInput = document.getElementById('input-perfil-foto-arquivo');
+      const btnAlterar = document.getElementById('btn-alterar-foto-perfil');
+      const btnRemover = document.getElementById('btn-remover-foto-perfil');
+      const previewEl = document.getElementById('perfil-avatar-preview');
+
+      if (btnAlterar && fileInput) {
+        btnAlterar.addEventListener('click', () => fileInput.click());
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          if (!file.type.startsWith('image/')) {
+            window.UI.toast({ title: 'Arquivo Inválido', message: 'Por favor selecione uma imagem (JPG, PNG ou WebP).', type: 'warning' });
+            return;
+          }
+
+          if (file.size > 5 * 1024 * 1024) {
+            window.UI.toast({ title: 'Arquivo Muito Grande', message: 'A imagem deve ter no máximo 5MB.', type: 'warning' });
+            return;
+          }
+
+          try {
+            // Converte e otimiza via Canvas para avatar leve e nítido (256x256)
+            const reader = new FileReader();
+            reader.onload = (re) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxDim = 256;
+                let w = img.width;
+                let h = img.height;
+                if (w > h) {
+                  h = Math.round((h * maxDim) / w);
+                  w = maxDim;
+                } else {
+                  w = Math.round((w * maxDim) / h);
+                  h = maxDim;
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                fotoTemporaria = dataUrl;
+                fotoRemovida = false;
+
+                if (previewEl) {
+                  previewEl.innerHTML = `<img src="${dataUrl}" alt="Preview" class="w-full h-full object-cover">`;
+                }
+                if (btnRemover) btnRemover.classList.remove('hidden');
+                if (btnAlterar) {
+                  const span = btnAlterar.querySelector('span');
+                  if (span) span.textContent = 'Trocar Foto';
+                }
+              };
+              img.src = re.target.result;
+            };
+            reader.readAsDataURL(file);
+          } catch (errFoto) {
+            console.error('Erro ao processar imagem:', errFoto);
+            window.UI.toast({ title: 'Erro na Foto', message: 'Falha ao processar a imagem selecionada.', type: 'error' });
+          }
+        });
+      }
+
+      if (btnRemover) {
+        btnRemover.addEventListener('click', () => {
+          fotoTemporaria = null;
+          fotoRemovida = true;
+          if (fileInput) fileInput.value = '';
+          if (previewEl) {
+            previewEl.innerHTML = `<span>${iniciais}</span>`;
+          }
+          btnRemover.classList.add('hidden');
+          if (btnAlterar) {
+            const span = btnAlterar.querySelector('span');
+            if (span) span.textContent = 'Adicionar Foto';
+          }
+        });
+      }
+    }, 50);
+
+    return modal;
   }
 
   abrirModalAlterarSenha() {

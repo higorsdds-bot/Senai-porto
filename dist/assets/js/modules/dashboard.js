@@ -360,26 +360,6 @@ window.DashboardModule = {
           </div>
         </div>
 
-        <!-- Banner de Comunicado Urgente (quando houver comunicados não lidos de alta prioridade) -->
-        ${temAltaNaoVisto ? `
-          <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-300 dark:border-rose-900/80 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                <i data-lucide="megaphone" class="w-4 h-4"></i>
-              </div>
-              <div class="min-w-0">
-                <span class="text-xs font-mono font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Aviso Institucional Prioritário</span>
-                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  ${comunicadosAltaNaoVistos[0].titulo}
-                </p>
-              </div>
-            </div>
-            <button onclick="window.UI.visualizarComunicadosAlta()" class="btn-danger text-xs py-1.5 px-3 shrink-0">
-              Ler Comunicado
-            </button>
-          </div>
-        ` : ''}
-
         <!-- ================================================================= -->
         <!-- TELEMETRY STRIP INTEGRADA (Estilo Vercel / Stripe - Sem caixas de IA) -->
         <!-- ================================================================= -->

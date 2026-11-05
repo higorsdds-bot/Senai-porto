@@ -56,7 +56,7 @@ class CDPClient {
             return;
           }
         }
-      } catch (_) {}
+      } catch (_) { }
       await new Promise(r => setTimeout(r, 250));
     }
     throw new Error('Não foi possível conectar ao Chrome via CDP');
@@ -84,8 +84,8 @@ class CDPClient {
   }
 
   async close() {
-    try { this.ws?.close(); } catch (_) {}
-    try { this.cp?.kill(); } catch (_) {}
+    try { this.ws?.close(); } catch (_) { }
+    try { this.cp?.kill(); } catch (_) { }
   }
 }
 
@@ -205,7 +205,7 @@ async function runAudit() {
 
       console.log(`\n--- Modo de Fonte: ${tamanho.toUpperCase()} (Total discrepâncias/desproporções: ${auditoriaTipografia.length}) ---`);
       auditoriaTipografia.forEach((d, i) => {
-        console.log(` [${i+1}] Card: ${d.cardClass}`);
+        console.log(` [${i + 1}] Card: ${d.cardClass}`);
         console.log(`     Min Font: ${d.minFontSize}px | Max Font: ${d.maxFontSize}px | Razão: ${d.ratio}x | Overflow: ${d.overflow}`);
         console.log(`     Amostras:`, d.samples.map(s => `"${s.text}" (${s.fontSize}px, ${s.fontWeight})`).join(' | '));
       });

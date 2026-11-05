@@ -816,7 +816,7 @@ async function autenticarRequest(request, db, secret) {
     const decoded = await verifyJwt(token, secret);
     const usuario = await d1First(
       db,
-      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, s.nome AS setor_nome
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
        FROM usuarios u
        LEFT JOIN setores s ON s.id = u.setor_id
        WHERE u.id = ? AND u.deleted_at IS NULL LIMIT 1`,
@@ -1052,7 +1052,7 @@ export async function onRequest(context) {
 
       const usuario = await d1First(
         db,
-        `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, s.nome AS setor_nome
+        `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
          FROM usuarios u
          LEFT JOIN setores s ON s.id = u.setor_id
          WHERE u.email = ? AND u.deleted_at IS NULL LIMIT 1`,
@@ -1096,7 +1096,8 @@ export async function onRequest(context) {
             email: usuario.email,
             perfil: usuario.perfil,
             setor_id: usuario.setor_id,
-            setor_nome: usuario.setor_nome
+            setor_nome: usuario.setor_nome,
+            foto_url: usuario.foto_url || null
           },
           permissoes,
           modulos
@@ -1306,6 +1307,29 @@ export async function onRequest(context) {
       });
     }
 
+    const matchUsuarioFoto = route.match(/^\/usuarios\/(\d+)\/foto$/);
+    if (matchUsuarioFoto && method === 'GET') {
+      const id = matchUsuarioFoto[1];
+      const row = await d1First(db, 'SELECT foto_url FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+      if (!row || !row.foto_url) {
+        return new Response('Foto não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+      if (row.foto_url.startsWith('http://') || row.foto_url.startsWith('https://')) {
+        return Response.redirect(row.foto_url, 302);
+      }
+      const parsed = parseDataUrl(row.foto_url);
+      if (!parsed) {
+        return new Response('Formato inválido.', { status: 400 });
+      }
+      return new Response(parsed.bytes, {
+        headers: {
+          'Content-Type': parsed.mime,
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     const auth = await autenticarRequest(request, db, jwtSecret);
     if (auth.erro) return auth.erro;
     const { usuario, permissoes, modulos } = auth;
@@ -1349,6 +1373,62 @@ export async function onRequest(context) {
         user_agent: userAgent
       });
       return jsonResponse({ success: true, message: 'Senha alterada com sucesso!' });
+    }
+
+    if (route === '/auth/perfil' && method === 'PUT') {
+      const { nome, email, foto_url } = await getBodyData(request);
+      if (!nome || String(nome).trim().length < 3) {
+        return jsonResponse({ success: false, message: 'O nome deve ter no mínimo 3 caracteres.' }, 422);
+      }
+      if (!email || !String(email).includes('@')) {
+        return jsonResponse({ success: false, message: 'Informe um e-mail válido.' }, 422);
+      }
+      const nomeLimpo = String(nome).trim();
+      const emailLimpo = String(email).toLowerCase().trim();
+      const fotoLimpa = foto_url !== undefined ? (foto_url ? String(foto_url).trim() : null) : undefined;
+
+      // Se email mudou, verifica duplicidade
+      if (emailLimpo !== (usuario.email || '').toLowerCase()) {
+        const existente = await d1First(db, `SELECT id FROM usuarios WHERE email = ? AND id != ? AND deleted_at IS NULL LIMIT 1`, [emailLimpo, usuario.id]);
+        if (existente) {
+          return jsonResponse({ success: false, message: 'Este e-mail já está em uso por outro usuário.' }, 409);
+        }
+      }
+
+      // Garante coluna foto_url se ainda não existir
+      try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+
+      if (fotoLimpa !== undefined) {
+        await d1Run(db, `UPDATE usuarios SET nome = ?, email = ?, foto_url = ?, updated_at = datetime('now') WHERE id = ?`, [nomeLimpo, emailLimpo, fotoLimpa, usuario.id]);
+      } else {
+        await d1Run(db, `UPDATE usuarios SET nome = ?, email = ?, updated_at = datetime('now') WHERE id = ?`, [nomeLimpo, emailLimpo, usuario.id]);
+      }
+
+      await registrarAuditoria(db, {
+        usuario_id: usuario.id,
+        acao: 'PERFIL_ATUALIZADO',
+        entidade: 'usuarios',
+        entidade_id: usuario.id,
+        descricao: `Usuário ${usuario.nome} atualizou seu próprio perfil.`,
+        ip,
+        user_agent: userAgent
+      });
+
+      const fotoFinal = fotoLimpa !== undefined ? fotoLimpa : (usuario.foto_url || null);
+
+      return jsonResponse({
+        success: true,
+        message: 'Perfil atualizado com sucesso!',
+        data: {
+          id: usuario.id,
+          nome: nomeLimpo,
+          email: emailLimpo,
+          perfil: usuario.perfil,
+          setor_id: usuario.setor_id,
+          setor_nome: usuario.setor_nome,
+          foto_url: fotoFinal
+        }
+      });
     }
 
     // =========================================================================

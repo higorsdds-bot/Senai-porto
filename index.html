@@ -355,7 +355,7 @@
             <button id="btn-user-dropdown" type="button"
               class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-white/10 text-white transition-all focus:outline-none cursor-pointer">
               <div
-                class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white/20 shrink-0"
+                class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white/20 shrink-0 overflow-hidden"
                 data-usuario-iniciais>
                 HB
               </div>
@@ -379,7 +379,7 @@
               <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2.5">
                   <div
-                    class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center shrink-0"
+                    class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden"
                     data-usuario-iniciais>
                     HB
                   </div>
@@ -421,6 +421,11 @@
                     <span>Modo Noturno</span>
                   </span>
                   <span class="text-[10px] text-slate-400 font-semibold uppercase" id="label-tema-status">Claro</span>
+                </button>
+                <button id="btn-dropdown-editar-perfil" type="button"
+                  class="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer text-slate-700 dark:text-slate-300">
+                  <i data-lucide="user-pen" class="w-4 h-4 text-slate-400"></i>
+                  <span>Editar Meu Perfil</span>
                 </button>
                 <button id="btn-dropdown-alterar-senha" type="button"
                   class="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors text-left cursor-pointer text-slate-700 dark:text-slate-300">
@@ -479,7 +484,7 @@
         class="p-4 border-b border-slate-100 dark:border-slate-800/60 bg-gradient-to-b from-slate-50/40 to-transparent dark:from-slate-900/30">
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-sm flex items-center justify-center shadow-sm"
+            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-sm flex items-center justify-center shadow-sm overflow-hidden"
             data-usuario-iniciais>
             HB
           </div>

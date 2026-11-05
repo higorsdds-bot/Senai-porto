@@ -578,6 +578,19 @@ class AuthManager {
     return 'Operador';
   }
 
+  setUsuario(novoUsuario) {
+    if (!novoUsuario) return;
+    this.usuario = { ...this.usuario, ...novoUsuario };
+    const usuarioSerializado = JSON.stringify(this.usuario);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+    }
+    this.preencherInfoUsuario();
+  },
+
   preencherInfoUsuario() {
     const u = this.getUsuario();
     if (!u) return;
@@ -591,7 +604,13 @@ class AuthManager {
     const iniciais = partes.length >= 2
       ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
       : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
-    document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
+    document.querySelectorAll('[data-usuario-iniciais]').forEach(el => {
+      if (u.foto_url) {
+        el.innerHTML = `<img src="${u.foto_url}" alt="${u.nome}" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.parentElement.textContent='${iniciais}';">`;
+      } else {
+        el.textContent = iniciais;
+      }
+    });
 
     const cargoPadronizado = this.getStandardCargo(u.perfil);
     document.querySelectorAll('[data-usuario-perfil]').forEach(el => {

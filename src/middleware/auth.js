@@ -69,7 +69,7 @@ async function authMiddleware(req, res, next) {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status,
+      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url,
               s.nome AS setor_nome
        FROM usuarios u
        LEFT JOIN setores s ON s.id = u.setor_id
