@@ -1,0 +1,203 @@
+/* ==============================================================================
+   HUB ES+ / SECULT - Sistema de Acessibilidade Visual e WCAG 2.1
+   Tamanhos de Fonte, Alto Contraste, Daltonismo, Destaque de Links e VLibras
+   ============================================================================== */
+
+/* ─── 1. Escala de Tamanhos de Tipografia ──────────────────────────────────── */
+html.fonte-normal {
+  font-size: 100% !important;
+  /* 16px base padrão */
+}
+
+html.fonte-media {
+  font-size: 112.5% !important;
+  /* 18px base (+12.5% de ampliação) */
+}
+
+html.fonte-grande {
+  font-size: 125% !important;
+  /* 20px base (+25% de ampliação) */
+}
+
+/* ─── 2. Alto Contraste: Modo Claro ────────────────────────────────────────── */
+html.alto-contraste:not(.dark) {
+  --hub-border-light: #000000;
+  --hub-border-subtle: #000000;
+}
+
+html.alto-contraste:not(.dark) body {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+html.alto-contraste:not(.dark) .bg-white,
+html.alto-contraste:not(.dark) .bg-slate-50,
+html.alto-contraste:not(.dark) .bg-slate-100,
+html.alto-contraste:not(.dark) [class*="bg-white/"],
+html.alto-contraste:not(.dark) [class*="bg-slate-50/"] {
+  background-color: #ffffff !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
+}
+
+html.alto-contraste:not(.dark) input,
+html.alto-contraste:not(.dark) select,
+html.alto-contraste:not(.dark) textarea {
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+html.alto-contraste:not(.dark) p,
+html.alto-contraste:not(.dark) span:not([class*="badge"]):not([class*="bg-"]),
+html.alto-contraste:not(.dark) h1,
+html.alto-contraste:not(.dark) h2,
+html.alto-contraste:not(.dark) h3,
+html.alto-contraste:not(.dark) h4,
+html.alto-contraste:not(.dark) label {
+  color: #000000 !important;
+  font-weight: 600;
+}
+
+html.alto-contraste:not(.dark) a {
+  color: #003399 !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+}
+
+/* ─── 3. Alto Contraste: Modo Escuro ───────────────────────────────────────── */
+html.dark.alto-contraste body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.dark.alto-contraste .bg-white,
+html.dark.alto-contraste .bg-slate-900,
+html.dark.alto-contraste .bg-slate-950,
+html.dark.alto-contraste [class*="bg-slate-"],
+html.dark.alto-contraste [class*="bg-gray-"] {
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+html.dark.alto-contraste input,
+html.dark.alto-contraste select,
+html.dark.alto-contraste textarea {
+  border: 2px solid #ffffff !important;
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+html.dark.alto-contraste p,
+html.dark.alto-contraste span:not([class*="badge"]):not([class*="bg-"]),
+html.dark.alto-contraste h1,
+html.dark.alto-contraste h2,
+html.dark.alto-contraste h3,
+html.dark.alto-contraste h4,
+html.dark.alto-contraste label {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+html.dark.alto-contraste a {
+  color: #66b3ff !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+}
+
+/* ─── 4. Modo Daltônico (Filtros SVG de Matriz de Cor) ─────────────────────── */
+html[data-daltonismo="protanopia"] {
+  filter: url('#filtro-protanopia') !important;
+}
+
+html[data-daltonismo="deuteranopia"] {
+  filter: url('#filtro-deuteranopia') !important;
+}
+
+html[data-daltonismo="tritanopia"] {
+  filter: url('#filtro-tritanopia') !important;
+}
+
+html[data-daltonismo="acromatopsia"] {
+  filter: url('#filtro-acromatopsia') !important;
+}
+
+/* ─── 5. Destaque de Links ─────────────────────────────────────────────────── */
+html.destaque-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-decoration-thickness: 2px !important;
+  font-weight: 700 !important;
+}
+
+/* ─── 6. Fonte Legível & Espaçamento Aprimorado ─────────────────────────────── */
+html.fonte-legivel body {
+  letter-spacing: 0.035em !important;
+  line-height: 1.75 !important;
+  word-spacing: 0.06em !important;
+}
+
+/* ─── 7. Botões Flutuantes e Menus de Acessibilidade ───────────────────────── */
+#hub-floating-accessibility {
+  position: fixed;
+  right: 1rem;
+  bottom: 2rem;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+@media (min-width: 640px) {
+  #hub-floating-accessibility {
+    right: 1.25rem;
+    bottom: 2.5rem;
+  }
+}
+
+.hub-fab-btn {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #0070e0 0%, #0056b3 100%);
+  border-radius: 1rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px -4px rgba(0, 102, 204, 0.45), 0 4px 8px -2px rgba(0, 102, 204, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  user-select: none;
+}
+
+.hub-fab-btn:hover {
+  background: linear-gradient(135deg, #0080ff 0%, #0060c8 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 28px -4px rgba(0, 102, 204, 0.55);
+}
+
+.hub-fab-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.hub-fab-btn:focus-visible {
+  ring: 3px solid #38bdf8;
+  outline: 2px solid #ffffff;
+}
+
+/* ─── 8. Integração Visual com o VLibras ────────────────────────────────────── */
+/* Oculta o botão flutuante genérico do VLibras pois o HUB ES+ possui o botão oficial estilizado */
+#vlibras-access-wrapper {
+  display: none !important;
+}
+
+/* Garante que o player/avatar 3D do VLibras fique visível e acima de qualquer camada */
+#vlibras-app-root,
+div[vw] {
+  z-index: 2147483647 !important;
+}

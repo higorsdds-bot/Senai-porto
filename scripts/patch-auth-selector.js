@@ -58,3 +58,4 @@ if (!auth.includes('id="seletor-cargos-teste"')) {
   fs.writeFileSync(authPath, auth, 'utf8');
   console.log('✅ Added seletor-cargos-teste to assets/js/auth.js');
 }
+

@@ -5,649 +5,657 @@
  */
 
 const FALLBACK_ALL_PERMISSIONS = [
-    'dashboard.visualizar', 'indicadores.visualizar',
-    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar', 'limpeza.excluir',
-    'compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber', 'compras.excluir',
-    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
-    'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar', 'documentos.excluir',
-    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
-    'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
-    'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar', 'insumos.excluir',
-    'comunicados.visualizar', 'comunicados.criar', 'comunicados.excluir',
-    'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear', 'usuarios.excluir',
-    'setores.visualizar', 'setores.criar', 'setores.editar', 'setores.excluir',
-    'auditoria.visualizar', 'auditoria.exportar',
-    'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
-    'rh.visualizar', 'rh.gerenciar'
+  'dashboard.visualizar', 'indicadores.visualizar',
+  'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar', 'limpeza.excluir',
+  'compras.visualizar', 'compras.visualizar_pedidos', 'compras.visualizar_proprias', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber', 'compras.excluir',
+  'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
+  'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar', 'documentos.excluir',
+  'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
+  'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+  'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar', 'insumos.excluir',
+  'comunicados.visualizar', 'comunicados.criar', 'comunicados.excluir',
+  'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear', 'usuarios.excluir',
+  'setores.visualizar', 'setores.criar', 'setores.editar', 'setores.excluir',
+  'auditoria.visualizar', 'auditoria.exportar',
+  'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
+  'rh.visualizar', 'rh.gerenciar'
 ];
 
 const FALLBACK_PROFILE_PERMISSIONS = {
-    ADMIN: FALLBACK_ALL_PERMISSIONS,
-    ADMINISTRADOR: FALLBACK_ALL_PERMISSIONS,
-    GESTOR: [
-        'dashboard.visualizar', 'indicadores.visualizar',
-        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
-        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
-        'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'comunicados.visualizar', 'comunicados.criar',
-        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
-        'setores.visualizar', 'usuarios.visualizar', 'usuarios.pre_cadastrar',
-        'advertencias.visualizar', 'advertencias.solicitar'
-    ],
-    GESTOR_RH: [
-        'dashboard.visualizar', 'indicadores.visualizar',
-        'comunicados.visualizar', 'comunicados.criar',
-        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
-        'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear',
-        'setores.visualizar', 'setores.criar', 'setores.editar',
-        'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
-        'ocorrencias.visualizar', 'ocorrencias.criar',
-        'rh.visualizar', 'rh.gerenciar'
-    ],
-    ANALISTA_RH: [
-        'dashboard.visualizar', 'indicadores.visualizar',
-        'comunicados.visualizar', 'comunicados.criar',
-        'eventos.visualizar',
-        'usuarios.visualizar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'setores.visualizar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.baixar',
-        'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
-    ],
-    RH: [
-        'dashboard.visualizar', 'comunicados.visualizar', 'eventos.visualizar',
-        'usuarios.visualizar', 'usuarios.pre_cadastrar', 'setores.visualizar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'advertencias.visualizar', 'advertencias.solicitar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
-    ],
-    GESTOR_INFRA: [
-        'dashboard.visualizar', 'indicadores.visualizar',
-        'eventos.visualizar', 'eventos.criar', 'eventos.editar',
-        'comunicados.visualizar', 'comunicados.criar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
-        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
-        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
-        'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
-        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'usuarios.visualizar', 'setores.visualizar',
-        'advertencias.visualizar', 'advertencias.solicitar'
-    ],
-    TECNICO_N3: [
-        'dashboard.visualizar', 'indicadores.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
-        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'setores.visualizar'
-    ],
-    TECNICO_N2: [
-        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'equipamentos.visualizar', 'equipamentos.editar',
-        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
-        'documentos.visualizar', 'documentos.baixar',
-        'setores.visualizar'
-    ],
-    TECNICO_N1: [
-        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'equipamentos.visualizar', 'insumos.visualizar',
-        'documentos.visualizar', 'documentos.baixar',
-        'setores.visualizar'
-    ],
-    TECNICO: [
-        'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'equipamentos.visualizar', 'insumos.visualizar',
-        'documentos.visualizar', 'documentos.baixar',
-        'setores.visualizar'
-    ],
-    GESTOR_OPERADOR: [
-        'dashboard.visualizar', 'indicadores.visualizar',
-        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
-        'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
-        'comunicados.visualizar', 'comunicados.criar',
-        'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
-        'compras.visualizar', 'compras.criar', 'compras.editar',
-        'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
-        'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
-        'usuarios.visualizar', 'setores.visualizar',
-        'advertencias.visualizar', 'advertencias.solicitar'
-    ],
-    OPERADOR: [
-        'dashboard.visualizar',
-        'limpeza.visualizar', 'limpeza.criar',
-        'eventos.visualizar', 'eventos.criar',
-        'ocorrencias.visualizar', 'ocorrencias.criar',
-        'comunicados.visualizar',
-        'equipamentos.visualizar',
-        'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
-        'documentos.visualizar', 'documentos.baixar'
-    ],
-    ADMINISTRACAO: [
-        'comunicados.visualizar',
-        'compras.visualizar_pedidos', 'compras.receber',
-        'eventos.visualizar',
-        'insumos.visualizar', 'insumos.baixar',
-        'usuarios.pre_cadastrar',
-        'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
-        'advertencias.visualizar', 'advertencias.solicitar'
-    ],
-    LIMPEZA: [
-        'comunicados.visualizar',
-        'limpeza.visualizar', 'limpeza.editar',
-        'compras.visualizar_proprias', 'compras.criar'
-    ]
+  ADMIN: FALLBACK_ALL_PERMISSIONS,
+  ADMINISTRADOR: FALLBACK_ALL_PERMISSIONS,
+  GESTOR: [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+    'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
+    'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+    'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'comunicados.visualizar', 'comunicados.criar',
+    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+    'setores.visualizar', 'usuarios.visualizar', 'usuarios.pre_cadastrar',
+    'advertencias.visualizar', 'advertencias.solicitar'
+  ],
+  GESTOR_RH: [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'comunicados.visualizar', 'comunicados.criar',
+    'eventos.visualizar', 'eventos.criar', 'eventos.editar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.editar', 'documentos.baixar', 'documentos.arquivar',
+    'usuarios.visualizar', 'usuarios.criar', 'usuarios.pre_cadastrar', 'usuarios.aprovar', 'usuarios.editar', 'usuarios.alterar_status', 'usuarios.bloquear',
+    'setores.visualizar', 'setores.criar', 'setores.editar',
+    'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar', 'advertencias.homologar', 'advertencias.revogar',
+    'ocorrencias.visualizar', 'ocorrencias.criar',
+    'rh.visualizar', 'rh.gerenciar'
+  ],
+  ANALISTA_RH: [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'comunicados.visualizar', 'comunicados.criar',
+    'eventos.visualizar',
+    'usuarios.visualizar', 'usuarios.pre_cadastrar', 'usuarios.editar', 'setores.visualizar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.criar', 'documentos.baixar',
+    'advertencias.visualizar', 'advertencias.solicitar', 'advertencias.aplicar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
+  ],
+  RH: [
+    'dashboard.visualizar', 'comunicados.visualizar', 'eventos.visualizar',
+    'usuarios.visualizar', 'usuarios.pre_cadastrar', 'setores.visualizar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+    'advertencias.visualizar', 'advertencias.solicitar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'rh.visualizar'
+  ],
+  GESTOR_INFRA: [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'eventos.visualizar', 'eventos.criar', 'eventos.editar',
+    'comunicados.visualizar', 'comunicados.criar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar', 'ocorrencias.excluir',
+    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar', 'equipamentos.excluir',
+    'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+    'compras.visualizar', 'compras.visualizar_pedidos', 'compras.criar', 'compras.editar', 'compras.aprovar', 'compras.receber',
+    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+    'usuarios.visualizar', 'setores.visualizar',
+    'advertencias.visualizar', 'advertencias.solicitar'
+  ],
+  TECNICO_N3: [
+    'dashboard.visualizar', 'indicadores.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+    'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+    'setores.visualizar'
+  ],
+  TECNICO_N2: [
+    'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'equipamentos.visualizar', 'equipamentos.editar',
+    'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+    'documentos.visualizar', 'documentos.baixar',
+    'setores.visualizar'
+  ],
+  TECNICO_N1: [
+    'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'equipamentos.visualizar', 'insumos.visualizar',
+    'documentos.visualizar', 'documentos.baixar',
+    'setores.visualizar'
+  ],
+  TECNICO: [
+    'dashboard.visualizar', 'eventos.visualizar', 'comunicados.visualizar',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.assumir', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'equipamentos.visualizar', 'insumos.visualizar',
+    'documentos.visualizar', 'documentos.baixar',
+    'setores.visualizar'
+  ],
+  GESTOR_OPERADOR: [
+    'dashboard.visualizar', 'indicadores.visualizar',
+    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+    'eventos.visualizar', 'eventos.criar', 'eventos.editar', 'eventos.excluir',
+    'ocorrencias.visualizar', 'ocorrencias.criar', 'ocorrencias.editar', 'ocorrencias.assumir', 'ocorrencias.atender', 'ocorrencias.escalonar', 'ocorrencias.fechar',
+    'comunicados.visualizar', 'comunicados.criar',
+    'insumos.visualizar', 'insumos.criar', 'insumos.editar', 'insumos.movimentar', 'insumos.baixar',
+    'compras.visualizar', 'compras.criar', 'compras.editar',
+    'documentos.visualizar', 'documentos.enviar', 'documentos.baixar',
+    'equipamentos.visualizar', 'equipamentos.criar', 'equipamentos.editar',
+    'usuarios.visualizar', 'setores.visualizar',
+    'advertencias.visualizar', 'advertencias.solicitar'
+  ],
+  OPERADOR: [
+    'dashboard.visualizar',
+    'limpeza.visualizar', 'limpeza.criar',
+    'eventos.visualizar', 'eventos.criar',
+    'ocorrencias.visualizar', 'ocorrencias.criar',
+    'comunicados.visualizar',
+    'equipamentos.visualizar',
+    'insumos.visualizar', 'insumos.movimentar', 'insumos.baixar',
+    'documentos.visualizar', 'documentos.baixar'
+  ],
+  ADMINISTRACAO: [
+    'comunicados.visualizar',
+    'compras.visualizar_pedidos', 'compras.receber',
+    'eventos.visualizar',
+    'insumos.visualizar', 'insumos.baixar',
+    'usuarios.pre_cadastrar',
+    'limpeza.visualizar', 'limpeza.criar', 'limpeza.editar',
+    'advertencias.visualizar', 'advertencias.solicitar'
+  ],
+  LIMPEZA: [
+    'comunicados.visualizar',
+    'limpeza.visualizar', 'limpeza.editar',
+    'compras.visualizar_proprias', 'compras.criar'
+  ]
 };
 
 const CONTAS_TESTE_CARGOS = [
-    { cargo: 'ADMIN', label: 'Admin Geral', email: 'admin@secult.es.gov.br', senha: 'Admin@Secult2026!', grupo: 'Governança & Direção' },
-    { cargo: 'ADMINISTRADOR', label: 'Administrador', email: 'administrador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
-    { cargo: 'ADMINISTRACAO', label: 'Administração (Pedidos/Admissão)', email: 'administracao@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
-    { cargo: 'GESTOR', label: 'Gestor Geral', email: 'gestor@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
-    { cargo: 'GESTOR_RH', label: 'Gestor de RH', email: 'gestor.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
-    { cargo: 'GESTOR_INFRA', label: 'Gestor de Infra & TI', email: 'gestor.infra@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
-    { cargo: 'GESTOR_OPERADOR', label: 'Gestor de Operadores', email: 'gestor.operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
-    { cargo: 'ANALISTA_RH', label: 'Analista de RH', email: 'analista.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
-    { cargo: 'RH', label: 'Assistente de RH', email: 'rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
-    { cargo: 'TECNICO_N3', label: 'Técnico N3 (Infra/Servidores)', email: 'tecnico.n3@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
-    { cargo: 'TECNICO_N2', label: 'Técnico N2 (Hardware/Redes)', email: 'tecnico.n2@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
-    { cargo: 'TECNICO_N1', label: 'Técnico N1 (Helpdesk)', email: 'tecnico.n1@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
-    { cargo: 'TECNICO', label: 'Técnico Geral', email: 'tecnico@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
-    { cargo: 'OPERADOR', label: 'Operador', email: 'operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' },
-    { cargo: 'LIMPEZA', label: 'Equipe de Limpeza', email: 'limpeza@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' }
+  { cargo: 'ADMIN', label: 'Admin Geral', email: 'admin@secult.es.gov.br', senha: 'Admin@Secult2026!', grupo: 'Governança & Direção' },
+  { cargo: 'ADMINISTRADOR', label: 'Administrador', email: 'administrador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
+  { cargo: 'ADMINISTRACAO', label: 'Administração (Pedidos/Admissão)', email: 'administracao@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Governança & Direção' },
+  { cargo: 'GESTOR', label: 'Gestor Geral', email: 'gestor@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+  { cargo: 'GESTOR_RH', label: 'Gestor de RH', email: 'gestor.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+  { cargo: 'GESTOR_INFRA', label: 'Gestor de Infra & TI', email: 'gestor.infra@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+  { cargo: 'GESTOR_OPERADOR', label: 'Gestor de Operadores', email: 'gestor.operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Gestores Setoriais' },
+  { cargo: 'ANALISTA_RH', label: 'Analista de RH', email: 'analista.rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
+  { cargo: 'RH', label: 'Assistente de RH', email: 'rh@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Recursos Humanos' },
+  { cargo: 'TECNICO_N3', label: 'Técnico N3 (Infra/Servidores)', email: 'tecnico.n3@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+  { cargo: 'TECNICO_N2', label: 'Técnico N2 (Hardware/Redes)', email: 'tecnico.n2@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+  { cargo: 'TECNICO_N1', label: 'Técnico N1 (Helpdesk)', email: 'tecnico.n1@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+  { cargo: 'TECNICO', label: 'Técnico Geral', email: 'tecnico@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Suporte Técnico & TI' },
+  { cargo: 'OPERADOR', label: 'Operador', email: 'operador@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' },
+  { cargo: 'LIMPEZA', label: 'Equipe de Limpeza', email: 'limpeza@secult.es.gov.br', senha: 'Teste@2026!', grupo: 'Operacional' }
 ];
 
 class AuthManager {
-    constructor() {
-        this.usuario = null;
-        this.permissoes = [];
-        this.modulos = [];
-        this.permissionsReady = false;
-        this._heartbeatInterval = null;
-        this._modoVisitante = false;
-    }
+  constructor() {
+    this.usuario = null;
+    this.permissoes = [];
+    this.modulos = [];
+    this.permissionsReady = false;
+    this._heartbeatInterval = null;
+    this._modoVisitante = false;
+  }
 
-    _normalizeProfile(perfil) {
-        const raw = String(perfil || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toUpperCase()
-            .trim()
-            .replace(/[\s-]+/g, '_')
-            .replace(/[^A-Z0-9_]/g, '');
-        const aliases = {
-    ADMINGERAL: 'ADMIN',
-    ADMIN_GERAL: 'ADMIN',
-    GESTORRH: 'GESTOR_RH',
-    GESTOR_DE_RH: 'GESTOR_RH',
-    ANALISTARH: 'ANALISTA_RH',
-    ANALISTA_DE_RH: 'ANALISTA_RH',
-    GESTORINFRA: 'GESTOR_INFRA',
-    GESTOR_DE_INFRA: 'GESTOR_INFRA',
-    GESTOR_INFRAESTRUTURA: 'GESTOR_INFRA',
-    TECNICON1: 'TECNICO_N1',
-    TECNICON2: 'TECNICO_N2',
-    TECNICON3: 'TECNICO_N3',
-    GESTOROPERADOR: 'GESTOR_OPERADOR',
-    GESTOR_DE_OPERADOR: 'GESTOR_OPERADOR',
-    GESTOR_DE_OPERADORES: 'GESTOR_OPERADOR'
-  };
-        return aliases[raw] || raw;
-    }
+  _normalizeProfile(perfil) {
+    const raw = String(perfil || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .trim()
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^A-Z0-9_]/g, '');
+    const aliases = {
+      ADMINGERAL: 'ADMIN',
+      ADMIN_GERAL: 'ADMIN',
+      GESTORRH: 'GESTOR_RH',
+      GESTOR_DE_RH: 'GESTOR_RH',
+      ANALISTARH: 'ANALISTA_RH',
+      ANALISTA_DE_RH: 'ANALISTA_RH',
+      GESTORINFRA: 'GESTOR_INFRA',
+      GESTOR_DE_INFRA: 'GESTOR_INFRA',
+      GESTOR_INFRAESTRUTURA: 'GESTOR_INFRA',
+      TECNICON1: 'TECNICO_N1',
+      TECNICON2: 'TECNICO_N2',
+      TECNICON3: 'TECNICO_N3',
+      GESTOROPERADOR: 'GESTOR_OPERADOR',
+      GESTOR_DE_OPERADOR: 'GESTOR_OPERADOR',
+      GESTOR_DE_OPERADORES: 'GESTOR_OPERADOR'
+    };
+    return aliases[raw] || raw;
+  }
 
-    getToken() {
-        return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_TOKEN))
-            || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_TOKEN))
-            || null;
-    }
+  getToken() {
+    return (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_TOKEN))
+      || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_TOKEN))
+      || null;
+  }
 
-    getUsuario() {
-        if (!this.usuario) {
-            // Prioridade primária: sessionStorage (isolamento individual por aba)
-            // Fallback: localStorage (persistência entre reinicializações do navegador)
-            const raw = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_USUARIO))
-                || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_USUARIO));
-            if (raw) {
-                try {
-                    this.usuario = JSON.parse(raw);
-                    const perfilNorm = this._normalizeProfile(this.usuario?.perfil);
-                    const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
-                    const storedPerms = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
-                    this.permissoes = storedPerms.length > 0 ? storedPerms : fallbackPerms;
-                    this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
-                    this.permissionsReady = true;
-
-                    // Sincroniza para o sessionStorage da aba atual caso tenha vindo do fallback
-                    if (typeof sessionStorage !== 'undefined') {
-                        if (!sessionStorage.getItem(CONFIG.STORAGE_TOKEN)) {
-                            const t = localStorage.getItem(CONFIG.STORAGE_TOKEN);
-                            if (t) sessionStorage.setItem(CONFIG.STORAGE_TOKEN, t);
-                        }
-                        if (!sessionStorage.getItem(CONFIG.STORAGE_USUARIO)) {
-                            sessionStorage.setItem(CONFIG.STORAGE_USUARIO, raw);
-                        }
-                    }
-                } catch { this.usuario = null; }
-            }
-        }
-        return this.usuario;
-    }
-
-    /** Alias de compatibilidade para getUsuario */
-    getUser() {
-        return this.getUsuario();
-    }
-
-    estaLogado() {
-        return !!this.getToken();
-    }
-
-    /** Verifica se é visitante (modo anônimo público ou perfil VISITANTE no banco) */
-    isVisitante() {
-        const u = this.getUsuario();
-        const p = u && u.perfil ? this._normalizeProfile(u.perfil) : '';
-        if (p === 'VISITANTE') return true;
-        if (this._modoVisitante) return true;
-        return !this.estaLogado();
-    }
-
-    isAdmin() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return p === 'ADMIN' || p === 'ADMINISTRADOR';
-    }
-
-    /** Verifica se é o Administrador Geral (autoridade máxima institucional) */
-    isAdminGeral() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return p === 'ADMIN';
-    }
-
-    isGestorRH() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return this.isAdmin() || p === 'GESTOR_RH';
-    }
-
-    isGestorInfra() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return this.isAdmin() || p === 'GESTOR_INFRA';
-    }
-
-    isGestorOperador() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return this.isAdmin() || p === 'GESTOR_OPERADOR';
-    }
-
-    isTecnico() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return this.isAdmin() || p.startsWith('TECNICO') || p === 'GESTOR_INFRA';
-    }
-
-    isRH() {
-        const u = this.getUsuario();
-        if (!u || !u.perfil) return false;
-        const p = this._normalizeProfile(u.perfil);
-        return this.isAdmin() || p.includes('RH');
-    }
-
-    hasPermission(chave) {
-        // Visitante público: só pode ver comunicados e eventos
-        if (this.isVisitante()) {
-            return chave === 'comunicados.visualizar' || chave === 'eventos.visualizar';
-        }
-        if (this.isAdmin()) return true;
-        if (this.permissoes.includes(chave)) return true;
-        const u = this.getUsuario();
-        const perfilNorm = this._normalizeProfile(u?.perfil);
-        const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
-        return fallbackPerms.includes(chave);
-    }
-
-    hasAnyPermission(chaves = []) {
-        if (this.isVisitante()) {
-            return chaves.some(c => c === 'comunicados.visualizar' || c === 'eventos.visualizar');
-        }
-        if (this.isAdmin()) return true;
-        return chaves.some(chave => this.hasPermission(chave));
-    }
-
-    canAccessModule(moduleName, permissionKeys = []) {
-        if (this.isVisitante()) {
-            return moduleName === 'comunicacao' || moduleName === 'agenda';
-        }
-        if (this.isAdmin()) return true;
-        if (Array.isArray(this.modulos) && this.modulos.includes(moduleName)) return true;
-        return this.hasAnyPermission(permissionKeys);
-    }
-
-    getUserStorageKey(prefix) {
-        const u = this.getUsuario();
-        if (!u) return `${prefix}_guest`;
-        const perfil = String(u.perfil || 'perfil').toLowerCase().trim();
-        const id = u.id || 'anon';
-        return `${prefix}_${perfil}_${id}`;
-    }
-
-    /** Ativa o modo visitante público: exibe o app sem login */
-    entrarComoVisitante() {
-        this._modoVisitante = true;
-        this.permissionsReady = true;
-        this.ocultarTelaLogin();
-        this._atualizarUIVisitante();
-        window.App?.atualizarVisibilidadeRotas();
-        // Redireciona para comunicados (página inicial do visitante)
-        window.location.hash = '#comunicacao';
-        window.App?.handleRoute();
-    }
-
-    /** Atualiza a topbar e sidebar para modo visitante */
-    _atualizarUIVisitante() {
-        // Esconde elementos que não fazem sentido para visitante
-        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-
-        // Atualiza info do usuário na topbar para mostrar "Visitante"
-        document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = 'Visitante');
-        document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = 'Visitante');
-        document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = 'V');
-        document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
-        document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
-        document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => el.textContent = 'Visitante');
-
-        // Mostra o botão de login na topbar
-        this._criarBotaoLoginTopbar();
-    }
-
-    /** Cria botão "Fazer Login" na topbar para visitantes */
-    _criarBotaoLoginTopbar() {
-        // Remove botão anterior se existir
-        document.getElementById('btn-visitante-login')?.remove();
-
-        // Esconde o botão de logout se existir
-        const btnLogout = document.getElementById('btn-logout');
-        if (btnLogout) btnLogout.classList.add('hidden');
-
-        // Insere botão de login ao lado das notificações
-        const topbarRight = document.querySelector('.topbar-right') || document.querySelector('header .flex.items-center.gap-2');
-        if (!topbarRight) return;
-
-        const btn = document.createElement('button');
-        btn.id = 'btn-visitante-login';
-        btn.className = 'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all';
-        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Fazer Login</span>';
-        btn.addEventListener('click', () => {
-            this._modoVisitante = false;
-            this.renderizarTelaLogin();
-        });
-        topbarRight.prepend(btn);
-        if (window.lucide) lucide.createIcons();
-    }
-
-    /** Remove o botão de login da topbar (quando o usuário faz login) */
-    _removerBotaoLoginTopbar() {
-        document.getElementById('btn-visitante-login')?.remove();
-        const btnLogout = document.getElementById('btn-logout');
-        if (btnLogout) btnLogout.classList.remove('hidden');
-    }
-
-    async login(email, senha) {
-        const res = await window.API.login(email, senha);
-        if (res?.success && res.data?.token) {
-            const perfilNorm = this._normalizeProfile(res.data.usuario?.perfil);
-            const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
-            const apiPerms = Array.isArray(res.data.permissoes) ? res.data.permissoes : [];
-            const mergedPerms = apiPerms.length > 0 ? apiPerms : fallbackPerms;
-
-            const usuario = {
-                ...res.data.usuario,
-                permissoes: mergedPerms,
-                modulos: res.data.modulos || []
-            };
-            // Isola a sessão ativamente nesta aba via sessionStorage
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
-                sessionStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
-            }
-            // Mantém no localStorage como fallback global de persistência
-            if (typeof localStorage !== 'undefined') {
-                localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
-                localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
-            }
-            this.usuario = usuario;
-            this.permissoes = usuario.permissoes;
-            this.modulos = usuario.modulos;
-            this.permissionsReady = true;
-            this._modoVisitante = false;
-            this.iniciarHeartbeat();
-            this._removerBotaoLoginTopbar();
-
-            // Atualiza imediatamente o badge de notificações para o perfil logado
-            if (window.App && typeof window.App.atualizarBadgeComunicados === 'function') {
-                window.App.atualizarBadgeComunicados();
-            }
-
-            return res.data;
-        }
-        throw new Error(res?.message || 'Falha no login.');
-    }
-
-    async logout() {
-        this.pararHeartbeat();
-        try { await window.API.logout(); } catch (_) { }
-        this.forcarLogout();
-    }
-
-    forcarLogout() {
-        this.pararHeartbeat();
-        if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.removeItem(CONFIG.STORAGE_TOKEN);
-            sessionStorage.removeItem(CONFIG.STORAGE_USUARIO);
-        }
-        if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem(CONFIG.STORAGE_TOKEN);
-            localStorage.removeItem(CONFIG.STORAGE_USUARIO);
-        }
-        this.usuario = null;
-        this.permissoes = [];
-        this.modulos = [];
-        this.permissionsReady = false;
-
-        // Limpa badge do sino na tela de login
-        const badge = document.getElementById('badge-topbar-notifications');
-        if (badge) {
-            badge.classList.add('hidden');
-            badge.classList.remove('animate-pulse');
-        }
-
-        // Volta para modo visitante ao invés de forçar tela de login
-        this.entrarComoVisitante();
-    }
-
-    iniciarHeartbeat() {
-        this.pararHeartbeat();
-        // Heartbeat inicial
-        window.API.heartbeat();
-        // A cada 60 segundos
-        this._heartbeatInterval = setInterval(() => {
-            if (this.estaLogado()) {
-                window.API.heartbeat();
-            } else {
-                this.pararHeartbeat();
-            }
-        }, 60000);
-    }
-
-    pararHeartbeat() {
-        if (this._heartbeatInterval) {
-            clearInterval(this._heartbeatInterval);
-            this._heartbeatInterval = null;
-        }
-    }
-
-    /** Guard: verifica autenticação ou ativa modo visitante */
-    exigirAutenticacao() {
-        // Verifica se a URL contém token de ativação de conta
-        const tokenAtivacao = this.verificarRotaAtivacao();
-        if (tokenAtivacao) {
-            this.mostrarTelaAtivacao(tokenAtivacao);
-            return false;
-        }
-
-        if (this.estaLogado()) {
-            this.ocultarTelaLogin();
-            this.preencherInfoUsuario();
-            this.iniciarHeartbeat();
-            this._atualizarPermissoes();
-            this.atualizarVisibilidadeAdmin();
-            return true;
-        }
-        // Sem login: entra diretamente como visitante
-        this.entrarComoVisitante();
-        return false;
-    }
-
-    verificarRotaAtivacao() {
-        const hash = window.location.hash || '';
-        if (hash.toLowerCase().includes('ativar-conta') || hash.toLowerCase().includes('redefinir-senha')) {
-            if (hash.includes('token=')) {
-                const raw = hash.split('token=')[1];
-                return raw.split('&')[0].trim();
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('token')?.trim() || '';
-        }
-        return null;
-    }
-
-    async _atualizarPermissoes() {
+  getUsuario() {
+    if (!this.usuario) {
+      // Prioridade primária: sessionStorage (isolamento individual por aba)
+      // Fallback: localStorage (persistência entre reinicializações do navegador)
+      const raw = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(CONFIG.STORAGE_USUARIO))
+        || (typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG.STORAGE_USUARIO));
+      if (raw) {
         try {
-            const session = await window.API.me();
-            if (!session?.usuario) throw new Error('Resposta de sessão inválida.');
-            const perfilNorm = this._normalizeProfile(session.usuario.perfil);
-            const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
-            const apiPerms = Array.isArray(session.permissoes) ? session.permissoes : [];
-            this.permissoes = apiPerms.length > 0 ? apiPerms : fallbackPerms;
-            this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
-            this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
-            this.permissionsReady = true;
-            const usuarioSerializado = JSON.stringify(this.usuario);
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+          this.usuario = JSON.parse(raw);
+          const perfilNorm = this._normalizeProfile(this.usuario?.perfil);
+          const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+          const storedPerms = Array.isArray(this.usuario?.permissoes) ? this.usuario.permissoes : [];
+          this.permissoes = storedPerms.length > 0 ? storedPerms : fallbackPerms;
+          this.modulos = Array.isArray(this.usuario?.modulos) ? this.usuario.modulos : [];
+          this.permissionsReady = true;
+
+          // Sincroniza para o sessionStorage da aba atual caso tenha vindo do fallback
+          if (typeof sessionStorage !== 'undefined') {
+            if (!sessionStorage.getItem(CONFIG.STORAGE_TOKEN)) {
+              const t = localStorage.getItem(CONFIG.STORAGE_TOKEN);
+              if (t) sessionStorage.setItem(CONFIG.STORAGE_TOKEN, t);
             }
-            if (typeof localStorage !== 'undefined') {
-                localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+            if (!sessionStorage.getItem(CONFIG.STORAGE_USUARIO)) {
+              sessionStorage.setItem(CONFIG.STORAGE_USUARIO, raw);
             }
-            this.preencherInfoUsuario();
-            window.App?.atualizarVisibilidadeRotas();
-            window.App?.handleRoute();
-        } catch (err) {
-            console.error('[AUTH] Não foi possível atualizar as permissões da sessão:', err.message);
-            if (!this.estaLogado()) return;
-            this.permissionsReady = true;
-            window.App?.atualizarVisibilidadeRotas();
-            window.App?.handleRoute();
-        }
+          }
+        } catch { this.usuario = null; }
+      }
+    }
+    return this.usuario;
+  }
+
+  /** Alias de compatibilidade para getUsuario */
+  getUser() {
+    return this.getUsuario();
+  }
+
+  estaLogado() {
+    return !!this.getToken();
+  }
+
+  /** Verifica se é visitante (modo anônimo público ou perfil VISITANTE no banco) */
+  isVisitante() {
+    const u = this.getUsuario();
+    const p = u && u.perfil ? this._normalizeProfile(u.perfil) : '';
+    if (p === 'VISITANTE') return true;
+    if (this._modoVisitante) return true;
+    return !this.estaLogado();
+  }
+
+  isAdmin() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return p === 'ADMIN' || p === 'ADMINISTRADOR';
+  }
+
+  /** Verifica se é o Administrador Geral (autoridade máxima institucional) */
+  isAdminGeral() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return p === 'ADMIN';
+  }
+
+  isGestorRH() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return this.isAdmin() || p === 'GESTOR_RH';
+  }
+
+  isGestorInfra() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return this.isAdmin() || p === 'GESTOR_INFRA';
+  }
+
+  isGestorOperador() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return this.isAdmin() || p === 'GESTOR_OPERADOR';
+  }
+
+  isTecnico() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return this.isAdmin() || p.startsWith('TECNICO') || p === 'GESTOR_INFRA';
+  }
+
+  isRH() {
+    const u = this.getUsuario();
+    if (!u || !u.perfil) return false;
+    const p = this._normalizeProfile(u.perfil);
+    return this.isAdmin() || p.includes('RH');
+  }
+
+  hasPermission(chave) {
+    // Visitante público: só pode ver comunicados e eventos
+    if (this.isVisitante()) {
+      return chave === 'comunicados.visualizar' || chave === 'eventos.visualizar';
+    }
+    if (this.isAdmin()) return true;
+    if (this.permissoes.includes(chave)) return true;
+    const u = this.getUsuario();
+    const perfilNorm = this._normalizeProfile(u?.perfil);
+    const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+    return fallbackPerms.includes(chave);
+  }
+
+  hasAnyPermission(chaves = []) {
+    if (this.isVisitante()) {
+      return chaves.some(c => c === 'comunicados.visualizar' || c === 'eventos.visualizar');
+    }
+    if (this.isAdmin()) return true;
+    return chaves.some(chave => this.hasPermission(chave));
+  }
+
+  canAccessModule(moduleName, permissionKeys = []) {
+    if (this.isVisitante()) {
+      return moduleName === 'comunicacao' || moduleName === 'agenda';
+    }
+    if (this.isAdmin()) return true;
+    if (Array.isArray(this.modulos) && this.modulos.includes(moduleName)) return true;
+    return this.hasAnyPermission(permissionKeys);
+  }
+
+  getUserStorageKey(prefix) {
+    const u = this.getUsuario();
+    if (!u) return `${prefix}_guest`;
+    const perfil = String(u.perfil || 'perfil').toLowerCase().trim();
+    const id = u.id || 'anon';
+    return `${prefix}_${perfil}_${id}`;
+  }
+
+  /** Ativa o modo visitante público: exibe o app sem login */
+  entrarComoVisitante() {
+    this._modoVisitante = true;
+    this.permissionsReady = true;
+    this.ocultarTelaLogin();
+    this._atualizarUIVisitante();
+    window.App?.atualizarVisibilidadeRotas();
+    // Redireciona para comunicados (página inicial do visitante)
+    window.location.hash = '#comunicacao';
+    window.App?.handleRoute();
+  }
+
+  /** Atualiza a topbar e sidebar para modo visitante */
+  _atualizarUIVisitante() {
+    // Esconde elementos que não fazem sentido para visitante
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+
+    // Atualiza info do usuário na topbar para mostrar "Visitante"
+    document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = 'Visitante');
+    document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = 'Visitante');
+    document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = 'V');
+    document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
+    document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
+    document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => el.textContent = 'Visitante');
+
+    // Mostra o botão de login na topbar
+    this._criarBotaoLoginTopbar();
+  }
+
+  /** Cria botão "Fazer Login" na topbar para visitantes */
+  _criarBotaoLoginTopbar() {
+    // Remove botão anterior se existir
+    document.getElementById('btn-visitante-login')?.remove();
+
+    // Esconde o botão de logout se existir
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) btnLogout.classList.add('hidden');
+
+    // Insere botão de login ao lado das notificações
+    const topbarRight = document.querySelector('.topbar-right') || document.querySelector('header .flex.items-center.gap-2');
+    if (!topbarRight) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'btn-visitante-login';
+    btn.className = 'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all';
+    btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Fazer Login</span>';
+    btn.addEventListener('click', () => {
+      this._modoVisitante = false;
+      this.renderizarTelaLogin();
+    });
+    topbarRight.prepend(btn);
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /** Remove o botão de login da topbar (quando o usuário faz login) */
+  _removerBotaoLoginTopbar() {
+    document.getElementById('btn-visitante-login')?.remove();
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) btnLogout.classList.remove('hidden');
+  }
+
+  async login(email, senha) {
+    const res = await window.API.login(email, senha);
+    if (res?.success && res.data?.token) {
+      const perfilNorm = this._normalizeProfile(res.data.usuario?.perfil);
+      const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+      const apiPerms = Array.isArray(res.data.permissoes) ? res.data.permissoes : [];
+      const mergedPerms = apiPerms.length > 0 ? apiPerms : fallbackPerms;
+
+      const usuario = {
+        ...res.data.usuario,
+        permissoes: mergedPerms,
+        modulos: res.data.modulos || []
+      };
+      // Isola a sessão ativamente nesta aba via sessionStorage
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
+        sessionStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+      }
+      // Mantém no localStorage como fallback global de persistência
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(CONFIG.STORAGE_TOKEN, res.data.token);
+        localStorage.setItem(CONFIG.STORAGE_USUARIO, JSON.stringify(usuario));
+      }
+      this.usuario = usuario;
+      this.permissoes = usuario.permissoes;
+      this.modulos = usuario.modulos;
+      this.permissionsReady = true;
+      this._modoVisitante = false;
+      this.iniciarHeartbeat();
+      this._removerBotaoLoginTopbar();
+
+      // Atualiza imediatamente o badge de notificações para o perfil logado
+      if (window.App && typeof window.App.atualizarBadgeComunicados === 'function') {
+        window.App.atualizarBadgeComunicados();
+      }
+
+      return res.data;
+    }
+    throw new Error(res?.message || 'Falha no login.');
+  }
+
+  async logout() {
+    this.pararHeartbeat();
+    try { await window.API.logout(); } catch (_) { }
+    this.forcarLogout();
+  }
+
+  forcarLogout() {
+    this.pararHeartbeat();
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(CONFIG.STORAGE_TOKEN);
+      sessionStorage.removeItem(CONFIG.STORAGE_USUARIO);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(CONFIG.STORAGE_TOKEN);
+      localStorage.removeItem(CONFIG.STORAGE_USUARIO);
+    }
+    this.usuario = null;
+    this.permissoes = [];
+    this.modulos = [];
+    this.permissionsReady = false;
+
+    // Limpa badge do sino na tela de login
+    const badge = document.getElementById('badge-topbar-notifications');
+    if (badge) {
+      badge.classList.add('hidden');
+      badge.classList.remove('animate-pulse');
     }
 
-        getStandardCargo(perfil) {
-        if (!perfil) return 'Visitante';
-        const p = this._normalizeProfile(perfil);
-        if (['ADMIN', 'ADMIN_GERAL', 'SUPERADMIN'].includes(p)) return 'Admin Geral';
-        if (['ADMINISTRADOR', 'ADMINISTRACAO'].includes(p)) return 'Administrador';
-        if (['GESTOR', 'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'ANALISTA_RH', 'RH', 'TECNICO_N3', 'TECNICO_N2', 'TECNICO_N1', 'TECNICO'].includes(p)) return 'Gestor';
-        if (p === 'OPERADOR') return 'Operador';
-        if (p === 'LIMPEZA') return 'Limpeza';
-        if (p === 'VISITANTE') return 'Visitante';
-        return 'Operador';
+    // Volta para modo visitante ao invés de forçar tela de login
+    this.entrarComoVisitante();
+  }
+
+  iniciarHeartbeat() {
+    this.pararHeartbeat();
+    // Heartbeat inicial
+    window.API.heartbeat();
+    // A cada 60 segundos
+    this._heartbeatInterval = setInterval(() => {
+      if (this.estaLogado()) {
+        window.API.heartbeat();
+      } else {
+        this.pararHeartbeat();
+      }
+    }, 60000);
+  }
+
+  pararHeartbeat() {
+    if (this._heartbeatInterval) {
+      clearInterval(this._heartbeatInterval);
+      this._heartbeatInterval = null;
+    }
+  }
+
+  /** Guard: verifica autenticação ou ativa modo visitante */
+  exigirAutenticacao() {
+    // Verifica se a URL contém token de ativação de conta
+    const tokenAtivacao = this.verificarRotaAtivacao();
+    if (tokenAtivacao) {
+      this.mostrarTelaAtivacao(tokenAtivacao);
+      return false;
     }
 
-    preencherInfoUsuario() {
-        const u = this.getUsuario();
-        if (!u) return;
-        document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = u.nome);
-        document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = u.email);
-        
-        const partes = (u.nome || '').trim().split(/\s+/);
-        const primeiroNome = partes[0] || 'Usuário';
-        document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = primeiroNome);
-        
-        const iniciais = partes.length >= 2
-            ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
-            : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
-        document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
-
-        const cargoPadronizado = this.getStandardCargo(u.perfil);
-        document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
-            el.textContent = cargoPadronizado;
-        });
-        document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => {
-            el.textContent = cargoPadronizado;
-            el.classList.remove('hidden');
-        });
-        this._removerBotaoLoginTopbar();
-        this.atualizarVisibilidadeAdmin();
+    if (this.estaLogado()) {
+      this.ocultarTelaLogin();
+      this.preencherInfoUsuario();
+      this.iniciarHeartbeat();
+      this._atualizarPermissoes();
+      this.atualizarVisibilidadeAdmin();
+      return true;
     }
+    // Sem login: entra diretamente como visitante
+    this.entrarComoVisitante();
+    return false;
+  }
 
-    atualizarVisibilidadeAdmin() {
-        const admin = this.isAdmin() || this.hasPermission('auditoria.visualizar');
-        document.querySelectorAll('.admin-only').forEach(el => {
-            if (admin) {
-                el.classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
-        });
-        window.App?.atualizarVisibilidadeRotas();
+  verificarRotaAtivacao() {
+    const hash = window.location.hash || '';
+    if (hash.toLowerCase().includes('ativar-conta') || hash.toLowerCase().includes('redefinir-senha')) {
+      if (hash.includes('token=')) {
+        const raw = hash.split('token=')[1];
+        return raw.split('&')[0].trim();
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token')?.trim() || '';
     }
+    return null;
+  }
 
-    ocultarTelaLogin() {
-        document.getElementById('tela-login')?.classList.add('hidden');
-        document.getElementById('app-conteudo')?.classList.remove('hidden');
+  async _atualizarPermissoes() {
+    try {
+      const session = await window.API.me();
+      if (!session?.usuario) throw new Error('Resposta de sessão inválida.');
+      const perfilNorm = this._normalizeProfile(session.usuario.perfil);
+      const fallbackPerms = FALLBACK_PROFILE_PERMISSIONS[perfilNorm] || [];
+      const apiPerms = Array.isArray(session.permissoes) ? session.permissoes : [];
+      this.permissoes = apiPerms.length > 0 ? apiPerms : fallbackPerms;
+      this.modulos = Array.isArray(session.modulos) ? session.modulos : [];
+      this.usuario = { ...session.usuario, permissoes: this.permissoes, modulos: this.modulos };
+      this.permissionsReady = true;
+      const usuarioSerializado = JSON.stringify(this.usuario);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+      }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
+      }
+      this.preencherInfoUsuario();
+      window.App?.atualizarVisibilidadeRotas();
+      window.App?.handleRoute();
+    } catch (err) {
+      console.error('[AUTH] Não foi possível atualizar as permissões da sessão:', err.message);
+      if (!this.estaLogado()) return;
+      this.permissionsReady = true;
+      window.App?.atualizarVisibilidadeRotas();
+      window.App?.handleRoute();
     }
+  }
 
-    mostrarTelaLogin() {
-        this.renderizarTelaLogin();
-    }
+  getStandardCargo(perfil) {
+    if (!perfil) return 'Visitante';
+    const p = this._normalizeProfile(perfil);
+    if (['ADMIN', 'ADMIN_GERAL', 'SUPERADMIN'].includes(p)) return 'Admin Geral';
+    if (['ADMINISTRADOR', 'ADMINISTRACAO'].includes(p)) return 'Administrador';
+    if (['GESTOR', 'GESTOR_RH', 'GESTOR_INFRA', 'GESTOR_OPERADOR', 'ANALISTA_RH', 'RH', 'TECNICO_N3', 'TECNICO_N2', 'TECNICO_N1', 'TECNICO'].includes(p)) return 'Gestor';
+    if (p === 'OPERADOR') return 'Operador';
+    if (p === 'LIMPEZA') return 'Limpeza';
+    if (p === 'VISITANTE') return 'Visitante';
+    return 'Operador';
+  }
 
-    renderizarTelaLogin() {
-        let tela = document.getElementById('tela-login');
-        if (!tela) {
-            tela = document.createElement('div');
-            tela.id = 'tela-login';
-            tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
-            tela.innerHTML = `
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-hub-lg p-6 sm:p-8 my-8 border border-slate-100 transition-all">
+  preencherInfoUsuario() {
+    const u = this.getUsuario();
+    if (!u) return;
+    document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = u.nome);
+    document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = u.email);
+
+    const partes = (u.nome || '').trim().split(/\s+/);
+    const primeiroNome = partes[0] || 'Usuário';
+    document.querySelectorAll('[data-usuario-primeiro-nome]').forEach(el => el.textContent = primeiroNome);
+
+    const iniciais = partes.length >= 2
+      ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+      : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
+    document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = iniciais);
+
+    const cargoPadronizado = this.getStandardCargo(u.perfil);
+    document.querySelectorAll('[data-usuario-perfil]').forEach(el => {
+      el.textContent = cargoPadronizado;
+    });
+    document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => {
+      el.textContent = cargoPadronizado;
+      el.classList.remove('hidden');
+    });
+    this._removerBotaoLoginTopbar();
+    this.atualizarVisibilidadeAdmin();
+  }
+
+  atualizarVisibilidadeAdmin() {
+    const admin = this.isAdmin() || this.hasPermission('auditoria.visualizar');
+    document.querySelectorAll('.admin-only').forEach(el => {
+      if (admin) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    });
+    window.App?.atualizarVisibilidadeRotas();
+  }
+
+  ocultarTelaLogin() {
+    document.getElementById('tela-login')?.classList.add('hidden');
+    document.getElementById('app-conteudo')?.classList.remove('hidden');
+  }
+
+  mostrarTelaLogin() {
+    this.renderizarTelaLogin();
+  }
+
+  renderizarTelaLogin() {
+    let tela = document.getElementById('tela-login');
+    if (!tela) {
+      tela = document.createElement('div');
+      tela.id = 'tela-login';
+      tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
+      tela.innerHTML = `
+        <div class="relative w-full max-w-md bg-white dark:bg-[#0b1320] rounded-3xl shadow-hub-lg p-6 sm:p-8 my-8 border border-slate-100 dark:border-slate-800 transition-all text-slate-800 dark:text-slate-100">
+          <!-- BOTÃO RÁPIDO DE ALTERNÂNCIA DE TEMA NO LOGIN -->
+          <button type="button" id="btn-login-tema-toggle"
+            class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Alternar tema claro/escuro" title="Alternar tema claro/escuro">
+            <i data-lucide="sun-medium" class="w-4 h-4 hidden dark:inline-block"></i>
+            <i data-lucide="moon" class="w-4 h-4 inline-block dark:hidden"></i>
+          </button>
+
           <div class="flex flex-col items-center mb-6">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-700 to-sky-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-blue-600/30 mb-3">ES+</div>
-            <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">HUB ES+</h1>
+            <h1 class="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">HUB ES+</h1>
             <p class="text-xs text-slate-400 font-semibold mt-1">Plataforma Administrativa Integrada</p>
           </div>
 
           <!-- ABAS DE NAVEGAÇÃO: ENTRAR / SOLICITAR ACESSO -->
-          <div class="flex p-1 bg-slate-100 rounded-xl mb-6">
+          <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
             <button type="button" id="tab-login"
-              class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm">
+              class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm">
               Entrar
             </button>
             <button type="button" id="tab-cadastro"
-              class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800">
+              class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
               Solicitar Acesso
             </button>
           </div>
@@ -770,85 +778,93 @@ class AuthManager {
             <span class="text-[11px] text-slate-400">HUB ES+ • Segurança e Governança Integrada</span>
           </div>
         </div>`;
-            document.body.appendChild(tela);
+      document.body.appendChild(tela);
 
-            // Alternância entre Login e Solicitar Cadastro
-            const tabLogin = tela.querySelector('#tab-login');
-            const tabCadastro = tela.querySelector('#tab-cadastro');
-            const formLogin = tela.querySelector('#form-login');
-            const formCadastro = tela.querySelector('#form-cadastro');
-            const feedbackEl = tela.querySelector('#login-feedback');
+      // Alternância rápida de Tema no Login
+      tela.querySelector('#btn-login-tema-toggle')?.addEventListener('click', () => {
+        if (window.Tema) {
+          window.Tema.alternar();
+          if (window.lucide) lucide.createIcons();
+        }
+      });
 
-            const mostrarFeedback = (msg, tipo = 'erro') => {
-                feedbackEl.textContent = msg;
-                feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
-                    tipo === 'sucesso'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : tipo === 'aviso'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-red-50 text-red-600 border border-red-200'
-                );
-                feedbackEl.classList.remove('hidden');
-            };
+      // Alternância entre Login e Solicitar Cadastro
+      const tabLogin = tela.querySelector('#tab-login');
+      const tabCadastro = tela.querySelector('#tab-cadastro');
+      const formLogin = tela.querySelector('#form-login');
+      const formCadastro = tela.querySelector('#form-cadastro');
+      const feedbackEl = tela.querySelector('#login-feedback');
 
-            const limparFeedback = () => feedbackEl.classList.add('hidden');
+      const mostrarFeedback = (msg, tipo = 'erro') => {
+        feedbackEl.textContent = msg;
+        feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
+          tipo === 'sucesso'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : tipo === 'aviso'
+              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+              : 'bg-red-50 text-red-600 border border-red-200'
+        );
+        feedbackEl.classList.remove('hidden');
+      };
 
-            const formEsqueci = tela.querySelector('#form-esqueci-senha');
-            const btnEsqueciSenha = tela.querySelector('#btn-esqueci-senha');
-            const btnVoltarLogin = tela.querySelector('#btn-voltar-login');
-            const abasNavegacao = tela.querySelector('.flex.p-1.bg-slate-100');
+      const limparFeedback = () => feedbackEl.classList.add('hidden');
 
-            if (btnEsqueciSenha) {
-              btnEsqueciSenha.addEventListener('click', () => {
-                limparFeedback();
-                formLogin.classList.add('hidden');
-                formCadastro.classList.add('hidden');
-                formEsqueci?.classList.remove('hidden');
-                abasNavegacao?.classList.add('hidden');
-                const recEmail = tela.querySelector('#recup-email');
-                if (recEmail) {
-                  recEmail.value = tela.querySelector('#login-email')?.value || '';
-                  recEmail.focus();
-                }
-                if (window.lucide) lucide.createIcons();
-              });
-            }
+      const formEsqueci = tela.querySelector('#form-esqueci-senha');
+      const btnEsqueciSenha = tela.querySelector('#btn-esqueci-senha');
+      const btnVoltarLogin = tela.querySelector('#btn-voltar-login');
+      const abasNavegacao = tela.querySelector('.flex.p-1.bg-slate-100');
 
-            if (btnVoltarLogin) {
-              btnVoltarLogin.addEventListener('click', () => {
-                limparFeedback();
-                formEsqueci?.classList.add('hidden');
-                formCadastro.classList.add('hidden');
-                formLogin.classList.remove('hidden');
-                abasNavegacao?.classList.remove('hidden');
-                if (window.lucide) lucide.createIcons();
-              });
-            }
+      if (btnEsqueciSenha) {
+        btnEsqueciSenha.addEventListener('click', () => {
+          limparFeedback();
+          formLogin.classList.add('hidden');
+          formCadastro.classList.add('hidden');
+          formEsqueci?.classList.remove('hidden');
+          abasNavegacao?.classList.add('hidden');
+          const recEmail = tela.querySelector('#recup-email');
+          if (recEmail) {
+            recEmail.value = tela.querySelector('#login-email')?.value || '';
+            recEmail.focus();
+          }
+          if (window.lucide) lucide.createIcons();
+        });
+      }
 
-            if (formEsqueci) {
-              formEsqueci.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                limparFeedback();
-                const email = tela.querySelector('#recup-email')?.value.trim();
-                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                  mostrarFeedback('Informe um e-mail válido.', 'erro');
-                  return;
-                }
-                const btnSubmit = tela.querySelector('#btn-enviar-recuperacao');
-                const textoOriginal = btnSubmit ? btnSubmit.innerHTML : 'Enviar Link de Recuperação';
-                if (btnSubmit) {
-                  btnSubmit.disabled = true;
-                  btnSubmit.innerHTML = 'Enviando link...';
-                }
-                try {
-                  const res = (typeof window.API?.esqueciSenha === 'function')
-                    ? await window.API.esqueciSenha({ email })
-                    : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
-                  const linkAtivacao = res?.linkAtivacao || res?.data?.linkAtivacao;
-                  const emailEnviado = res?.emailEnviado ?? res?.data?.emailEnviado;
-                  const msg = res?.message || (emailEnviado ? 'Link seguro enviado para o seu e-mail!' : 'Link seguro de redefinição gerado com sucesso!');
-                  if (linkAtivacao) {
-                    feedbackEl.innerHTML = `
+      if (btnVoltarLogin) {
+        btnVoltarLogin.addEventListener('click', () => {
+          limparFeedback();
+          formEsqueci?.classList.add('hidden');
+          formCadastro.classList.add('hidden');
+          formLogin.classList.remove('hidden');
+          abasNavegacao?.classList.remove('hidden');
+          if (window.lucide) lucide.createIcons();
+        });
+      }
+
+      if (formEsqueci) {
+        formEsqueci.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          limparFeedback();
+          const email = tela.querySelector('#recup-email')?.value.trim();
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarFeedback('Informe um e-mail válido.', 'erro');
+            return;
+          }
+          const btnSubmit = tela.querySelector('#btn-enviar-recuperacao');
+          const textoOriginal = btnSubmit ? btnSubmit.innerHTML : 'Enviar Link de Recuperação';
+          if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = 'Enviando link...';
+          }
+          try {
+            const res = (typeof window.API?.esqueciSenha === 'function')
+              ? await window.API.esqueciSenha({ email })
+              : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
+            const linkAtivacao = res?.linkAtivacao || res?.data?.linkAtivacao;
+            const emailEnviado = res?.emailEnviado ?? res?.data?.emailEnviado;
+            const msg = res?.message || (emailEnviado ? 'Link seguro enviado para o seu e-mail!' : 'Link seguro de redefinição gerado com sucesso!');
+            if (linkAtivacao) {
+              feedbackEl.innerHTML = `
                       <div class="font-semibold text-emerald-900">${msg}</div>
                       <div class="mt-2.5 p-3 bg-white rounded-xl border border-emerald-300 shadow-sm text-left">
                         <div class="text-[11px] text-slate-500 font-bold mb-1 flex items-center gap-1.5">
@@ -860,159 +876,170 @@ class AuthManager {
                         </a>
                       </div>
                     `;
-                    feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
-                    feedbackEl.classList.remove('hidden');
-                    if (window.lucide) lucide.createIcons();
-                  } else {
-                    mostrarFeedback(msg, 'sucesso');
-                  }
-                } catch (err) {
-                  mostrarFeedback(err.message || 'Erro ao processar recuperação de senha.', 'erro');
-                } finally {
-                  if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = textoOriginal;
-                  }
-                }
-              });
+              feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
+              feedbackEl.classList.remove('hidden');
+              if (window.lucide) lucide.createIcons();
+            } else {
+              mostrarFeedback(msg, 'sucesso');
             }
-
-            tabLogin.addEventListener('click', () => {
-                limparFeedback();
-                tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
-                tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
-                formLogin.classList.remove('hidden');
-                formCadastro.classList.add('hidden');
-            });
-
-            tabCadastro.addEventListener('click', () => {
-                limparFeedback();
-                tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
-                tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
-                formCadastro.classList.remove('hidden');
-                formLogin.classList.add('hidden');
-            });
-
-            // Submit: Formulário de Login
-            
-            const seletorCargos = tela.querySelector('#seletor-cargos-teste');
-            if (seletorCargos) {
-              seletorCargos.addEventListener('change', (e) => {
-                const opt = e.target.selectedOptions?.[0];
-                if (opt && opt.value) {
-                  tela.querySelector('#login-email').value = opt.value;
-                  tela.querySelector('#login-senha').value = opt.getAttribute('data-pass') || 'Teste@2026!';
-                }
-              });
+          } catch (err) {
+            mostrarFeedback(err.message || 'Erro ao processar recuperação de senha.', 'erro');
+          } finally {
+            if (btnSubmit) {
+              btnSubmit.disabled = false;
+              btnSubmit.innerHTML = textoOriginal;
             }
+          }
+        });
+      }
 
-            formLogin.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                limparFeedback();
-                const email = tela.querySelector('#login-email').value.trim();
-                const senha = tela.querySelector('#login-senha').value;
-                const btn = tela.querySelector('#btn-login');
+      tabLogin.addEventListener('click', () => {
+        limparFeedback();
+        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+        tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+        formLogin.classList.remove('hidden');
+        formCadastro.classList.add('hidden');
+      });
 
-                if (!email || !senha) {
-                    mostrarFeedback('Preencha o e-mail e a senha.');
-                    return;
-                }
+      tabCadastro.addEventListener('click', () => {
+        limparFeedback();
+        tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+        formCadastro.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+      });
 
-                btn.disabled = true;
-                btn.textContent = 'Autenticando...';
-                try {
-                    await this.login(email, senha);
-                    this.ocultarTelaLogin();
-                    this.preencherInfoUsuario();
-                    window.dispatchEvent(new Event('hub:login'));
-                    if (window.lucide) lucide.createIcons();
-                } catch (err) {
-                    const msg = err.message || 'Credenciais inválidas.';
-                    if (msg.toLowerCase().includes('pendente')) {
-                        mostrarFeedback(msg, 'aviso');
-                    } else {
-                        mostrarFeedback(msg, 'erro');
-                    }
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = 'Entrar no Sistema';
-                }
-            });
+      // Submit: Formulário de Login
 
-            // Submit: Solicitação de Cadastro
-            formCadastro.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                limparFeedback();
-                const nome = tela.querySelector('#cad-nome').value.trim();
-                const email = tela.querySelector('#cad-email').value.trim();
-                const btn = tela.querySelector('#btn-solicitar');
+      const seletorCargos = tela.querySelector('#seletor-cargos-teste');
+      if (seletorCargos) {
+        seletorCargos.addEventListener('change', (e) => {
+          const opt = e.target.selectedOptions?.[0];
+          if (opt && opt.value) {
+            tela.querySelector('#login-email').value = opt.value;
+            tela.querySelector('#login-senha').value = opt.getAttribute('data-pass') || 'Teste@2026!';
+          }
+        });
+      }
 
-                if (!nome || nome.length < 3) {
-                    mostrarFeedback('Nome precisa ter no mínimo 3 caracteres.');
-                    return;
-                }
-                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    mostrarFeedback('Por favor, informe um e-mail válido.');
-                    return;
-                }
+      formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        limparFeedback();
+        const email = tela.querySelector('#login-email').value.trim();
+        const senha = tela.querySelector('#login-senha').value;
+        const btn = tela.querySelector('#btn-login');
 
-                btn.disabled = true;
-                btn.textContent = 'Enviando Solicitação...';
-                try {
-                    const res = await window.API.solicitarCadastro({ nome, email });
-                    formCadastro.reset();
-                    mostrarFeedback(
-                        res?.message || 'Solicitação enviada com sucesso! Aguarde a notificação por e-mail após a aprovação do Administrador.',
-                        'sucesso'
-                    );
-                    // Alterna para a aba de login após 3.5 segundos
-                    setTimeout(() => tabLogin.click(), 3500);
-                } catch (err) {
-                    mostrarFeedback(err.message || 'Erro ao enviar solicitação de cadastro.', 'erro');
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = 'Enviar Solicitação de Cadastro';
-                }
-            });
-
-            // Botão "Continuar como Visitante"
-            tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
-                this.entrarComoVisitante();
-            });
+        if (!email || !senha) {
+          mostrarFeedback('Preencha o e-mail e a senha.');
+          return;
         }
-        tela.classList.remove('hidden');
-        document.getElementById('app-conteudo')?.classList.add('hidden');
-        if (window.lucide) lucide.createIcons();
+
+        btn.disabled = true;
+        btn.textContent = 'Autenticando...';
+        try {
+          await this.login(email, senha);
+
+          // Exibe opções de acessibilidade e escolha de tema (dark/light) pós-login
+          if (window.Acessibilidade && typeof window.Acessibilidade.mostrarModalPosLogin === 'function') {
+            window.Acessibilidade.mostrarModalPosLogin(this.usuario, () => {
+              this.ocultarTelaLogin();
+              this.preencherInfoUsuario();
+              window.dispatchEvent(new Event('hub:login'));
+              if (window.lucide) lucide.createIcons();
+            });
+          } else {
+            this.ocultarTelaLogin();
+            this.preencherInfoUsuario();
+            window.dispatchEvent(new Event('hub:login'));
+            if (window.lucide) lucide.createIcons();
+          }
+        } catch (err) {
+          const msg = err.message || 'Credenciais inválidas.';
+          if (msg.toLowerCase().includes('pendente')) {
+            mostrarFeedback(msg, 'aviso');
+          } else {
+            mostrarFeedback(msg, 'erro');
+          }
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Entrar no Sistema';
+        }
+      });
+
+      // Submit: Solicitação de Cadastro
+      formCadastro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        limparFeedback();
+        const nome = tela.querySelector('#cad-nome').value.trim();
+        const email = tela.querySelector('#cad-email').value.trim();
+        const btn = tela.querySelector('#btn-solicitar');
+
+        if (!nome || nome.length < 3) {
+          mostrarFeedback('Nome precisa ter no mínimo 3 caracteres.');
+          return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          mostrarFeedback('Por favor, informe um e-mail válido.');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Enviando Solicitação...';
+        try {
+          const res = await window.API.solicitarCadastro({ nome, email });
+          formCadastro.reset();
+          mostrarFeedback(
+            res?.message || 'Solicitação enviada com sucesso! Aguarde a notificação por e-mail após a aprovação do Administrador.',
+            'sucesso'
+          );
+          // Alterna para a aba de login após 3.5 segundos
+          setTimeout(() => tabLogin.click(), 3500);
+        } catch (err) {
+          mostrarFeedback(err.message || 'Erro ao enviar solicitação de cadastro.', 'erro');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Enviar Solicitação de Cadastro';
+        }
+      });
+
+      // Botão "Continuar como Visitante"
+      tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
+        this.entrarComoVisitante();
+      });
+    }
+    tela.classList.remove('hidden');
+    document.getElementById('app-conteudo')?.classList.add('hidden');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  ocultarTelaAtivacao() {
+    const tela = document.getElementById('tela-ativacao');
+    if (tela) {
+      tela.classList.add('hidden');
+      tela.innerHTML = '';
+    }
+    document.getElementById('app-conteudo')?.classList.remove('hidden');
+  }
+
+  /**
+   * Tela dedicada de Ativação de Conta e Definição de Senha
+   * Carregada ao acessar o link seguro enviado por e-mail (#ativar-conta?token=...)
+   */
+  async mostrarTelaAtivacao(token) {
+    this.ocultarTelaLogin();
+    let tela = document.getElementById('tela-ativacao');
+    if (!tela) {
+      tela = document.createElement('div');
+      tela.id = 'tela-ativacao';
+      tela.className = 'fixed inset-0 z-[999] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto';
+      document.body.appendChild(tela);
     }
 
-    ocultarTelaAtivacao() {
-        const tela = document.getElementById('tela-ativacao');
-        if (tela) {
-            tela.classList.add('hidden');
-            tela.innerHTML = '';
-        }
-        document.getElementById('app-conteudo')?.classList.remove('hidden');
-    }
+    tela.classList.remove('hidden');
+    document.getElementById('app-conteudo')?.classList.add('hidden');
 
-    /**
-     * Tela dedicada de Ativação de Conta e Definição de Senha
-     * Carregada ao acessar o link seguro enviado por e-mail (#ativar-conta?token=...)
-     */
-    async mostrarTelaAtivacao(token) {
-        this.ocultarTelaLogin();
-        let tela = document.getElementById('tela-ativacao');
-        if (!tela) {
-            tela = document.createElement('div');
-            tela.id = 'tela-ativacao';
-            tela.className = 'fixed inset-0 z-[999] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto';
-            document.body.appendChild(tela);
-        }
-
-        tela.classList.remove('hidden');
-        document.getElementById('app-conteudo')?.classList.add('hidden');
-
-        // Estado inicial de carregamento
-        tela.innerHTML = `
+    // Estado inicial de carregamento
+    tela.innerHTML = `
           <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-pulse">
             <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-4">
               <i data-lucide="shield" class="w-7 h-7 animate-spin"></i>
@@ -1021,13 +1048,13 @@ class AuthManager {
             <p class="text-xs text-slate-500 mt-2">Aguarde enquanto verificamos a segurança e autenticidade do seu link.</p>
           </div>
         `;
-        if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 
-        try {
-            const res = await window.API.verificarTokenAtivacao(token);
-            const dadosUsuario = res?.data || res;
+    try {
+      const res = await window.API.verificarTokenAtivacao(token);
+      const dadosUsuario = res?.data || res;
 
-            tela.innerHTML = `
+      tela.innerHTML = `
               <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 my-8 border border-slate-100 transition-all">
                 <div class="flex flex-col items-center mb-5 text-center">
                   <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-emerald-600/30 mb-3">
@@ -1095,67 +1122,67 @@ class AuthManager {
                 </div>
               </div>
             `;
-            if (window.lucide) lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
 
-            // Alternar visualização da senha
-            const btnEye = tela.querySelector('#btn-toggle-senha-ativar');
-            const inputSenha = tela.querySelector('#ativar-senha');
-            btnEye?.addEventListener('click', () => {
-                const isPass = inputSenha.type === 'password';
-                inputSenha.type = isPass ? 'text' : 'password';
-                btnEye.innerHTML = isPass ? '<i data-lucide="eye-off" class="w-4 h-4"></i>' : '<i data-lucide="eye" class="w-4 h-4"></i>';
-                if (window.lucide) lucide.createIcons();
-            });
+      // Alternar visualização da senha
+      const btnEye = tela.querySelector('#btn-toggle-senha-ativar');
+      const inputSenha = tela.querySelector('#ativar-senha');
+      btnEye?.addEventListener('click', () => {
+        const isPass = inputSenha.type === 'password';
+        inputSenha.type = isPass ? 'text' : 'password';
+        btnEye.innerHTML = isPass ? '<i data-lucide="eye-off" class="w-4 h-4"></i>' : '<i data-lucide="eye" class="w-4 h-4"></i>';
+        if (window.lucide) lucide.createIcons();
+      });
 
-            // Botão ir para login
-            tela.querySelector('#btn-ir-login-ativacao')?.addEventListener('click', () => {
-                window.location.hash = '';
-                this.ocultarTelaAtivacao();
-                this.renderizarTelaLogin();
-            });
+      // Botão ir para login
+      tela.querySelector('#btn-ir-login-ativacao')?.addEventListener('click', () => {
+        window.location.hash = '';
+        this.ocultarTelaAtivacao();
+        this.renderizarTelaLogin();
+      });
 
-            // Submit do formulário de ativação
-            const formAtivar = tela.querySelector('#form-ativar-conta');
-            const feedbackEl = tela.querySelector('#ativacao-feedback');
+      // Submit do formulário de ativação
+      const formAtivar = tela.querySelector('#form-ativar-conta');
+      const feedbackEl = tela.querySelector('#ativacao-feedback');
 
-            const mostrarFeedbackAtivacao = (msg, tipo = 'erro') => {
-                feedbackEl.textContent = msg;
-                feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
-                    tipo === 'sucesso'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-red-50 text-red-600 border border-red-200'
-                );
-                feedbackEl.classList.remove('hidden');
-            };
+      const mostrarFeedbackAtivacao = (msg, tipo = 'erro') => {
+        feedbackEl.textContent = msg;
+        feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
+          tipo === 'sucesso'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : 'bg-red-50 text-red-600 border border-red-200'
+        );
+        feedbackEl.classList.remove('hidden');
+      };
 
-            formAtivar?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                feedbackEl.classList.add('hidden');
-                const senha = tela.querySelector('#ativar-senha').value;
-                const senhaConf = tela.querySelector('#ativar-senha-conf').value;
-                const btn = tela.querySelector('#btn-confirmar-ativacao');
+      formAtivar?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        feedbackEl.classList.add('hidden');
+        const senha = tela.querySelector('#ativar-senha').value;
+        const senhaConf = tela.querySelector('#ativar-senha-conf').value;
+        const btn = tela.querySelector('#btn-confirmar-ativacao');
 
-                if (!senha || senha.length < 8) {
-                    mostrarFeedbackAtivacao('A senha precisa ter no mínimo 8 caracteres.');
-                    return;
-                }
-                if (senha !== senhaConf) {
-                    mostrarFeedbackAtivacao('As senhas digitadas não coincidem.');
-                    return;
-                }
+        if (!senha || senha.length < 8) {
+          mostrarFeedbackAtivacao('A senha precisa ter no mínimo 8 caracteres.');
+          return;
+        }
+        if (senha !== senhaConf) {
+          mostrarFeedbackAtivacao('As senhas digitadas não coincidem.');
+          return;
+        }
 
-                btn.disabled = true;
-                btn.textContent = 'Ativando sua conta...';
+        btn.disabled = true;
+        btn.textContent = 'Ativando sua conta...';
 
-                try {
-                    await window.API.ativarConta({
-                        token,
-                        senha,
-                        confirmacao_senha: senhaConf
-                    });
+        try {
+          await window.API.ativarConta({
+            token,
+            senha,
+            confirmacao_senha: senhaConf
+          });
 
-                    // Sucesso na ativação
-                    tela.innerHTML = `
+          // Sucesso na ativação
+          tela.innerHTML = `
                       <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-in fade-in duration-300">
                         <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
                           <i data-lucide="check-circle" class="w-9 h-9"></i>
@@ -1175,25 +1202,25 @@ class AuthManager {
                         </button>
                       </div>
                     `;
-                    if (window.lucide) lucide.createIcons();
+          if (window.lucide) lucide.createIcons();
 
-                    tela.querySelector('#btn-concluir-ativacao-login')?.addEventListener('click', () => {
-                        window.location.hash = '';
-                        this.ocultarTelaAtivacao();
-                        this.renderizarTelaLogin();
-                        const inputEmail = document.getElementById('login-email');
-                        if (inputEmail) inputEmail.value = dadosUsuario.email || '';
-                    });
-                } catch (err) {
-                    mostrarFeedbackAtivacao(err.message || 'Erro ao concluir ativação.', 'erro');
-                    btn.disabled = false;
-                    btn.textContent = 'Definir Senha e Ativar Minha Conta';
-                }
-            });
-
+          tela.querySelector('#btn-concluir-ativacao-login')?.addEventListener('click', () => {
+            window.location.hash = '';
+            this.ocultarTelaAtivacao();
+            this.renderizarTelaLogin();
+            const inputEmail = document.getElementById('login-email');
+            if (inputEmail) inputEmail.value = dadosUsuario.email || '';
+          });
         } catch (err) {
-            // Token inválido, expirado ou já utilizado
-            tela.innerHTML = `
+          mostrarFeedbackAtivacao(err.message || 'Erro ao concluir ativação.', 'erro');
+          btn.disabled = false;
+          btn.textContent = 'Definir Senha e Ativar Minha Conta';
+        }
+      });
+
+    } catch (err) {
+      // Token inválido, expirado ou já utilizado
+      tela.innerHTML = `
               <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 text-center animate-in fade-in duration-300">
                 <div class="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
                   <i data-lucide="alert-triangle" class="w-8 h-8"></i>
@@ -1221,33 +1248,33 @@ class AuthManager {
                 </div>
               </div>
             `;
-            if (window.lucide) lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
 
-            tela.querySelector('#btn-erro-ir-login')?.addEventListener('click', () => {
-                window.location.hash = '';
-                this.ocultarTelaAtivacao();
-                this.renderizarTelaLogin();
-            });
+      tela.querySelector('#btn-erro-ir-login')?.addEventListener('click', () => {
+        window.location.hash = '';
+        this.ocultarTelaAtivacao();
+        this.renderizarTelaLogin();
+      });
 
-            tela.querySelector('#btn-erro-visitante')?.addEventListener('click', () => {
-                window.location.hash = '#comunicacao';
-                this.ocultarTelaAtivacao();
-                this.entrarComoVisitante();
-            });
-        }
+      tela.querySelector('#btn-erro-visitante')?.addEventListener('click', () => {
+        window.location.hash = '#comunicacao';
+        this.ocultarTelaAtivacao();
+        this.entrarComoVisitante();
+      });
     }
+  }
 }
 
 window.Auth = new AuthManager();
 document.addEventListener('DOMContentLoaded', () => {
-    window.Auth.exigirAutenticacao();
-    if (window.lucide) lucide.createIcons();
+  window.Auth.exigirAutenticacao();
+  if (window.lucide) lucide.createIcons();
 });
 
 // Listener global para capturar clique em links de ativação dinamicamente
 window.addEventListener('hashchange', () => {
-    const token = window.Auth?.verificarRotaAtivacao?.();
-    if (token) {
-        window.Auth.mostrarTelaAtivacao(token);
-    }
+  const token = window.Auth?.verificarRotaAtivacao?.();
+  if (token) {
+    window.Auth.mostrarTelaAtivacao(token);
+  }
 });

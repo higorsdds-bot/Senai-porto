@@ -18,14 +18,17 @@
         if (labelStatus) {
             labelStatus.textContent = tema === 'escuro' ? 'Ativado' : 'Desativado';
         }
+        if (window.Acessibilidade && typeof window.Acessibilidade._sincronizarBotoesTema === 'function') {
+            window.Acessibilidade._sincronizarBotoesTema();
+        }
         if (window.lucide) {
-            try { lucide.createIcons(); } catch (_) {}
+            try { lucide.createIcons(); } catch (_) { }
         }
     }
 
     function aplicarTema(tema) {
         document.documentElement.classList.toggle('dark', tema === 'escuro');
-        try { localStorage.setItem(CHAVE, tema); } catch (_) {}
+        try { localStorage.setItem(CHAVE, tema); } catch (_) { }
         sincronizarUI();
     }
 
@@ -33,7 +36,7 @@
         try {
             const salvo = localStorage.getItem(CHAVE);
             if (salvo) return salvo;
-        } catch (_) {}
+        } catch (_) { }
         return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'escuro' : 'claro';
     }
 
