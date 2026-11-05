@@ -939,19 +939,16 @@ class AuthManager {
         try {
           await this.login(email, senha);
 
-          // Exibe opções de acessibilidade e escolha de tema (dark/light) pós-login
+          this.ocultarTelaLogin();
+          this.preencherInfoUsuario();
+          window.dispatchEvent(new Event('hub:login'));
+          if (window.lucide) lucide.createIcons();
+
+          // Exibe opções de acessibilidade e escolha de tema (dark/light) pós-login em assistente wizard
           if (window.Acessibilidade && typeof window.Acessibilidade.mostrarModalPosLogin === 'function') {
             window.Acessibilidade.mostrarModalPosLogin(this.usuario, () => {
-              this.ocultarTelaLogin();
-              this.preencherInfoUsuario();
-              window.dispatchEvent(new Event('hub:login'));
               if (window.lucide) lucide.createIcons();
             });
-          } else {
-            this.ocultarTelaLogin();
-            this.preencherInfoUsuario();
-            window.dispatchEvent(new Event('hub:login'));
-            if (window.lucide) lucide.createIcons();
           }
         } catch (err) {
           const msg = err.message || 'Credenciais inválidas.';

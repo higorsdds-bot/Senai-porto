@@ -357,9 +357,9 @@
                         <span class="block text-[10px] font-extrabold uppercase text-blue-900 dark:text-blue-400 tracking-wider">
                             MENU DE ACESSIBILIDADE
                         </span>
-                        <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5 leading-snug">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-0.5 leading-snug">
                             Ajuste as opções de acessibilidade do site
-                        </h2>
+                        </h3>
                     </div>
                     <button id="btn-fechar-menu-acess" type="button"
                         class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
@@ -418,32 +418,47 @@
                             </span>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input id="toggle-alto-contraste" type="checkbox" class="sr-only peer">
+                            <input id="toggle-alto-contraste" type="checkbox" aria-label="Ativar Alto Contraste" class="sr-only peer">
                             <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                     </div>
 
-                    <!-- ITEM 3: Modo Daltônico (Filtros de Visão Cromática) -->
-                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800/60 space-y-1.5">
+                    <!-- ITEM 3: Modo Daltônico com Bolas de Cores -->
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                                Modo Daltônico
+                                Filtros de Cores (Daltonismo)
                             </span>
                             <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase" id="badge-daltonismo-status">
                                 Desativado
                             </span>
                         </div>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                            Adapte as cores para diferentes tipos de percepção visual.
+                            Identifique pela bola de cores a paleta mais nítida para sua visão:
                         </p>
-                        <select id="select-modo-daltonico"
-                            class="w-full text-xs font-semibold py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-                            <option value="padrao">Padrão (Sem filtro cromático)</option>
-                            <option value="deuteranopia">Deuteranopia (Dificuldade com tons verdes)</option>
-                            <option value="protanopia">Protanopia (Dificuldade com tons vermelhos)</option>
-                            <option value="tritanopia">Tritanopia (Dificuldade com tons azuis/amarelos)</option>
-                            <option value="acromatopsia">Acromatopsia (Escala monocromática)</option>
-                        </select>
+                        <!-- Grid com as Bolas de Cores -->
+                        <div class="grid grid-cols-5 gap-1.5 pt-1" id="menu-grid-bolas-daltonismo">
+                            <button type="button" data-dalton-val="padrao" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Cores Padrão">
+                                <div class="hub-color-swatch hub-color-swatch-padrao group-hover:scale-105"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Padrão</span>
+                            </button>
+                            <button type="button" data-dalton-val="deuteranopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Deuteranopia (Verdes)">
+                                <div class="hub-color-swatch hub-color-swatch-deuteranopia group-hover:scale-105"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Deuter.</span>
+                            </button>
+                            <button type="button" data-dalton-val="protanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Protanopia (Vermelhos)">
+                                <div class="hub-color-swatch hub-color-swatch-protanopia group-hover:scale-105"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Protan.</span>
+                            </button>
+                            <button type="button" data-dalton-val="tritanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Tritanopia (Azuis)">
+                                <div class="hub-color-swatch hub-color-swatch-tritanopia group-hover:scale-105"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Tritan.</span>
+                            </button>
+                            <button type="button" data-dalton-val="acromatopsia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Monocromático">
+                                <div class="hub-color-swatch hub-color-swatch-acromatopsia group-hover:scale-105"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Mono</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- ITEM 4: Tema do Sistema (Claro / Escuro) -->
@@ -487,11 +502,11 @@
                     <!-- ITEM 6: Recursos Visuais Extras (Destaque de Links & Leitura Fácil) -->
                     <div class="pt-2 border-t border-slate-100 dark:border-slate-800/60 grid grid-cols-2 gap-2">
                         <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 transition-colors">
-                            <input id="toggle-destaque-links" type="checkbox" class="rounded text-blue-600 focus:ring-blue-500">
+                            <input id="toggle-destaque-links" type="checkbox" aria-label="Destacar links da página" class="rounded text-blue-600 focus:ring-blue-500">
                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Destacar Links</span>
                         </label>
                         <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100 transition-colors">
-                            <input id="toggle-fonte-legivel" type="checkbox" class="rounded text-blue-600 focus:ring-blue-500">
+                            <input id="toggle-fonte-legivel" type="checkbox" aria-label="Ativar fonte de fácil leitura" class="rounded text-blue-600 focus:ring-blue-500">
                             <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200">Leitura Fácil</span>
                         </label>
                     </div>
@@ -527,9 +542,13 @@
             const toggleContraste = menu.querySelector('#toggle-alto-contraste');
             toggleContraste?.addEventListener('change', (e) => this.setAltoContraste(e.target.checked));
 
-            // Modo Daltônico
-            const selectDaltonico = menu.querySelector('#select-modo-daltonico');
-            selectDaltonico?.addEventListener('change', (e) => this.setModoDaltonico(e.target.value));
+            // Modo Daltônico com Bolas de Cores
+            menu.querySelectorAll('#menu-grid-bolas-daltonismo button')?.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = btn.getAttribute('data-dalton-val');
+                    this.setModoDaltonico(val);
+                });
+            });
 
             // Tema Claro / Escuro
             const btnClaro = menu.querySelector('#btn-tema-claro');
@@ -593,9 +612,17 @@
             const toggleContraste = menu.querySelector('#toggle-alto-contraste');
             if (toggleContraste) toggleContraste.checked = this.config.altoContraste;
 
-            // Select daltonismo
-            const selectDaltonico = menu.querySelector('#select-modo-daltonico');
-            if (selectDaltonico) selectDaltonico.value = this.config.daltonismo;
+            // Bolas de daltonismo
+            const btnsBolasMenu = menu.querySelectorAll('#menu-grid-bolas-daltonismo button');
+            btnsBolasMenu.forEach(b => {
+                const val = b.getAttribute('data-dalton-val');
+                const ativo = val === this.config.daltonismo;
+                if (ativo) {
+                    b.className = 'flex flex-col items-center gap-1 p-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 ring-2 ring-blue-600 shadow-sm transition-all cursor-pointer scale-105';
+                } else {
+                    b.className = 'flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer opacity-75 hover:opacity-100';
+                }
+            });
 
             const badgeDaltonismo = menu.querySelector('#badge-daltonismo-status');
             if (badgeDaltonismo) {
@@ -663,157 +690,309 @@
 
         /**
          * Exibe a tela de configuração de preferências e acessibilidade pós-login.
-         * O usuário define tema (dark/light), tamanho das letras e daltonismo/contraste
-         * antes de ir para a página do sistema.
+         * Formato de assistente profissional passo a passo (Etapas 1 a 4)
+         * com transições suaves, bolas coloridas com identificação e centralização perfeita.
          */
         mostrarModalPosLogin(usuario, callbackConcluir) {
             let container = document.getElementById('modal-acessibilidade-pos-login');
             if (!container) {
                 container = document.createElement('div');
                 container.id = 'modal-acessibilidade-pos-login';
-                container.className = 'fixed inset-0 z-[1003] bg-hub-navy/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto';
+                container.className = 'fixed inset-0 z-[1003] bg-hub-navy/85 dark:bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto';
                 document.body.appendChild(container);
             }
 
             const primeiroNome = (usuario?.nome || 'Colaborador').split(' ')[0];
-            const temaAtual = window.Tema ? window.Tema.getTemaAtual() : 'claro';
+            let temaAtual = window.Tema ? window.Tema.getTemaAtual() : 'claro';
+            let etapaAtual = 1;
+            const totalEtapas = 4;
+
+            // Determina a opção de cor ativa atual
+            let modoCorAtivo = 'padrao';
+            if (this.config.altoContraste) {
+                modoCorAtivo = 'contraste';
+            } else if (this.config.daltonismo && this.config.daltonismo !== 'padrao') {
+                modoCorAtivo = this.config.daltonismo;
+            }
 
             container.innerHTML = `
-                <div class="w-full max-w-lg bg-white dark:bg-[#0b1320] rounded-3xl shadow-2xl p-6 sm:p-8 my-8 border border-slate-200/90 dark:border-slate-800 transition-all text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-200">
+                <div class="w-full max-w-md bg-white dark:bg-[#0b1320] rounded-3xl shadow-2xl p-6 sm:p-7 my-auto border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-100 flex flex-col justify-between transition-all">
                     
-                    <!-- Topo de Boas-vindas -->
-                    <div class="flex items-center gap-3.5 mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-extrabold text-base flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-                            ES+
-                        </div>
-                        <div class="min-w-0 flex-1">
+                    <!-- Topo: Progresso e Pular -->
+                    <div class="mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between gap-3 mb-3">
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
-                                    Login Autorizado
+                                <span class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-black text-xs flex items-center justify-center shadow-sm shrink-0">
+                                    ES+
                                 </span>
-                                <span class="text-[10px] text-slate-400 font-medium">Acessibilidade Inicial</span>
+                                <span id="wizard-badge-etapa" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
+                                    Etapa 1 de 4
+                                </span>
                             </div>
-                            <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight mt-0.5">
-                                Olá, ${primeiroNome}! Personalize sua Visualização
-                            </h2>
+                            <button type="button" id="poslogin-btn-pular-topo" class="text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer">
+                                Pular assistente
+                            </button>
+                        </div>
+
+                        <!-- Barra de Progresso Suave -->
+                        <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div id="wizard-progress-bar" class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-300 ease-out rounded-full" style="width: 25%;"></div>
                         </div>
                     </div>
 
-                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                        Antes de acessar a plataforma, defina suas preferências de <strong>tema</strong> e <strong>acessibilidade</strong>. Você poderá alterá-las a qualquer momento pelas janelas flutuantes fixas no canto da tela.
-                    </p>
+                    <!-- Conteúdo das Etapas -->
+                    <div id="wizard-etapas-conteudo" class="min-h-[290px] flex flex-col justify-center">
 
-                    <!-- SEÇÃO 1: Escolha do Tema (Dark ou Light) -->
-                    <div class="mb-5">
-                        <label class="block text-xs font-bold text-slate-900 dark:text-slate-100 mb-2">
-                            1. Tema da Interface (Claro ou Escuro)
-                        </label>
-                        <div class="grid grid-cols-2 gap-3" id="poslogin-selecao-tema">
-                            <!-- Card Tema Claro -->
-                            <button type="button" data-tema-val="claro"
-                                class="p-3.5 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 cursor-pointer text-center ${temaAtual === 'claro' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300'}">
-                                <span class="text-2xl">☀️</span>
-                                <div>
-                                    <span class="block text-xs font-extrabold">Modo Claro</span>
-                                    <span class="block text-[10px] text-slate-400 mt-0.5">Fundo branco e alto brilho</span>
+                        <!-- ETAPA 1: Tema da Interface -->
+                        <div id="wizard-step-1" class="wizard-step-transition">
+                            <div class="text-center mb-5">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
                                 </div>
-                            </button>
-                            <!-- Card Tema Escuro -->
-                            <button type="button" data-tema-val="escuro"
-                                class="p-3.5 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 cursor-pointer text-center ${temaAtual === 'escuro' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300'}">
-                                <span class="text-2xl">🌙</span>
-                                <div>
-                                    <span class="block text-xs font-extrabold">Modo Noturno</span>
-                                    <span class="block text-[10px] text-slate-400 mt-0.5">Fundo escuro e conforto visual</span>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                                    Olá, ${primeiroNome}!
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+                                    Escolha o tema visual que proporcione maior conforto aos seus olhos:
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3" id="wizard-selecao-tema">
+                                <!-- Card Tema Claro -->
+                                <button type="button" data-tema-val="claro"
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2.5 cursor-pointer text-center ${temaAtual === 'claro' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:border-slate-300'}">
+                                    <span class="text-3xl">☀️</span>
+                                    <div>
+                                        <span class="block text-xs font-black">Modo Claro</span>
+                                        <span class="block text-[10px] text-slate-400 dark:text-slate-400 mt-0.5">Alto brilho e clareza</span>
+                                    </div>
+                                </button>
+                                <!-- Card Tema Escuro -->
+                                <button type="button" data-tema-val="escuro"
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2.5 cursor-pointer text-center ${temaAtual === 'escuro' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:border-slate-300'}">
+                                    <span class="text-3xl">🌙</span>
+                                    <div>
+                                        <span class="block text-xs font-black">Modo Noturno</span>
+                                        <span class="block text-[10px] text-slate-400 dark:text-slate-400 mt-0.5">Fundo escuro e descanso</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ETAPA 2: Tamanho das Letras -->
+                        <div id="wizard-step-2" class="wizard-step-transition hidden">
+                            <div class="text-center mb-4">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 5v14m6-8h6m-3 0v8" />
+                                    </svg>
                                 </div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- SEÇÃO 2: Tamanho das Letras (3 Tamanhos) -->
-                    <div class="mb-5">
-                        <label class="block text-xs font-bold text-slate-900 dark:text-slate-100 mb-2">
-                            2. Tamanho das Letras (Tipografia)
-                        </label>
-                        <div class="grid grid-cols-3 gap-2" id="poslogin-selecao-fonte">
-                            <button type="button" data-fonte-val="normal"
-                                class="py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${this.config.tamanhoFonte === 'normal' ? 'border-blue-600 bg-blue-600 text-white font-black shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold'}">
-                                <span class="block text-sm">A</span>
-                                <span class="block text-[10px] mt-0.5">Normal</span>
-                            </button>
-                            <button type="button" data-fonte-val="medio"
-                                class="py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${this.config.tamanhoFonte === 'medio' ? 'border-blue-600 bg-blue-600 text-white font-black shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold'}">
-                                <span class="block text-base">A+</span>
-                                <span class="block text-[10px] mt-0.5">Médio</span>
-                            </button>
-                            <button type="button" data-fonte-val="grande"
-                                class="py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${this.config.tamanhoFonte === 'grande' ? 'border-blue-600 bg-blue-600 text-white font-black shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold'}">
-                                <span class="block text-lg">A++</span>
-                                <span class="block text-[10px] mt-0.5">Grande</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- SEÇÃO 3: Visual & Daltonismo -->
-                    <div class="mb-5 space-y-3 bg-slate-50 dark:bg-slate-850/50 p-3.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="block text-xs font-bold text-slate-900 dark:text-slate-100">Alto Contraste</span>
-                                <span class="block text-[10px] text-slate-400">Realça bordas e texto</span>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                                    Tamanho das Letras
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+                                    Ajuste a escala tipográfica para facilitar a leitura de relatórios e tabelas:
+                                </p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input id="poslogin-toggle-contraste" type="checkbox" class="sr-only peer" ${this.config.altoContraste ? 'checked' : ''}>
-                                <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
 
-                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800">
-                            <label class="block text-xs font-bold text-slate-900 dark:text-slate-100 mb-1">
-                                Modo Daltônico
-                            </label>
-                            <select id="poslogin-select-daltonismo"
-                                class="w-full text-xs font-semibold py-2 px-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="padrao" ${this.config.daltonismo === 'padrao' ? 'selected' : ''}>Padrão (Sem filtro cromático)</option>
-                                <option value="deuteranopia" ${this.config.daltonismo === 'deuteranopia' ? 'selected' : ''}>Deuteranopia (Tons verdes)</option>
-                                <option value="protanopia" ${this.config.daltonismo === 'protanopia' ? 'selected' : ''}>Protanopia (Tons vermelhos)</option>
-                                <option value="tritanopia" ${this.config.daltonismo === 'tritanopia' ? 'selected' : ''}>Tritanopia (Tons azuis/amarelos)</option>
-                                <option value="acromatopsia" ${this.config.daltonismo === 'acromatopsia' ? 'selected' : ''}>Acromatopsia (Monocromático)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- SEÇÃO 4: VLibras (Opção Rápida) -->
-                    <div class="mb-6 flex items-center justify-between p-3 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-                                <svg viewBox="0 0 40 40" fill="none" class="w-5 h-5">
-                                    <path fill="#ffffff" fill-rule="evenodd" clip-rule="evenodd" d="M14.35 8a1 1 0 0 0-.38.24c-.22.21-.22.21-.17.72l.11 1.35c.3 3.62.34 4.7.21 4.78-.21.14-.33-.06-2.35-3.97-.69-1.33-.82-1.48-1.24-1.34-.68.23-.63.57.45 2.9l.26.58c0 .01.12.3.27.61.8 1.76 1.01 2.47.75 2.57-.18.07-.51-.1-.78-.42-.14-.16-.3-.36-.38-.43a19 19 0 0 1-.78-.95l-.72-.86a7 7 0 0 0-.8-.86c-.34-.13-.8.13-.8.46 0 .29.7 1.44 2.13 3.56.9 1.33 1.11 1.8 1.32 2.97q.64 3.7 1.78 4.6c.51.4.53.4 1.75.35l1.11-.04.85-1.14.93-1.23c.33-.43 1.17-1.92 1.17-2.07 0-.02-.44-.02-.97 0q-.98.05-1.43-.04c-.52-.1-1.18-.4-1.55-.7a1.55 1.55 0 0 1-.38-1.94c.27-.45.64-.65 1.41-.74.63-.08 1.3-.26 2.27-.62l.51-.19v-.82c0-.84.16-3.78.29-5.16.1-1.09.1-1.08-.17-1.34-.19-.19-.3-.24-.5-.24-.5 0-.52.07-1.02 2.57l-.54 2.8c-.12.68-.21.93-.37 1-.2.07-.39-.25-.48-.82l-.27-1.68c-.19-1.19-.56-3.4-.64-3.8-.05-.24-.36-.6-.57-.65a1 1 0 0 0-.28 0m9.37 7.25a14 14 0 0 0-2.12.8l-1.31.62c-1.49.74-3.2 1.34-3.8 1.34-.4 0-.84.18-.88.37-.04.2.4.6.82.76.38.15.48.15 1.83.11 1.22-.03 1.47-.02 1.67.07.33.16.42.43.31.93-.11.51-.74 1.77-1.25 2.5-.33.48-2.29 3.1-3.43 4.57-.4.53-.42.8-.07 1.15.45.45.39.49 2.8-1.94 2.26-2.27 2.45-2.42 2.55-2.01.07.24.08.2-.92 2.35a16 16 0 0 0-.57 1.25c-1.15 2.49-1.2 2.65-.86 3.08.12.15.2.18.47.18.18 0 .38-.04.44-.09s.4-.62.77-1.28c.63-1.15 1-1.82 1.32-2.37 1.17-2.04 1.16-2.03 1.38-2.03.13 0 .13.03.1.86-.05.76-.14 1.66-.4 3.75-.1.79-.1 1.45.02 1.6.14.19.63.24.85.1.23-.15.33-.53.6-2.12.55-3.38.7-4.02.91-4.22.14-.13.15-.13.3 0 .07.08.17.19.2.26.04.06.15.85.24 1.76.27 2.53.29 2.66.5 2.85q.35.3.7 0c.2-.17.2-.21.26-1.12.04-.52.05-1.54.03-2.28-.03-1.43.04-2.63.17-3.04l.49-1.21c.22-.52.54-1.36.7-1.87.5-1.55.47-2.8-.1-3.36a5 5 0 0 0-.8-.54 6 6 0 0 1-1.32-1c-.57-.54-.78-.68-1.04-.75a6 6 0 0 0-1.56-.03" />
-                                </svg>
+                            <div class="grid grid-cols-3 gap-2.5 mb-4" id="wizard-selecao-fonte">
+                                <button type="button" data-fonte-val="normal"
+                                    class="py-3 px-2 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${this.config.tamanhoFonte === 'normal' ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 font-black shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:border-slate-300'}">
+                                    <span class="text-base font-black">A</span>
+                                    <span class="text-[11px]">Normal</span>
+                                    <span class="text-[9px] text-slate-400">100%</span>
+                                </button>
+                                <button type="button" data-fonte-val="medio"
+                                    class="py-3 px-2 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${this.config.tamanhoFonte === 'medio' ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 font-black shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:border-slate-300'}">
+                                    <span class="text-lg font-black">A+</span>
+                                    <span class="text-[11px]">Médio</span>
+                                    <span class="text-[9px] text-slate-400">+12.5%</span>
+                                </button>
+                                <button type="button" data-fonte-val="grande"
+                                    class="py-3 px-2 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${this.config.tamanhoFonte === 'grande' ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 font-black shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:border-slate-300'}">
+                                    <span class="text-xl font-black">A++</span>
+                                    <span class="text-[11px]">Grande</span>
+                                    <span class="text-[9px] text-slate-400">+25%</span>
+                                </button>
                             </div>
-                            <div>
-                                <span class="block text-xs font-bold text-slate-900 dark:text-slate-100">Ativar VLibras</span>
-                                <span class="block text-[10px] text-slate-400">Intérprete 3D de Língua de Sinais</span>
+
+                            <!-- Cartão de Preview em tempo real -->
+                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60 text-center">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Pré-visualização do texto</span>
+                                <p class="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                    HUB ES+: Inovação, Tecnologia e Criatividade no Espírito Santo.
+                                </p>
                             </div>
                         </div>
-                        <button id="poslogin-btn-vlibras" type="button"
-                            class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer">
-                            Testar VLibras
-                        </button>
+
+                        <!-- ETAPA 3: Cores e Daltonismo (Bolas com Nomes) -->
+                        <div id="wizard-step-3" class="wizard-step-transition hidden">
+                            <div class="text-center mb-3">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 mb-1.5">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4 8.014 8.014 0 014-4h.256a4.5 4.5 0 016.988 0H15a8.014 8.014 0 014 4 4 4 0 01-4 4H7z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                                    Cores e Daltonismo
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                    Identifique a paleta ideal pelas <strong>cores da amostra</strong> ou pelo tipo de visão:
+                                </p>
+                            </div>
+
+                            <!-- Grid com as Bolas de Cores com Nomes -->
+                            <div class="grid grid-cols-2 gap-2" id="wizard-grid-bolas-cores">
+                                
+                                <!-- 1. Padrão -->
+                                <button type="button" data-cor-val="padrao"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'padrao' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-padrao"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Padrão</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Sem filtro</span>
+                                    </div>
+                                </button>
+
+                                <!-- 2. Deuteranopia -->
+                                <button type="button" data-cor-val="deuteranopia"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'deuteranopia' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-deuteranopia"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Deuteranopia</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Tons verdes</span>
+                                    </div>
+                                </button>
+
+                                <!-- 3. Protanopia -->
+                                <button type="button" data-cor-val="protanopia"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'protanopia' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-protanopia"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Protanopia</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Tons vermelhos</span>
+                                    </div>
+                                </button>
+
+                                <!-- 4. Tritanopia -->
+                                <button type="button" data-cor-val="tritanopia"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'tritanopia' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-tritanopia"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Tritanopia</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Tons azuis</span>
+                                    </div>
+                                </button>
+
+                                <!-- 5. Monocromático -->
+                                <button type="button" data-cor-val="acromatopsia"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'acromatopsia' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-acromatopsia"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Monocromático</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Preto e branco</span>
+                                    </div>
+                                </button>
+
+                                <!-- 6. Alto Contraste -->
+                                <button type="button" data-cor-val="contraste"
+                                    class="p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${modoCorAtivo === 'contraste' ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}">
+                                    <div class="hub-color-swatch hub-color-swatch-contraste"></div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-xs font-black text-slate-900 dark:text-slate-100 leading-tight">Alto Contraste</span>
+                                        <span class="block text-[9px] text-slate-400 truncate">Realce preto/amarelo</span>
+                                    </div>
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <!-- ETAPA 4: VLibras e Conclusão -->
+                        <div id="wizard-step-4" class="wizard-step-transition hidden">
+                            <div class="text-center mb-4">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                                    Tudo Pronto para Acessar!
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+                                    Suas preferências foram registradas com sucesso.
+                                </p>
+                            </div>
+
+                            <!-- Cartão VLibras Integrado -->
+                            <div class="mb-4 p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/40 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <svg viewBox="0 0 40 40" fill="none" class="w-5 h-5">
+                                            <path fill="#ffffff" fill-rule="evenodd" clip-rule="evenodd" d="M14.35 8a1 1 0 0 0-.38.24c-.22.21-.22.21-.17.72l.11 1.35c.3 3.62.34 4.7.21 4.78-.21.14-.33-.06-2.35-3.97-.69-1.33-.82-1.48-1.24-1.34-.68.23-.63.57.45 2.9l.26.58c0 .01.12.3.27.61.8 1.76 1.01 2.47.75 2.57-.18.07-.51-.1-.78-.42-.14-.16-.3-.36-.38-.43a19 19 0 0 1-.78-.95l-.72-.86a7 7 0 0 0-.8-.86c-.34-.13-.8.13-.8.46 0 .29.7 1.44 2.13 3.56.9 1.33 1.11 1.8 1.32 2.97q.64 3.7 1.78 4.6c.51.4.53.4 1.75.35l1.11-.04.85-1.14.93-1.23c.33-.43 1.17-1.92 1.17-2.07 0-.02-.44-.02-.97 0q-.98.05-1.43-.04c-.52-.1-1.18-.4-1.55-.7a1.55 1.55 0 0 1-.38-1.94c.27-.45.64-.65 1.41-.74.63-.08 1.3-.26 2.27-.62l.51-.19v-.82c0-.84.16-3.78.29-5.16.1-1.09.1-1.08-.17-1.34-.19-.19-.3-.24-.5-.24-.5 0-.52.07-1.02 2.57l-.54 2.8c-.12.68-.21.93-.37 1-.2.07-.39-.25-.48-.82l-.27-1.68c-.19-1.19-.56-3.4-.64-3.8-.05-.24-.36-.6-.57-.65a1 1 0 0 0-.28 0m9.37 7.25a14 14 0 0 0-2.12.8l-1.31.62c-1.49.74-3.2 1.34-3.8 1.34-.4 0-.84.18-.88.37-.04.2.4.6.82.76.38.15.48.15 1.83.11 1.22-.03 1.47-.02 1.67.07.33.16.42.43.31.93-.11.51-.74 1.77-1.25 2.5-.33.48-2.29 3.1-3.43 4.57-.4.53-.42.8-.07 1.15.45.45.39.49 2.8-1.94 2.26-2.27 2.45-2.42 2.55-2.01.07.24.08.2-.92 2.35a16 16 0 0 0-.57 1.25c-1.15 2.49-1.2 2.65-.86 3.08.12.15.2.18.47.18.18 0 .38-.04.44-.09s.4-.62.77-1.28c.63-1.15 1-1.82 1.32-2.37 1.17-2.04 1.16-2.03 1.38-2.03.13 0 .13.03.1.86-.05.76-.14 1.66-.4 3.75-.1.79-.1 1.45.02 1.6.14.19.63.24.85.1.23-.15.33-.53.6-2.12.55-3.38.7-4.02.91-4.22.14-.13.15-.13.3 0 .07.08.17.19.2.26.04.06.15.85.24 1.76.27 2.53.29 2.66.5 2.85q.35.3.7 0c.2-.17.2-.21.26-1.12.04-.52.05-1.54.03-2.28-.03-1.43.04-2.63.17-3.04l.49-1.21c.22-.52.54-1.36.7-1.87.5-1.55.47-2.8-.1-3.36a5 5 0 0 0-.8-.54 6 6 0 0 1-1.32-1c-.57-.54-.78-.68-1.04-.75a6 6 0 0 0-1.56-.03" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-900 dark:text-slate-100">Intérprete VLibras</span>
+                                        <span class="block text-[10px] text-slate-500 dark:text-slate-400">Tradução em Libras 3D</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="wizard-btn-testar-vlibras"
+                                    class="px-2.5 py-1.5 text-[11px] font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer shadow-sm">
+                                    Testar Avatar
+                                </button>
+                            </div>
+
+                            <!-- Resumo das Escolhas -->
+                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 text-left mb-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">Resumo das Suas Escolhas</span>
+                                <div class="flex flex-wrap gap-1.5" id="wizard-resumo-badges">
+                                    <span id="badge-resumo-tema" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200">
+                                        Tema: ${temaAtual === 'escuro' ? 'Noturno 🌙' : 'Claro ☀️'}
+                                    </span>
+                                    <span id="badge-resumo-fonte" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200">
+                                        Texto: ${this.config.tamanhoFonte.toUpperCase()}
+                                    </span>
+                                    <span id="badge-resumo-cor" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200">
+                                        Cores: ${modoCorAtivo.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] text-slate-400 text-center">
+                                Você pode reabrir este menu a qualquer momento pelos botões flutuantes no canto inferior direito.
+                            </p>
+                        </div>
+
                     </div>
 
-                    <!-- Botões de Conclusão -->
-                    <div class="space-y-2">
-                        <button type="button" id="poslogin-btn-salvar-entrar"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer">
-                            <span>Salvar e Acessar o HUB ES+</span>
+                    <!-- Rodapé de Navegação do Assistente -->
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                        <!-- Botão Voltar -->
+                        <button type="button" id="wizard-btn-voltar"
+                            class="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-xl transition-all flex items-center gap-1 cursor-pointer invisible">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                             </svg>
+                            <span>Voltar</span>
                         </button>
 
-                        <button type="button" id="poslogin-btn-pular"
-                            class="w-full py-2.5 text-xs font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors text-center cursor-pointer">
-                            Pular e Usar Configurações Atuais
+                        <!-- Indicadores de Etapa (Pontos) -->
+                        <div class="flex items-center gap-1.5" id="wizard-dots">
+                            <div class="h-2 rounded-full transition-all duration-300 w-6 bg-blue-600"></div>
+                            <div class="h-2 rounded-full transition-all duration-300 w-2 bg-slate-300 dark:bg-slate-700"></div>
+                            <div class="h-2 rounded-full transition-all duration-300 w-2 bg-slate-300 dark:bg-slate-700"></div>
+                            <div class="h-2 rounded-full transition-all duration-300 w-2 bg-slate-300 dark:bg-slate-700"></div>
+                        </div>
+
+                        <!-- Botão Avançar / Concluir -->
+                        <button type="button" id="wizard-btn-avancar"
+                            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer">
+                            <span>Avançar</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
                         </button>
                     </div>
 
@@ -822,53 +1001,152 @@
 
             container.classList.remove('hidden');
 
-            // ── Eventos dos Seletores no Modal ──
+            // ── Atualização do Estado do Assistente ──
+            const atualizarEtapa = () => {
+                // Atualiza badge e barra de progresso
+                const badge = container.querySelector('#wizard-badge-etapa');
+                if (badge) badge.textContent = `Etapa ${etapaAtual} de ${totalEtapas}`;
 
-            // 1. Alternância de tema com preview ao vivo
-            const btnsTema = container.querySelectorAll('#poslogin-selecao-tema button');
+                const bar = container.querySelector('#wizard-progress-bar');
+                if (bar) bar.style.width = `${(etapaAtual / totalEtapas) * 100}%`;
+
+                // Alterna os contêineres de etapas com animação
+                for (let i = 1; i <= totalEtapas; i++) {
+                    const stepEl = container.querySelector(`#wizard-step-${i}`);
+                    if (stepEl) {
+                        if (i === etapaAtual) {
+                            stepEl.classList.remove('hidden');
+                            stepEl.classList.remove('wizard-step-transition');
+                            // Trigger reflow para reiniciar a animação suave
+                            void stepEl.offsetWidth;
+                            stepEl.classList.add('wizard-step-transition');
+                        } else {
+                            stepEl.classList.add('hidden');
+                        }
+                    }
+                }
+
+                // Atualiza dots
+                const dots = container.querySelectorAll('#wizard-dots div');
+                dots.forEach((dot, idx) => {
+                    if (idx + 1 === etapaAtual) {
+                        dot.className = 'h-2 rounded-full transition-all duration-300 w-6 bg-blue-600';
+                    } else if (idx + 1 < etapaAtual) {
+                        dot.className = 'h-2 rounded-full transition-all duration-300 w-2 bg-blue-400 dark:bg-blue-600/60';
+                    } else {
+                        dot.className = 'h-2 rounded-full transition-all duration-300 w-2 bg-slate-300 dark:bg-slate-700';
+                    }
+                });
+
+                // Atualiza botão voltar
+                const btnVoltar = container.querySelector('#wizard-btn-voltar');
+                if (btnVoltar) {
+                    if (etapaAtual === 1) {
+                        btnVoltar.classList.add('invisible');
+                    } else {
+                        btnVoltar.classList.remove('invisible');
+                    }
+                }
+
+                // Atualiza botão avançar/concluir
+                const btnAvancar = container.querySelector('#wizard-btn-avancar');
+                if (btnAvancar) {
+                    if (etapaAtual === totalEtapas) {
+                        btnAvancar.className = 'px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition-all shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer';
+                        btnAvancar.innerHTML = `
+                            <span>Salvar e Acessar HUB ES+</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        `;
+                    } else {
+                        btnAvancar.className = 'px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer';
+                        btnAvancar.innerHTML = `
+                            <span>Avançar</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        `;
+                    }
+                }
+
+                // Atualiza resumo na etapa final
+                if (etapaAtual === 4) {
+                    const badgeTema = container.querySelector('#badge-resumo-tema');
+                    const badgeFonte = container.querySelector('#badge-resumo-fonte');
+                    const badgeCor = container.querySelector('#badge-resumo-cor');
+                    if (badgeTema) badgeTema.textContent = `Tema: ${temaAtual === 'escuro' ? 'Noturno 🌙' : 'Claro ☀️'}`;
+                    if (badgeFonte) badgeFonte.textContent = `Texto: ${this.config.tamanhoFonte.toUpperCase()}`;
+                    if (badgeCor) badgeCor.textContent = `Cores: ${modoCorAtivo.toUpperCase()}`;
+                }
+            };
+
+            // ── Eventos: Etapa 1 - Tema ──
+            const btnsTema = container.querySelectorAll('#wizard-selecao-tema button');
             btnsTema.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const temaEscolhido = btn.getAttribute('data-tema-val');
+                    temaAtual = temaEscolhido;
                     if (window.Tema) {
                         window.Tema.aplicarTema(temaEscolhido);
                     }
                     btnsTema.forEach(b => {
                         const ativo = b.getAttribute('data-tema-val') === temaEscolhido;
-                        b.className = `p-3.5 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 cursor-pointer text-center ${ativo ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300'}`;
+                        b.className = `p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2.5 cursor-pointer text-center ${ativo ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:border-slate-300'}`;
                     });
                 });
             });
 
-            // 2. Alternância do tamanho de fonte com preview ao vivo
-            const btnsFonte = container.querySelectorAll('#poslogin-selecao-fonte button');
+            // ── Eventos: Etapa 2 - Tamanho da Fonte ──
+            const btnsFonte = container.querySelectorAll('#wizard-selecao-fonte button');
             btnsFonte.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const fonteEscolhida = btn.getAttribute('data-fonte-val');
                     this.setTamanhoFonte(fonteEscolhida, true);
                     btnsFonte.forEach(b => {
                         const ativo = b.getAttribute('data-fonte-val') === fonteEscolhida;
-                        b.className = `py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${ativo ? 'border-blue-600 bg-blue-600 text-white font-black shadow-md' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold'}`;
+                        b.className = `py-3 px-2 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${ativo ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20 font-black shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:border-slate-300'}`;
                     });
                 });
             });
 
-            // 3. Alto Contraste ao vivo
-            container.querySelector('#poslogin-toggle-contraste')?.addEventListener('change', (e) => {
-                this.setAltoContraste(e.target.checked, true);
+            // ── Eventos: Etapa 3 - Bolas de Cores / Daltonismo ──
+            const btnsCores = container.querySelectorAll('#wizard-grid-bolas-cores button');
+            btnsCores.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const corEscolhida = btn.getAttribute('data-cor-val');
+                    modoCorAtivo = corEscolhida;
+
+                    if (corEscolhida === 'contraste') {
+                        this.setAltoContraste(true, true);
+                        this.setModoDaltonico('padrao', true);
+                    } else {
+                        this.setAltoContraste(false, true);
+                        this.setModoDaltonico(corEscolhida, true);
+                    }
+
+                    btnsCores.forEach(b => {
+                        const ativo = b.getAttribute('data-cor-val') === corEscolhida;
+                        b.className = `p-2.5 rounded-2xl border-2 transition-all flex items-center gap-2.5 cursor-pointer text-left ${ativo ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-2 ring-blue-500/20 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-slate-300'}`;
+                    });
+                });
             });
 
-            // 4. Modo Daltônico ao vivo
-            container.querySelector('#poslogin-select-daltonismo')?.addEventListener('change', (e) => {
-                this.setModoDaltonico(e.target.value, true);
-            });
-
-            // 5. Testar VLibras
-            container.querySelector('#poslogin-btn-vlibras')?.addEventListener('click', () => {
+            // ── Eventos: Etapa 4 - Testar VLibras ──
+            container.querySelector('#wizard-btn-testar-vlibras')?.addEventListener('click', () => {
                 this.abrirVLibras();
             });
 
-            // 6. Botões de Concluir
-            const concluir = () => {
+            // ── Navegação: Voltar e Avançar ──
+            container.querySelector('#wizard-btn-voltar')?.addEventListener('click', () => {
+                if (etapaAtual > 1) {
+                    etapaAtual--;
+                    atualizarEtapa();
+                }
+            });
+
+            const finalizarWizard = () => {
+                this._salvarConfig();
                 container.classList.add('hidden');
                 container.remove();
                 if (typeof callbackConcluir === 'function') {
@@ -876,13 +1154,17 @@
                 }
             };
 
-            container.querySelector('#poslogin-btn-salvar-entrar')?.addEventListener('click', () => {
-                this._salvarConfig();
-                concluir();
+            container.querySelector('#wizard-btn-avancar')?.addEventListener('click', () => {
+                if (etapaAtual < totalEtapas) {
+                    etapaAtual++;
+                    atualizarEtapa();
+                } else {
+                    finalizarWizard();
+                }
             });
 
-            container.querySelector('#poslogin-btn-pular')?.addEventListener('click', () => {
-                concluir();
+            container.querySelector('#poslogin-btn-pular-topo')?.addEventListener('click', () => {
+                finalizarWizard();
             });
         }
     }

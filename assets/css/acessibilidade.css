@@ -201,3 +201,58 @@ html.fonte-legivel body {
 div[vw] {
   z-index: 2147483647 !important;
 }
+
+/* ─── 9. Bolas de Cores para Acessibilidade Cromática e Daltonismo ──────────── */
+.hub-color-swatch {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  border: 2.5px solid #ffffff;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.dark .hub-color-swatch {
+  border-color: #0f172a;
+}
+
+.hub-color-swatch-padrao {
+  background: conic-gradient(#3b82f6 0deg 90deg, #10b981 90deg 180deg, #eab308 180deg 270deg, #ef4444 270deg 360deg);
+}
+
+.hub-color-swatch-deuteranopia {
+  background: conic-gradient(#3b82f6 0deg 120deg, #eab308 120deg 240deg, #854d0e 240deg 360deg);
+}
+
+.hub-color-swatch-protanopia {
+  background: conic-gradient(#2563eb 0deg 120deg, #facc15 120deg 240deg, #57534e 240deg 360deg);
+}
+
+.hub-color-swatch-tritanopia {
+  background: conic-gradient(#06b6d4 0deg 120deg, #f43f5e 120deg 240deg, #14b8a6 240deg 360deg);
+}
+
+.hub-color-swatch-acromatopsia {
+  background: conic-gradient(#0f172a 0deg 120deg, #64748b 120deg 240deg, #f8fafc 240deg 360deg);
+}
+
+.hub-color-swatch-contraste {
+  background: linear-gradient(135deg, #000000 50%, #facc15 50%);
+}
+
+/* Transições suaves do assistente de acessibilidade */
+.wizard-step-transition {
+  animation: wizardFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes wizardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
