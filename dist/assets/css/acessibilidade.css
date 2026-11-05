@@ -19,93 +19,241 @@ html.fonte-grande {
   /* 20px base (+25% de ampliação) */
 }
 
+/* Proteção de proporção: garante que micro-textos em px escalem dinamicamente */
+html.fonte-media [class*="text-[10px]"],
+html.fonte-media [class*="text-[11px]"],
+html.fonte-media [class*="text-[9px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1.3 !important;
+}
+
+html.fonte-grande [class*="text-[10px]"],
+html.fonte-grande [class*="text-[11px]"],
+html.fonte-grande [class*="text-[9px]"] {
+  font-size: 0.8125rem !important;
+  line-height: 1.35 !important;
+}
+
 /* ─── 2. Alto Contraste: Modo Claro ────────────────────────────────────────── */
 html.alto-contraste:not(.dark) {
   --hub-border-light: #000000;
   --hub-border-subtle: #000000;
 }
 
-html.alto-contraste:not(.dark) body {
+html.alto-contraste:not(.dark) body,
+html.alto-contraste:not(.dark) #app-conteudo,
+html.alto-contraste:not(.dark) #main-content {
   background-color: #ffffff !important;
   color: #000000 !important;
 }
 
+/* Superfícies, Cards e Contêineres no Alto Contraste Claro */
+html.alto-contraste:not(.dark) .bento-surface,
+html.alto-contraste:not(.dark) .telemetry-cell,
+html.alto-contraste:not(.dark) .glass-surface,
+html.alto-contraste:not(.dark) .glass-card,
 html.alto-contraste:not(.dark) .bg-white,
 html.alto-contraste:not(.dark) .bg-slate-50,
 html.alto-contraste:not(.dark) .bg-slate-100,
 html.alto-contraste:not(.dark) [class*="bg-white/"],
-html.alto-contraste:not(.dark) [class*="bg-slate-50/"] {
+html.alto-contraste:not(.dark) [class*="bg-slate-50/"],
+html.alto-contraste:not(.dark) [class*="bg-slate-100/"],
+html.alto-contraste:not(.dark) aside,
+html.alto-contraste:not(.dark) dialog,
+html.alto-contraste:not(.dark) .modal,
+html.alto-contraste:not(.dark) table,
+html.alto-contraste:not(.dark) thead,
+html.alto-contraste:not(.dark) tbody tr {
   background-color: #ffffff !important;
   border-color: #000000 !important;
   color: #000000 !important;
 }
 
+/* Bordas universais nítidas no Alto Contraste Claro */
+html.alto-contraste:not(.dark) .border,
+html.alto-contraste:not(.dark) [class*="border-"],
+html.alto-contraste:not(.dark) hr {
+  border-color: #000000 !important;
+}
+
+html.alto-contraste:not(.dark) .hub-top-navbar {
+  border-bottom: 2px solid #000000 !important;
+}
+
+/* Formulários e Entradas no Alto Contraste Claro */
 html.alto-contraste:not(.dark) input,
 html.alto-contraste:not(.dark) select,
 html.alto-contraste:not(.dark) textarea {
   border: 2px solid #000000 !important;
   background-color: #ffffff !important;
   color: #000000 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
+/* Tipografia Universal no Alto Contraste Claro (elimina tons cinzas apagados) */
 html.alto-contraste:not(.dark) p,
-html.alto-contraste:not(.dark) span:not([class*="badge"]):not([class*="bg-"]),
+html.alto-contraste:not(.dark) span:not([class*="hub-color-swatch"]):not(.btn-primary *),
+html.alto-contraste:not(.dark) div:not([class*="hub-color-swatch"]):not([class*="badge"]),
 html.alto-contraste:not(.dark) h1,
 html.alto-contraste:not(.dark) h2,
 html.alto-contraste:not(.dark) h3,
 html.alto-contraste:not(.dark) h4,
-html.alto-contraste:not(.dark) label {
+html.alto-contraste:not(.dark) h5,
+html.alto-contraste:not(.dark) h6,
+html.alto-contraste:not(.dark) label,
+html.alto-contraste:not(.dark) th,
+html.alto-contraste:not(.dark) td,
+html.alto-contraste:not(.dark) [class*="text-slate-"],
+html.alto-contraste:not(.dark) [class*="text-gray-"],
+html.alto-contraste:not(.dark) [class*="text-zinc-"] {
   color: #000000 !important;
-  font-weight: 600;
 }
 
-html.alto-contraste:not(.dark) a {
-  color: #003399 !important;
+/* Links em Alto Contraste Claro (Azul Escuro Profundo e Sublinhado) */
+html.alto-contraste:not(.dark) a:not(.btn-primary):not([class*="swatch"]),
+html.alto-contraste:not(.dark) a:not(.btn-primary) span {
+  color: #002277 !important;
   font-weight: 700 !important;
   text-decoration: underline !important;
 }
 
+/* Botões no Alto Contraste Claro */
+html.alto-contraste:not(.dark) .btn-primary,
+html.alto-contraste:not(.dark) button[type="submit"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+  font-weight: 800 !important;
+}
+
+html.alto-contraste:not(.dark) .btn-primary * {
+  color: #ffffff !important;
+}
+
+html.alto-contraste:not(.dark) .btn-secondary,
+html.alto-contraste:not(.dark) button:not(.btn-primary):not([class*="hub-color-swatch"]) {
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Ícones SVG no Alto Contraste Claro */
+html.alto-contraste:not(.dark) svg:not([class*="swatch"]):not(.no-high-contrast) {
+  stroke: #000000 !important;
+}
+
+html.alto-contraste:not(.dark) .btn-primary svg {
+  stroke: #ffffff !important;
+}
+
 /* ─── 3. Alto Contraste: Modo Escuro ───────────────────────────────────────── */
-html.dark.alto-contraste body {
+html.dark.alto-contraste body,
+html.dark.alto-contraste #app-conteudo,
+html.dark.alto-contraste #main-content {
   background-color: #000000 !important;
   color: #ffffff !important;
 }
 
+/* Superfícies, Cards e Contêineres no Alto Contraste Escuro */
+html.dark.alto-contraste .bento-surface,
+html.dark.alto-contraste .telemetry-cell,
+html.dark.alto-contraste .glass-surface,
+html.dark.alto-contraste .glass-card,
+html.dark.alto-contraste .hub-top-navbar,
 html.dark.alto-contraste .bg-white,
 html.dark.alto-contraste .bg-slate-900,
 html.dark.alto-contraste .bg-slate-950,
 html.dark.alto-contraste [class*="bg-slate-"],
-html.dark.alto-contraste [class*="bg-gray-"] {
+html.dark.alto-contraste [class*="bg-gray-"],
+html.dark.alto-contraste aside,
+html.dark.alto-contraste dialog,
+html.dark.alto-contraste .modal,
+html.dark.alto-contraste table,
+html.dark.alto-contraste thead,
+html.dark.alto-contraste tbody tr {
   background-color: #000000 !important;
   border-color: #ffffff !important;
   color: #ffffff !important;
 }
 
+/* Bordas universais nítidas no Alto Contraste Escuro */
+html.dark.alto-contraste .border,
+html.dark.alto-contraste [class*="border-"],
+html.dark.alto-contraste hr {
+  border-color: #ffffff !important;
+}
+
+html.dark.alto-contraste .hub-top-navbar {
+  border-bottom: 2px solid #ffffff !important;
+}
+
+/* Formulários e Entradas no Alto Contraste Escuro */
 html.dark.alto-contraste input,
 html.dark.alto-contraste select,
 html.dark.alto-contraste textarea {
   border: 2px solid #ffffff !important;
-  background-color: #0a0a0a !important;
+  background-color: #050505 !important;
   color: #ffffff !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
+/* Tipografia Universal no Alto Contraste Escuro (elimina textos apagados) */
 html.dark.alto-contraste p,
-html.dark.alto-contraste span:not([class*="badge"]):not([class*="bg-"]),
+html.dark.alto-contraste span:not([class*="hub-color-swatch"]):not(.btn-primary *),
+html.dark.alto-contraste div:not([class*="hub-color-swatch"]):not([class*="badge"]),
 html.dark.alto-contraste h1,
 html.dark.alto-contraste h2,
 html.dark.alto-contraste h3,
 html.dark.alto-contraste h4,
-html.dark.alto-contraste label {
+html.dark.alto-contraste h5,
+html.dark.alto-contraste h6,
+html.dark.alto-contraste label,
+html.dark.alto-contraste th,
+html.dark.alto-contraste td,
+html.dark.alto-contraste [class*="text-slate-"],
+html.dark.alto-contraste [class*="text-gray-"],
+html.dark.alto-contraste [class*="text-zinc-"],
+html.dark.alto-contraste [class*="dark:text-"] {
   color: #ffffff !important;
-  font-weight: 600;
 }
 
-html.dark.alto-contraste a {
-  color: #66b3ff !important;
+/* Links em Alto Contraste Escuro (Amarelo Alta Visibilidade WCAG AAA) */
+html.dark.alto-contraste a:not(.btn-primary):not([class*="swatch"]),
+html.dark.alto-contraste a:not(.btn-primary) span {
+  color: #ffff00 !important;
   font-weight: 700 !important;
   text-decoration: underline !important;
+}
+
+/* Botões no Alto Contraste Escuro (Amarelo Destaque com Texto Preto) */
+html.dark.alto-contraste .btn-primary,
+html.dark.alto-contraste button[type="submit"] {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+  border: 2px solid #ffff00 !important;
+  font-weight: 800 !important;
+}
+
+html.dark.alto-contraste .btn-primary * {
+  color: #000000 !important;
+}
+
+html.dark.alto-contraste .btn-secondary,
+html.dark.alto-contraste button:not(.btn-primary):not([class*="hub-color-swatch"]) {
+  border: 2px solid #ffffff !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Ícones SVG no Alto Contraste Escuro */
+html.dark.alto-contraste svg:not([class*="swatch"]):not(.no-high-contrast) {
+  stroke: #ffffff !important;
+}
+
+html.dark.alto-contraste .btn-primary svg {
+  stroke: #000000 !important;
 }
 
 /* ─── 4. Modo Daltônico (Filtros SVG de Matriz de Cor) ─────────────────────── */

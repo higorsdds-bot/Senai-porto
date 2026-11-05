@@ -53,7 +53,7 @@ html.dark aside {
 
 html.dark .hub-top-navbar {
   background-color: #071529 !important;
-  border-bottom: 2px solid #ffffff !important; /* Branco no dark mode */
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12) !important;
 }
 
 html.dark #mobile-drawer {

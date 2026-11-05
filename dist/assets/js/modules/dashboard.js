@@ -320,7 +320,7 @@ window.DashboardModule = {
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200/90 dark:border-slate-800">
           <div>
             <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 uppercase tracking-wider">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 uppercase tracking-wider">
                 HUB ES+ • SECULT
               </span>
               <span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -368,7 +368,7 @@ window.DashboardModule = {
                 <i data-lucide="megaphone" class="w-4 h-4"></i>
               </div>
               <div class="min-w-0">
-                <span class="text-[10px] font-mono font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Aviso Institucional Prioritário</span>
+                <span class="text-xs font-mono font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Aviso Institucional Prioritário</span>
                 <p class="text-xs font-bold text-slate-900 dark:text-white truncate">
                   ${comunicadosAltaNaoVistos[0].titulo}
                 </p>
@@ -388,22 +388,22 @@ window.DashboardModule = {
           <!-- Célula 1: Chamados & Manutenção -->
           <div onclick="window.location.hash = '#ocorrencias'" class="telemetry-cell cursor-pointer group">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Ocorrências em Aberto
               </span>
-              <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
                 Fila ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2">
-              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
+            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
               <span class="text-xs font-semibold ${ocorrenciasAbertas > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
                 ${ocorrenciasAbertas > 0 ? 'Exige atenção' : 'Normal'}
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>SLA Resolução: <strong>${slaOcorrencias}%</strong></span>
-              <span class="font-mono text-[10px]">Manutenção</span>
+              <span class="font-mono text-xs text-slate-400">Manutenção</span>
             </div>
           </div>
 
@@ -411,43 +411,43 @@ window.DashboardModule = {
           ${podeVerCompras ? `
             <div onclick="window.location.hash = '#compras'" class="telemetry-cell cursor-pointer group">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Suprimentos Pendentes
                 </span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
                   Pedidos ↗
                 </span>
               </div>
-              <div class="mt-2.5 flex items-baseline gap-2">
-                <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
+              <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+                <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
                 <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
                   Aguardando cotação
                 </span>
               </div>
-              <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>Fluxo de Compras</span>
-                <span class="font-mono text-[10px]">Almoxarifado</span>
+                <span class="font-mono text-xs text-slate-400">Almoxarifado</span>
               </div>
             </div>
           ` : `
             <div onclick="window.location.hash = '${podeVerDocumentos ? '#documentos' : '#equipamentos'}'" class="telemetry-cell cursor-pointer group">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Acervo & Patrimônio
                 </span>
-                <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
                   Consultar ↗
                 </span>
               </div>
-              <div class="mt-2.5 flex items-baseline gap-2">
-                <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${totalDocs + totalEquipamentos}</span>
+              <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+                <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${totalDocs + totalEquipamentos}</span>
                 <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                   Itens ativos
                 </span>
               </div>
-              <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>${totalDocs} docs • ${totalEquipamentos} ativos</span>
-                <span class="font-mono text-[10px]">Repositório</span>
+                <span class="font-mono text-xs text-slate-400">Repositório</span>
               </div>
             </div>
           `}
@@ -455,46 +455,46 @@ window.DashboardModule = {
           <!-- Célula 3: Agenda & Espaços -->
           <div onclick="window.location.hash = '#agenda'" class="telemetry-cell cursor-pointer group">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Eventos Agendados
               </span>
-              <span class="text-[10px] font-bold text-sky-600 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-sky-600 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform">
                 Agenda ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2">
-              <span class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
+            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
               <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">
                 Auditórios & Labs
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Capacidade Ativa</span>
-              <span class="font-mono text-[10px]">Espaços</span>
+              <span class="font-mono text-xs text-slate-400">Espaços</span>
             </div>
           </div>
 
           <!-- Célula 4: Estoque & Patrimônio -->
           <div onclick="window.location.hash = '#insumos'" class="telemetry-cell cursor-pointer group">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Almoxarifado & Insumos
               </span>
-              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
                 Estoque ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2">
-              <span class="text-3xl font-black ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'} tracking-tight">
-                ${insumosCriticos > 0 ? `${insumosCriticos} Alertas` : 'Conforme'}
+            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+              <span class="text-2xl sm:text-3xl font-black ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'} tracking-tight">
+                ${insumosCriticos > 0 ? insumosCriticos : 'OK'}
               </span>
               <span class="text-xs font-semibold ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
-                ${insumosCriticos > 0 ? 'Estoque Mínimo' : 'Nível Adequado'}
+                ${insumosCriticos > 0 ? 'Estoque Crítico' : 'Nível Conforme'}
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>${totalDocs} docs • ${totalEquipamentos} patrs.</span>
-              <span class="font-mono text-[10px]">Inventário</span>
+              <span class="font-mono text-xs text-slate-400">Inventário</span>
             </div>
           </div>
 
@@ -518,7 +518,7 @@ window.DashboardModule = {
                   <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
                     Fila Operacional Crítica
-                    <span class="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       ${this.demandasConsolidadas.length} ativas
                     </span>
                   </h3>
@@ -546,7 +546,7 @@ window.DashboardModule = {
               <!-- Tabela de Demandas de Alta Densidade -->
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
-                  <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
+                  <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="py-3 px-4">Tag / Tipo</th>
                       <th class="py-3 px-4">Demanda & Detalhes</th>
@@ -566,18 +566,18 @@ window.DashboardModule = {
                     ` : filaFiltrada.slice(0, 6).map(item => `
                       <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td class="py-3 px-4 whitespace-nowrap">
-                          <span class="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 block">${item.tag}</span>
-                          <span class="text-[10px] text-slate-400 block">${item.tipoLabel}</span>
+                          <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 block">${item.tag}</span>
+                          <span class="text-xs text-slate-400 block">${item.tipoLabel}</span>
                         </td>
                         <td class="py-3 px-4">
                           <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate">${item.titulo}</span>
-                          <span class="text-[11px] text-slate-500 dark:text-slate-400 block max-w-sm truncate">${item.detalhe}</span>
+                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate">${item.detalhe}</span>
                         </td>
                         <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           ${item.solicitante}
                         </td>
                         <td class="py-3 px-4 whitespace-nowrap">
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                             <span class="w-1.5 h-1.5 rounded-full ${item.statusCor}"></span>
                             ${item.statusLabel}
                           </span>
@@ -595,7 +595,7 @@ window.DashboardModule = {
 
               <div class="p-3 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
                 <span>Mostrando até 6 registros mais recentes da operação</span>
-                <span class="text-[11px] font-mono">Dados atualizados via TiDB Cloud</span>
+                <span class="text-xs font-mono">Dados atualizados via TiDB Cloud</span>
               </div>
             </div>
 
@@ -611,7 +611,7 @@ window.DashboardModule = {
                     Relação consolidada entre solicitações de compras e documentos indexados
                   </p>
                 </div>
-                <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   Polos do HUB
                 </span>
               </div>
@@ -636,7 +636,7 @@ window.DashboardModule = {
                     Feed de Auditoria & Ações
                   </h3>
                 </div>
-                <span class="text-[10px] text-slate-400 font-mono">Tempo Real</span>
+                <span class="text-xs text-slate-400 font-mono">Tempo Real</span>
               </div>
 
               <!-- Lista de Eventos com Linha Contínua -->
@@ -648,12 +648,12 @@ window.DashboardModule = {
                       <div class="feed-node-dot"></div>
                       <div class="flex items-baseline justify-between gap-2">
                         <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${ev.autor}</span>
-                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${ev.hora}</span>
+                        <span class="text-xs text-slate-400 whitespace-nowrap">${ev.hora}</span>
                       </div>
                       <p class="text-xs font-semibold text-blue-600 dark:text-sky-400 mt-0.5 leading-snug">
                         ${ev.acao}
                       </p>
-                      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
+                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
                         ${ev.descricao}
                       </p>
                     </div>
@@ -674,12 +674,12 @@ window.DashboardModule = {
                 <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   Integridade da Infraestrutura
                 </h3>
-                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono">OK</span>
+                <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold font-mono">OK</span>
               </div>
 
               <div class="space-y-3 text-xs">
                 <div>
-                  <div class="flex items-center justify-between mb-1 text-[11px]">
+                  <div class="flex items-center justify-between mb-1 text-xs">
                     <span class="text-slate-500 font-medium">SLA de Resolução de Ocorrências</span>
                     <span class="font-bold text-slate-900 dark:text-white font-mono">${slaOcorrencias}%</span>
                   </div>
@@ -690,16 +690,16 @@ window.DashboardModule = {
 
                 <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">Banco de Dados TiDB Cloud</span>
-                    <span class="text-[10px] text-slate-400 block font-mono">Cluster MySQL 8.0 • Latência 14ms</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Banco de Dados TiDB Cloud</span>
+                    <span class="text-xs text-slate-400 block font-mono">Cluster MySQL 8.0 • Latência 14ms</span>
                   </div>
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 </div>
 
                 <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">Autenticação & Sessões</span>
-                    <span class="text-[10px] text-slate-400 block font-mono">Isolamento multi-aba ativo</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Autenticação & Sessões</span>
+                    <span class="text-xs text-slate-400 block font-mono">Isolamento multi-aba ativo</span>
                   </div>
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 </div>
@@ -714,23 +714,23 @@ window.DashboardModule = {
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <a href="#ocorrencias" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-500 mb-2"></i>
-                  <span class="font-bold text-[11px]">Chamados</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">Ocorrências</span>
+                  <span class="font-bold text-xs">Chamados</span>
+                  <span class="text-xs text-slate-400 mt-0.5">Ocorrências</span>
                 </a>
                 <a href="${podeVerCompras ? '#compras' : '#insumos'}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="shopping-bag" class="w-4 h-4 text-amber-500 mb-2"></i>
-                  <span class="font-bold text-[11px]">Suprimentos</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">${podeVerCompras ? 'Compras' : 'Insumos'}</span>
+                  <span class="font-bold text-xs">Suprimentos</span>
+                  <span class="text-xs text-slate-400 mt-0.5">${podeVerCompras ? 'Compras' : 'Insumos'}</span>
                 </a>
                 <a href="#agenda" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="calendar" class="w-4 h-4 text-sky-500 mb-2"></i>
-                  <span class="font-bold text-[11px]">Agenda</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">Espaços</span>
+                  <span class="font-bold text-xs">Agenda</span>
+                  <span class="text-xs text-slate-400 mt-0.5">Espaços</span>
                 </a>
                 <a href="${podeVerAdvertencias ? '#advertencias' : '#comunicacao'}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex flex-col justify-between transition-colors group">
                   <i data-lucide="shield-alert" class="w-4 h-4 text-purple-500 mb-2"></i>
-                  <span class="font-bold text-[11px]">${podeVerAdvertencias ? 'Advertências' : 'Mural'}</span>
-                  <span class="text-[10px] text-slate-400 mt-0.5">${podeVerAdvertencias ? 'Disciplina' : 'Comunicados'}</span>
+                  <span class="font-bold text-xs">${podeVerAdvertencias ? 'Advertências' : 'Mural'}</span>
+                  <span class="text-xs text-slate-400 mt-0.5">${podeVerAdvertencias ? 'Disciplina' : 'Comunicados'}</span>
                 </a>
               </div>
             </div>
