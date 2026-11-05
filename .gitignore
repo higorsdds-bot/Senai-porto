@@ -4,3 +4,7 @@ uploads/
 *.log
 .wrangler/
 _worker.bundle
+*.pdf
+*.zip
+ENTREGA_PROJETO_HUB_ES/
+
