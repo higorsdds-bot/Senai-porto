@@ -945,6 +945,22 @@ async function sha256Hex(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+let _dbInitPromise = null;
+async function ensureDbInit(db) {
+  if (_dbInitPromise) return _dbInitPromise;
+  _dbInitPromise = (async () => {
+    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+    try {
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_del_created ON ocorrencias(deleted_at, created_at DESC)');
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_status ON ocorrencias(status, deleted_at)');
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equipamentos_del ON equipamentos(deleted_at)');
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_usuarios_del ON usuarios(deleted_at)');
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_comunicados_del ON comunicados(destinatario_perfil, deleted_at)');
+    } catch (_) {}
+  })();
+  return _dbInitPromise;
+}
+
 // ─── Handler Principal do Cloudflare Pages Functions ─────────────────────────
 export async function onRequest(context) {
   const { request, env } = context;
@@ -972,8 +988,8 @@ export async function onRequest(context) {
   if (route.length > 1 && route.endsWith('/')) route = route.slice(0, -1);
 
   try {
-    // Garante que a coluna foto_url exista na tabela usuarios de forma idempotente
-    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+    // Garante inicialização e índices de forma assíncrona/cacheada por isolate
+    ensureDbInit(db);
 
     // =========================================================================
     // 1. HEALTH CHECK
@@ -1857,11 +1873,13 @@ export async function onRequest(context) {
         conds.push('(o.local LIKE ? OR o.descricao LIKE ? OR o.tipo LIKE ?)');
         params.push(`%${q}%`, `%${q}%`, `%${q}%`);
       }
+      const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
       const rows = await d1All(
         db,
         `SELECT o.id, o.local, o.descricao, o.tipo, o.status,
                 o.nivel_atendimento, o.equipamento_id, o.parecer_tecnico,
-                o.foto_url, o.anexo_url, o.anexo_nome,
+                CASE WHEN o.foto_url LIKE 'data:%' THEN ('/api/v1/ocorrencias/' || o.id || '/foto') ELSE o.foto_url END AS foto_url,
+                o.anexo_url, o.anexo_nome,
                 o.created_at, o.updated_at,
                 o.usuario_id, u1.nome AS usuario_nome,
                 o.responsavel_id, u2.nome AS responsavel_nome,
@@ -1871,17 +1889,11 @@ export async function onRequest(context) {
          LEFT JOIN usuarios u2 ON u2.id = o.responsavel_id
          LEFT JOIN equipamentos eq ON eq.id = o.equipamento_id
          WHERE ${conds.join(' AND ')}
-         ORDER BY o.created_at DESC`,
-        params
+         ORDER BY o.created_at DESC
+         LIMIT ?`,
+        [...params, limit]
       );
-      const data = rows.map(r => {
-        let foto_url = r.foto_url;
-        if (foto_url && foto_url.startsWith('data:')) {
-          foto_url = `/api/v1/ocorrencias/${r.id}/foto`;
-        }
-        return { ...r, foto_url };
-      });
-      return jsonResponse({ success: true, data });
+      return jsonResponse({ success: true, data: rows });
     }
 
     const matchOcorrenciaId = route.match(/^\/ocorrencias\/(\d+)$/);
