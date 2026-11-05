@@ -213,6 +213,12 @@ class AppRouter {
     }
 
     if (!this._canAccess(target)) {
+      if (!window.Auth?.estaLogado() && !window.Auth?.isVisitante()) {
+        window.location.hash = '#comunicacao';
+        window.Auth?.entrarComoVisitante();
+        return;
+      }
+
       const allowed = Object.entries(this.routes).find(([, route]) => this._canAccess(route));
       const nextRoute = allowed ? allowed[0] : null;
 

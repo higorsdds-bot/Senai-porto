@@ -91,15 +91,29 @@ router.post('/login', async (req, res) => {
 
   try {
     const pool = getPool();
-    const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url,
-              s.nome AS setor_nome
-       FROM usuarios u
-       LEFT JOIN setores s ON s.id = u.setor_id
-       WHERE u.email = ? AND u.deleted_at IS NULL
-       LIMIT 1`,
-      [email.toLowerCase().trim()]
-    );
+    let rows;
+    try {
+      [rows] = await pool.query(
+        `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url,
+                s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.email = ? AND u.deleted_at IS NULL
+         LIMIT 1`,
+        [email.toLowerCase().trim()]
+      );
+    } catch (_) {
+      [rows] = await pool.query(
+        `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status,
+                s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.email = ? AND u.deleted_at IS NULL
+         LIMIT 1`,
+        [email.toLowerCase().trim()]
+      );
+      if (rows && rows.length) rows[0].foto_url = null;
+    }
 
     if (!rows.length) {
       const { USUARIOS_TESTE_POR_CARGO } = require('../database/seed');

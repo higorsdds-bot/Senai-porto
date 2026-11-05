@@ -68,15 +68,29 @@ async function authMiddleware(req, res, next) {
 
   try {
     const pool = getPool();
-    const [rows] = await pool.query(
-      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url,
-              s.nome AS setor_nome
-       FROM usuarios u
-       LEFT JOIN setores s ON s.id = u.setor_id
-       WHERE u.id = ? AND u.deleted_at IS NULL
-       LIMIT 1`,
-      [userId]
-    );
+    let rows;
+    try {
+      [rows] = await pool.query(
+        `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url,
+                s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.id = ? AND u.deleted_at IS NULL
+         LIMIT 1`,
+        [userId]
+      );
+    } catch (_) {
+      [rows] = await pool.query(
+        `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status,
+                s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.id = ? AND u.deleted_at IS NULL
+         LIMIT 1`,
+        [userId]
+      );
+      if (rows && rows.length) rows[0].foto_url = null;
+    }
 
     if (!rows.length) {
       _userAuthCache.delete(userId);

@@ -814,14 +814,27 @@ async function autenticarRequest(request, db, secret) {
   const token = authHeader.slice(7).trim();
   try {
     const decoded = await verifyJwt(token, secret);
-    const usuario = await d1First(
-      db,
-      `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
-       FROM usuarios u
-       LEFT JOIN setores s ON s.id = u.setor_id
-       WHERE u.id = ? AND u.deleted_at IS NULL LIMIT 1`,
-      [decoded.id]
-    );
+    let usuario;
+    try {
+      usuario = await d1First(
+        db,
+        `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.id = ? AND u.deleted_at IS NULL LIMIT 1`,
+        [decoded.id]
+      );
+    } catch (_) {
+      usuario = await d1First(
+        db,
+        `SELECT u.id, u.nome, u.email, u.perfil, u.setor_id, u.status, s.nome AS setor_nome
+         FROM usuarios u
+         LEFT JOIN setores s ON s.id = u.setor_id
+         WHERE u.id = ? AND u.deleted_at IS NULL LIMIT 1`,
+        [decoded.id]
+      );
+      if (usuario) usuario.foto_url = null;
+    }
     if (!usuario) {
       return { erro: jsonResponse({ success: false, message: 'Usuário não encontrado.' }, 401) };
     }
@@ -959,6 +972,9 @@ export async function onRequest(context) {
   if (route.length > 1 && route.endsWith('/')) route = route.slice(0, -1);
 
   try {
+    // Garante que a coluna foto_url exista na tabela usuarios de forma idempotente
+    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+
     // =========================================================================
     // 1. HEALTH CHECK
     // =========================================================================
@@ -1050,14 +1066,27 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Email e senha são obrigatórios.' }, 422);
       }
 
-      const usuario = await d1First(
-        db,
-        `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
-         FROM usuarios u
-         LEFT JOIN setores s ON s.id = u.setor_id
-         WHERE u.email = ? AND u.deleted_at IS NULL LIMIT 1`,
-        [String(email).toLowerCase().trim()]
-      );
+      let usuario;
+      try {
+        usuario = await d1First(
+          db,
+          `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, u.foto_url, s.nome AS setor_nome
+           FROM usuarios u
+           LEFT JOIN setores s ON s.id = u.setor_id
+           WHERE u.email = ? AND u.deleted_at IS NULL LIMIT 1`,
+          [String(email).toLowerCase().trim()]
+        );
+      } catch (_) {
+        usuario = await d1First(
+          db,
+          `SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.setor_id, u.status, s.nome AS setor_nome
+           FROM usuarios u
+           LEFT JOIN setores s ON s.id = u.setor_id
+           WHERE u.email = ? AND u.deleted_at IS NULL LIMIT 1`,
+          [String(email).toLowerCase().trim()]
+        );
+        if (usuario) usuario.foto_url = null;
+      }
 
       if (!usuario) {
         await registrarAuditoria(db, { acao: 'LOGIN_FALHOU', descricao: `Email inexistente: ${email}`, ip, user_agent: userAgent });

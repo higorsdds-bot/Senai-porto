@@ -369,7 +369,14 @@ class AuthManager {
     document.querySelectorAll('[data-usuario-iniciais]').forEach(el => el.textContent = 'V');
     document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = 'Acesso público');
     document.querySelectorAll('[data-usuario-perfil]').forEach(el => el.textContent = 'Visitante');
-    document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => el.textContent = 'Visitante');
+    document.querySelectorAll('[data-usuario-cargo-badge]').forEach(el => {
+      el.textContent = 'Visitante';
+      el.classList.add('hidden');
+    });
+
+    // Oculta o dropdown do usuário quando em modo visitante
+    const userMenuContainer = document.getElementById('user-menu-container');
+    if (userMenuContainer) userMenuContainer.classList.add('hidden');
 
     // Mostra o botão de login na topbar
     this._criarBotaoLoginTopbar();
@@ -380,20 +387,17 @@ class AuthManager {
     // Remove botão anterior se existir
     document.getElementById('btn-visitante-login')?.remove();
 
-    // Esconde o botão de logout se existir
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) btnLogout.classList.add('hidden');
-
     // Insere botão de login ao lado das notificações
     const topbarRight = document.querySelector('.topbar-right') || document.querySelector('header .flex.items-center.gap-2');
     if (!topbarRight) return;
 
     const btn = document.createElement('button');
     btn.id = 'btn-visitante-login';
-    btn.className = 'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all';
+    btn.className = 'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition-all cursor-pointer';
     btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Fazer Login</span>';
     btn.addEventListener('click', () => {
       this._modoVisitante = false;
+      this.mostrarTelaLogin();
       this.renderizarTelaLogin();
     });
     topbarRight.prepend(btn);
@@ -403,6 +407,8 @@ class AuthManager {
   /** Remove o botão de login da topbar (quando o usuário faz login) */
   _removerBotaoLoginTopbar() {
     document.getElementById('btn-visitante-login')?.remove();
+    const userMenuContainer = document.getElementById('user-menu-container');
+    if (userMenuContainer) userMenuContainer.classList.remove('hidden');
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) btnLogout.classList.remove('hidden');
   }
@@ -451,10 +457,10 @@ class AuthManager {
   async logout() {
     this.pararHeartbeat();
     try { await window.API.logout(); } catch (_) { }
-    this.forcarLogout();
+    this.forcarLogout(true);
   }
 
-  forcarLogout() {
+  forcarLogout(abrirLogin = true) {
     this.pararHeartbeat();
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(CONFIG.STORAGE_TOKEN);
@@ -476,8 +482,13 @@ class AuthManager {
       badge.classList.remove('animate-pulse');
     }
 
-    // Volta para modo visitante ao invés de forçar tela de login
-    this.entrarComoVisitante();
+    if (abrirLogin) {
+      this._modoVisitante = false;
+      this.mostrarTelaLogin();
+      this.renderizarTelaLogin();
+    } else {
+      this.entrarComoVisitante();
+    }
   }
 
   iniciarHeartbeat() {
@@ -589,11 +600,19 @@ class AuthManager {
       localStorage.setItem(CONFIG.STORAGE_USUARIO, usuarioSerializado);
     }
     this.preencherInfoUsuario();
-  },
+  }
 
   preencherInfoUsuario() {
     const u = this.getUsuario();
-    if (!u) return;
+    if (!u) {
+      this._atualizarUIVisitante();
+      return;
+    }
+
+    const userMenuContainer = document.getElementById('user-menu-container');
+    if (userMenuContainer) userMenuContainer.classList.remove('hidden');
+    this._removerBotaoLoginTopbar();
+
     document.querySelectorAll('[data-usuario-nome]').forEach(el => el.textContent = u.nome);
     document.querySelectorAll('[data-usuario-email]').forEach(el => el.textContent = u.email);
 
@@ -647,7 +666,11 @@ class AuthManager {
 
   renderizarTelaLogin() {
     let tela = document.getElementById('tela-login');
-    if (!tela) {
+    if (tela) {
+      tela.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons({ root: tela });
+      return;
+    }
       tela = document.createElement('div');
       tela.id = 'tela-login';
       tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
@@ -1022,10 +1045,10 @@ class AuthManager {
       tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
         this.entrarComoVisitante();
       });
-    }
-    tela.classList.remove('hidden');
-    document.getElementById('app-conteudo')?.classList.add('hidden');
-    if (window.lucide) lucide.createIcons();
+
+      tela.classList.remove('hidden');
+      document.getElementById('app-conteudo')?.classList.add('hidden');
+      if (window.lucide) lucide.createIcons();
   }
 
   ocultarTelaAtivacao() {
