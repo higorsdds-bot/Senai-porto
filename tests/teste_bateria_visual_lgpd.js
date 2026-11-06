@@ -45,7 +45,7 @@ let tablesWithOverflowScroll = 0;
 moduleFiles.forEach(file => {
   const filePath = path.join(modulesDir, file);
   const content = fs.readFileSync(filePath, 'utf8');
-  
+
   const tableRegex = /<table\s+([^>]*?)>/g;
   let match;
   while ((match = tableRegex.exec(content)) !== null) {
@@ -83,6 +83,15 @@ const styleCssContent = fs.readFileSync(styleCssPath, 'utf8');
 
 assert(styleCssContent.includes('.telemetry-cell') && styleCssContent.includes('min-width: 0;'), 'Células da Telemetry Strip possuem min-width: 0 para evitar quebra de colunas');
 assert(styleCssContent.includes('.hub-scrollbar'), 'Estilos de scrollbar suave e responsiva (.hub-scrollbar) estão definidos em style.css');
+
+// Verificação de Resiliência a Fontes Grandes (Modo Acessibilidade)
+const acessibilidadeJsPath = path.join(ROOT_DIR, 'assets', 'js', 'acessibilidade.js');
+const acessibilidadeJsContent = fs.readFileSync(acessibilidadeJsPath, 'utf8');
+assert(acessibilidadeJsContent.includes('max-h-[calc(100vh-6.5rem)]') && acessibilidadeJsContent.includes('overflow-y-auto'), 'Menu flutuante de acessibilidade possui limite de altura e overflow-y para não estourar viewport com fonte grande');
+
+const acessibilidadeCssPath = path.join(ROOT_DIR, 'assets', 'css', 'acessibilidade.css');
+const acessibilidadeCssContent = fs.readFileSync(acessibilidadeCssPath, 'utf8');
+assert(acessibilidadeCssContent.includes('#hub-menu-acessibilidade') && acessibilidadeCssContent.includes('max-height'), 'Regra CSS explícita garante que #hub-menu-acessibilidade nunca ultrapasse o topo da tela');
 
 // -----------------------------------------------------------------------------
 // GRUPO 3: AUDITORIA ESTRUTURAL E JURÍDICA DA LGPD (LEI 13.709/2018)
@@ -131,15 +140,15 @@ global.localStorage = mockLocalStorage;
 global.document = {
   readyState: 'complete',
   getElementById: () => null,
-  addEventListener: () => {},
-  createElement: () => ({ id: '', innerHTML: '', appendChild: () => {} }),
-  body: { appendChild: () => {} }
+  addEventListener: () => { },
+  createElement: () => ({ id: '', innerHTML: '', appendChild: () => { } }),
+  body: { appendChild: () => { } }
 };
 global.window = {
-  dispatchEvent: () => {},
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  UI: { toast: () => {} }
+  dispatchEvent: () => { },
+  addEventListener: () => { },
+  removeEventListener: () => { },
+  UI: { toast: () => { } }
 };
 global.CustomEvent = class {
   constructor(name, opts) {

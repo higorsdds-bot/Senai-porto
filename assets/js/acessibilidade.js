@@ -348,7 +348,7 @@
 
             const menu = document.createElement('div');
             menu.id = 'hub-menu-acessibilidade';
-            menu.className = 'hidden fixed right-3 sm:right-5 bottom-24 sm:bottom-28 z-[1002] w-[calc(100vw-1.5rem)] max-w-sm bg-white dark:bg-[#0b1320] rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 p-5 select-none transition-all';
+            menu.className = 'hidden fixed right-3 sm:right-5 bottom-20 sm:bottom-24 z-[1002] w-[calc(100vw-1.5rem)] max-w-sm max-h-[calc(100vh-6.5rem)] overflow-y-auto hub-scrollbar bg-white dark:bg-[#0b1320] rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 select-none transition-all';
 
             menu.innerHTML = `
                 <!-- Cabeçalho (Padrão Image 2) -->
@@ -437,26 +437,26 @@
                             Identifique pela bola de cores a paleta mais nítida para sua visão:
                         </p>
                         <!-- Grid com as Bolas de Cores -->
-                        <div class="grid grid-cols-5 gap-1.5 pt-1" id="menu-grid-bolas-daltonismo">
-                            <button type="button" data-dalton-val="padrao" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Cores Padrão">
-                                <div class="hub-color-swatch hub-color-swatch-padrao group-hover:scale-105"></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Padrão</span>
+                        <div class="grid grid-cols-5 gap-1 pt-1" id="menu-grid-bolas-daltonismo">
+                            <button type="button" data-dalton-val="padrao" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group min-w-0" title="Cores Padrão">
+                                <div class="hub-color-swatch hub-color-swatch-padrao group-hover:scale-105 shrink-0"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full">Padrão</span>
                             </button>
-                            <button type="button" data-dalton-val="deuteranopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Deuteranopia (Verdes)">
-                                <div class="hub-color-swatch hub-color-swatch-deuteranopia group-hover:scale-105"></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Deuter.</span>
+                            <button type="button" data-dalton-val="deuteranopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group min-w-0" title="Deuteranopia (Verdes)">
+                                <div class="hub-color-swatch hub-color-swatch-deuteranopia group-hover:scale-105 shrink-0"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full">Deuter.</span>
                             </button>
-                            <button type="button" data-dalton-val="protanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Protanopia (Vermelhos)">
-                                <div class="hub-color-swatch hub-color-swatch-protanopia group-hover:scale-105"></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Protan.</span>
+                            <button type="button" data-dalton-val="protanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group min-w-0" title="Protanopia (Vermelhos)">
+                                <div class="hub-color-swatch hub-color-swatch-protanopia group-hover:scale-105 shrink-0"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full">Protan.</span>
                             </button>
-                            <button type="button" data-dalton-val="tritanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Tritanopia (Azuis)">
-                                <div class="hub-color-swatch hub-color-swatch-tritanopia group-hover:scale-105"></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Tritan.</span>
+                            <button type="button" data-dalton-val="tritanopia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group min-w-0" title="Tritanopia (Azuis)">
+                                <div class="hub-color-swatch hub-color-swatch-tritanopia group-hover:scale-105 shrink-0"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full">Tritan.</span>
                             </button>
-                            <button type="button" data-dalton-val="acromatopsia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group" title="Monocromático">
-                                <div class="hub-color-swatch hub-color-swatch-acromatopsia group-hover:scale-105"></div>
-                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Mono</span>
+                            <button type="button" data-dalton-val="acromatopsia" class="flex flex-col items-center gap-1 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group min-w-0" title="Monocromático">
+                                <div class="hub-color-swatch hub-color-swatch-acromatopsia group-hover:scale-105 shrink-0"></div>
+                                <span class="text-[9px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight truncate w-full">Mono</span>
                             </button>
                         </div>
                     </div>
@@ -644,6 +644,7 @@
             if (menu) {
                 this._sincronizarUI();
                 menu.classList.remove('hidden');
+                menu.scrollTop = 0; // Garante que o cabeçalho e tamanho de fonte fiquem visíveis no topo
                 this.menuAberto = true;
             }
         }

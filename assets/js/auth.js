@@ -662,6 +662,9 @@ class AuthManager {
 
   mostrarTelaLogin() {
     this.renderizarTelaLogin();
+    if (window.LGPD && !window.LGPD.hasConsented()) {
+      setTimeout(() => window.LGPD.exibirBanner(), 300);
+    }
   }
 
   renderizarTelaLogin() {

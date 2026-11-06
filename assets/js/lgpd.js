@@ -172,6 +172,10 @@
       const consent = this.getConsent();
       if (!consent.consented) {
         this.exibirBanner();
+        // Fallback garantido após ciclos assíncronos ou renderização de login
+        setTimeout(() => {
+          if (!this.hasConsented()) this.exibirBanner();
+        }, 350);
       }
     },
 
@@ -180,6 +184,7 @@
      */
     _injetarEstruturaDOM() {
       if (document.getElementById('hub-lgpd-container')) return;
+      if (!document.body) return;
 
       const container = document.createElement('div');
       container.id = 'hub-lgpd-container';
@@ -187,8 +192,8 @@
         <!-- ============================================================= -->
         <!-- BANNER FLUTUANTE DE CONSENTIMENTO DE COOKIES (LGPD)          -->
         <!-- ============================================================= -->
-        <div id="hub-lgpd-banner" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-xl z-50 hidden transition-all duration-300 transform translate-y-4">
-          <div class="bg-white/95 dark:bg-[#071322]/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-slate-950/20 text-slate-800 dark:text-slate-100 ring-1 ring-black/5 dark:ring-white/10">
+        <div id="hub-lgpd-banner" style="z-index: 99999 !important; display: none;" class="fixed bottom-4 left-4 right-4 sm:right-auto sm:left-6 sm:max-w-xl transition-all duration-300 transform translate-y-4">
+          <div class="bg-white/95 dark:bg-[#071322]/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-slate-950/30 text-slate-800 dark:text-slate-100 ring-1 ring-black/10 dark:ring-white/10">
             <div class="flex items-start gap-3.5">
               <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 mt-0.5">
                 <i data-lucide="shield-check" class="w-5 h-5"></i>
@@ -234,7 +239,7 @@
         <!-- ============================================================= -->
         <!-- MODAL DE PREFERÊNCIAS GRANULARES DE COOKIES                   -->
         <!-- ============================================================= -->
-        <div id="hub-lgpd-modal-prefs" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div id="hub-lgpd-modal-prefs" style="z-index: 100000 !important; display: none;" class="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
           <div class="bg-white dark:bg-[#071322] rounded-3xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 my-8 max-h-[92vh] overflow-y-auto transform transition-all text-slate-800 dark:text-slate-100">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div class="flex items-center gap-3">
@@ -336,7 +341,7 @@
         <!-- ============================================================= -->
         <!-- MODAL OFICIAL: POLÍTICA DE PRIVACIDADE E PROTEÇÃO DE DADOS   -->
         <!-- ============================================================= -->
-        <div id="hub-lgpd-modal-policy" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div id="hub-lgpd-modal-policy" style="z-index: 100000 !important; display: none;" class="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
           <div class="bg-white dark:bg-[#071322] rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-8 max-h-[92vh] overflow-y-auto transform transition-all text-slate-800 dark:text-slate-100">
             <div class="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div class="flex items-center gap-3">
@@ -578,11 +583,17 @@
     exibirBanner() {
       const banner = document.getElementById('hub-lgpd-banner');
       if (banner) {
+        banner.style.display = 'block';
         banner.classList.remove('hidden');
         requestAnimationFrame(() => {
+          banner.style.opacity = '1';
+          banner.style.transform = 'translateY(0)';
           banner.classList.remove('translate-y-4');
           banner.classList.add('translate-y-0');
         });
+        if (window.lucide) {
+          window.lucide.createIcons({ root: banner });
+        }
       }
     },
 
@@ -592,8 +603,12 @@
     ocultarBanner() {
       const banner = document.getElementById('hub-lgpd-banner');
       if (banner) {
-        banner.classList.add('translate-y-4');
-        setTimeout(() => banner.classList.add('hidden'), 250);
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(1rem)';
+        setTimeout(() => {
+          banner.style.display = 'none';
+          banner.classList.add('hidden');
+        }, 250);
       }
     },
 
@@ -620,6 +635,7 @@
         }
       }
 
+      modal.style.display = 'flex';
       modal.classList.remove('hidden');
       if (window.lucide) window.lucide.createIcons({ root: modal });
     },
@@ -631,6 +647,7 @@
       const modal = document.getElementById('hub-lgpd-modal-policy');
       if (!modal) return;
 
+      modal.style.display = 'flex';
       modal.classList.remove('hidden');
       if (window.lucide) window.lucide.createIcons({ root: modal });
     },
@@ -639,8 +656,16 @@
      * Fecha todos os modais da LGPD
      */
     fecharModais() {
-      document.getElementById('hub-lgpd-modal-prefs')?.classList.add('hidden');
-      document.getElementById('hub-lgpd-modal-policy')?.classList.add('hidden');
+      const p = document.getElementById('hub-lgpd-modal-prefs');
+      if (p) {
+        p.style.display = 'none';
+        p.classList.add('hidden');
+      }
+      const pol = document.getElementById('hub-lgpd-modal-policy');
+      if (pol) {
+        pol.style.display = 'none';
+        pol.classList.add('hidden');
+      }
     }
   };
 

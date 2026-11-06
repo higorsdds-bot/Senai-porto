@@ -19,19 +19,26 @@ html.fonte-grande {
   /* 20px base (+25% de ampliação) */
 }
 
-/* Proteção de proporção: garante que micro-textos em px escalem dinamicamente */
+/* Proteção de proporção suave: micro-textos aumentam proporcionalmente sem estourar layouts */
 html.fonte-media [class*="text-[10px]"],
 html.fonte-media [class*="text-[11px]"],
 html.fonte-media [class*="text-[9px]"] {
-  font-size: 0.75rem !important;
-  line-height: 1.3 !important;
+  font-size: 0.6875rem !important; /* ~12.3px quando base é 18px */
+  line-height: 1.25 !important;
 }
 
 html.fonte-grande [class*="text-[10px]"],
 html.fonte-grande [class*="text-[11px]"],
 html.fonte-grande [class*="text-[9px]"] {
-  font-size: 0.8125rem !important;
-  line-height: 1.35 !important;
+  font-size: 0.725rem !important; /* ~14.5px quando base é 20px */
+  line-height: 1.3 !important;
+}
+
+/* Proteção global para o menu de acessibilidade flutuante */
+#hub-menu-acessibilidade {
+  max-height: calc(100vh - 6.5rem) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ─── 2. Alto Contraste: Modo Claro ────────────────────────────────────────── */
