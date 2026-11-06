@@ -3185,7 +3185,7 @@ export async function onRequest(context) {
         // Invalida tokens anteriores não utilizados
         try {
           await d1Run(db, `DELETE FROM tokens_ativacao WHERE usuario_id = ? AND usado_em IS NULL`, [id]);
-        } catch (_) {}
+        } catch (_) { }
 
         // Gera token de ativação seguro de alta entropia (64 caracteres hex)
         const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');

@@ -25,7 +25,7 @@ const PERFIS_PERMITIDOS = [
 ];
 
 async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais) {
-  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => {});
+  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => { });
   if (!Array.isArray(permissoesAdicionais) || permissoesAdicionais.length === 0) return;
 
   for (const rawChave of permissoesAdicionais) {
@@ -34,13 +34,13 @@ async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais
     await pool.query(
       `INSERT IGNORE INTO permissoes (chave, nome) VALUES (?, ?)`,
       [chave, chave]
-    ).catch(() => {});
+    ).catch(() => { });
     await pool.query(
       `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
        SELECT ?, id, 1 FROM permissoes WHERE chave = ?
        ON DUPLICATE KEY UPDATE concedida = 1`,
       [usuarioId, chave]
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -323,14 +323,14 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     await pool.query(
       `UPDATE tokens_ativacao SET expira_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL`,
       [id]
-    ).catch(() => {});
+    ).catch(() => { });
 
     // Insere o hash do novo token com validade configurada
     await pool.query(
       `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
        VALUES (?, ?, NOW() + INTERVAL ? HOUR, ?)`,
       [id, tokenHash, ACTIVATION_TOKEN_EXPIRES_HOURS, getClientIp(req)]
-    ).catch(() => {});
+    ).catch(() => { });
 
     // Busca nome do setor para incluir no e-mail
     let setorNome = null;
@@ -741,8 +741,8 @@ router.post('/testar-email', async (req, res) => {
       dica: provedor === 'BREVO_API'
         ? 'Dica Brevo: Certifique-se de que o remetente está confirmado em Senders & IPs > Senders, e verifique se a conta já ativou o envio transacional no painel da Brevo.'
         : provedor === 'SMTP'
-        ? 'Dica: hospedagens como o plano Free do Render bloqueiam conexões nas portas SMTP (25/465/587). Configure a variável BREVO_API_KEY no painel do Render para envio via HTTPS.'
-        : undefined
+          ? 'Dica: hospedagens como o plano Free do Render bloqueiam conexões nas portas SMTP (25/465/587). Configure a variável BREVO_API_KEY no painel do Render para envio via HTTPS.'
+          : undefined
     });
   }
 });

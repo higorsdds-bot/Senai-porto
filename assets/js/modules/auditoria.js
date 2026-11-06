@@ -1362,11 +1362,11 @@ const AuditoriaModule = {
               </thead>
               <tbody id="tbody-usuarios" class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${usuarios.map(u => {
-                  const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
-                  const isAtivo = u.status === 'ATIVO';
-                  const extras = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
+        const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
+        const isAtivo = u.status === 'ATIVO';
+        const extras = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
 
-                  return `
+        return `
                   <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors user-row"
                       data-nome="${this._esc(u.nome).toLowerCase()}"
                       data-email="${this._esc(u.email).toLowerCase()}"
@@ -1460,7 +1460,7 @@ const AuditoriaModule = {
                       </div>
                     </td>
                   </tr>`;
-                }).join('')}
+      }).join('')}
               </tbody>
             </table>
           </div>
