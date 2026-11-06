@@ -100,11 +100,11 @@ window.DashboardModule = {
       const podeVerComunicados = window.Auth?.isAdmin() || window.Auth?.hasPermission('comunicados.visualizar');
       const todosAlta = podeVerComunicados ? listaComunicados.filter(c => c.prioridade === 'alta') : [];
 
-      const timeKey = window.Auth?.getUserStorageKey 
-        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp') 
+      const timeKey = window.Auth?.getUserStorageKey
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp')
         : 'hub_comunicados_alta_vistos_timestamp';
-      const idsKey = window.Auth?.getUserStorageKey 
-        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids') 
+      const idsKey = window.Auth?.getUserStorageKey
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids')
         : 'hub_comunicados_alta_vistos_ids';
 
       const vistosTimestamp = parseInt(localStorage.getItem(timeKey) || '0', 10);
@@ -233,7 +233,7 @@ window.DashboardModule = {
           ...listaOcorrencias.slice(0, 3).map(o => ({
             autor: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Colaborador',
             acao: 'Ocorrência Técnica Registrada',
-            descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado' }...`,
+            descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado'}...`,
             hora: this._formatTimeAgo(new Date(o.created_at || Date.now())),
             entidade: 'ocorrencias'
           })),
@@ -525,12 +525,12 @@ window.DashboardModule = {
                 <!-- Abas Rápidas: Flex-wrap garante que nunca corte botões como Insumos ou Advertências -->
                 <div class="flex items-center gap-1.5 flex-wrap shrink-0">
                   ${[
-                    { id: 'TODAS', label: 'Todas' },
-                    { id: 'OCORRENCIA', label: 'Chamados' },
-                    { id: 'COMPRA', label: 'Compras' },
-                    { id: 'ADVERTENCIA', label: 'Advertências' },
-                    { id: 'INSUMO', label: 'Insumos' }
-                  ].map(aba => `
+        { id: 'TODAS', label: 'Todas' },
+        { id: 'OCORRENCIA', label: 'Chamados' },
+        { id: 'COMPRA', label: 'Compras' },
+        { id: 'ADVERTENCIA', label: 'Advertências' },
+        { id: 'INSUMO', label: 'Insumos' }
+      ].map(aba => `
                     <button data-aba-fila="${aba.id}" class="${!abasFilaDisponiveis.some(a => a.id === aba.id) ? 'hidden' : 'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ' + (this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold shadow-sm' : 'bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700')}">
                       ${aba.label}
                     </button>
@@ -637,8 +637,8 @@ window.DashboardModule = {
               <!-- Lista de Eventos com Linha Contínua -->
               <div class="space-y-4">
                 ${eventosFeed.map(ev => {
-                  const iniciais = ev.autor.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-                  return `
+        const iniciais = ev.autor.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        return `
                     <div class="feed-node">
                       <div class="feed-node-dot"></div>
                       <div class="flex items-baseline justify-between gap-2">
@@ -653,7 +653,7 @@ window.DashboardModule = {
                       </p>
                     </div>
                   `;
-                }).join('')}
+      }).join('')}
               </div>
 
               <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">

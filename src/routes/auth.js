@@ -16,6 +16,7 @@ const { getPermissoesDoUsuario, getModulosDoUsuario } = require('../middleware/p
 const { registrarAuditoria, getClientIp } = require('../middleware/auditoria');
 const {
   notificarNovoCadastroAdmin,
+  notificarRecebimentoSolicitacaoUsuario,
   buscarEmailsAdministradoresGerais,
   gerarHashToken,
   gerarTokenAtivacao,
@@ -613,6 +614,15 @@ router.post('/solicitar-cadastro', async (req, res) => {
       .catch(err => {
         console.error('[AUTH] Erro ao notificar administrador sobre cadastro:', err.message);
       });
+
+    // 2. Notifica o próprio usuário confirmando que a solicitação foi registrada
+    notificarRecebimentoSolicitacaoUsuario({
+      usuarioNome: String(nome).trim(),
+      usuarioEmail: cleanEmail,
+      solicitacaoId: result.insertId
+    }).catch(err => {
+      console.error('[AUTH] Erro ao enviar e-mail de confirmação para o solicitante:', err.message);
+    });
 
     return res.status(201).json({
       success: true,

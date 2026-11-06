@@ -9,4 +9,6 @@ database_id = "3a5a576c-346d-42fe-a6ca-d23e727e844e"
 migrations_dir = "src/database"
 
 [vars]
+BREVO_SENDER_EMAIL = "higor.sdds@gmail.com"
 BREVO_SENDER_NAME = "HUB ES+ | SECULT"
+ADMIN_NOTIFICATION_EMAIL = "higor.sdds@gmail.com"

@@ -552,6 +552,56 @@ HUB ES+ • Segurança e Governança Integrada
 }
 
 /**
+ * 1.1 Notifica o novo solicitante confirmando o recebimento da solicitação de cadastro.
+ */
+async function notificarRecebimentoSolicitacaoUsuario({ usuarioNome, usuarioEmail, solicitacaoId }) {
+  const portalUrl = `${APP_URL}`;
+  const texto = `
+HUB ES+ • Confirmação de Solicitação de Cadastro
+
+Olá, ${usuarioNome}!
+
+Recebemos sua solicitação de acesso à plataforma integrada HUB ES+ SECULT.
+Seu pedido foi registrado sob o protocolo #${solicitacaoId} e encaminhado para a equipe de Administração e Governança da SECULT.
+
+Assim que seu acesso for homologado, você receberá uma notificação neste e-mail para acessar a plataforma.
+
+Acesse o portal: ${portalUrl}
+  `.trim();
+
+  const conteudoHtml = `
+    <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0;">Solicitação de Cadastro Recebida</h2>
+    <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 12px 0;">
+      Olá, <strong>${usuarioNome}</strong>!
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 12px 0;">
+      Recebemos sua solicitação de cadastro no sistema integrado <strong>HUB ES+ SECULT</strong>.<br>
+      Seu pedido foi registrado com o protocolo <strong>#${solicitacaoId}</strong> e está sob avaliação da equipe de Administração Geral e Governança da SECULT.
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 12px 0;">
+      Assim que seu acesso for homologado, você receberá uma nova notificação por este e-mail com as orientações de acesso à plataforma.
+    </p>
+    <div style="text-align: center; margin: 28px 0 20px;">
+      <a href="${portalUrl}" style="display: inline-block; background-color: #0284c7; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 14px;">
+        Visitar HUB ES+
+      </a>
+    </div>
+  `;
+
+  const html = aplicarTemplateBaseHtml({
+    titulo: 'HUB ES+ • Solicitação de Cadastro Recebida',
+    conteudoHtml
+  });
+
+  return enviarEmail({
+    para: usuarioEmail,
+    assunto: 'Solicitação de Cadastro Recebida - HUB ES+ SECULT',
+    texto,
+    html
+  });
+}
+
+/**
  * 2. Envia e-mail ao novo usuário com link seguro de ativação e definição de senha.
  * REGRA CRÍTICA: Não envia senhas provisórias nem definitivas em texto pelo e-mail.
  */
@@ -920,6 +970,7 @@ module.exports = {
   gerarTokenAtivacao,
   gerarHashToken,
   notificarNovoCadastroAdmin,
+  notificarRecebimentoSolicitacaoUsuario,
   enviarEmailAtivacaoConta,
   enviarEmailRejeicaoCadastro,
   enviarEmailCredenciaisCriacaoDireta,

@@ -597,15 +597,39 @@ async function registrarAuditoria(db, { usuario_id = null, acao, entidade = null
   }
 }
 
+const BREVO_FALLBACK_SENDER_EMAIL = 'higor.sdds@gmail.com';
+const BREVO_FALLBACK_SENDER_NAME = 'HUB ES+ | SECULT';
+const ADMIN_DEFAULT_NOTIFY_EMAIL = 'higor.sdds@gmail.com';
+
+function getAdminNotificationEmails(env) {
+  const envAdmin = (env?.ADMIN_NOTIFICATION_EMAIL || env?.ADMIN_NOTIFY_EMAIL || '').trim().toLowerCase();
+  const list = [];
+  if (envAdmin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(envAdmin) && !envAdmin.includes('@secult.es.gov.br')) {
+    list.push(envAdmin);
+  }
+  if (!list.includes(ADMIN_DEFAULT_NOTIFY_EMAIL)) {
+    list.push(ADMIN_DEFAULT_NOTIFY_EMAIL);
+  }
+  return list;
+}
+
 async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
   try {
     const brevoKey = (env?.BREVO_API_KEY || '').trim();
     const resendKey = (env?.RESEND_API_KEY || '').trim();
-    const fromStr = env?.EMAIL_FROM || 'HUB ES+ <higor.sdds@gmail.com>';
+    const senderEmail = (env?.BREVO_SENDER_EMAIL || BREVO_FALLBACK_SENDER_EMAIL).trim();
+    const senderName = (env?.BREVO_SENDER_NAME || BREVO_FALLBACK_SENDER_NAME).trim();
+
+    const destinatarios = (Array.isArray(para) ? para : [para])
+      .map(e => String(e).trim().toLowerCase())
+      .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+
+    if (!destinatarios.length) {
+      console.warn('[D1 EMAIL] Nenhum destinatário válido informado:', para);
+      return false;
+    }
 
     if (brevoKey) {
-      const senderEmail = (env?.BREVO_SENDER_EMAIL || 'higor.sdds@gmail.com').trim();
-      const senderName = (env?.BREVO_SENDER_NAME || 'HUB ES+ | SECULT').trim();
       const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -615,22 +639,26 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
         },
         body: JSON.stringify({
           sender: { name: senderName, email: senderEmail },
-          to: [{ email: para }],
+          to: destinatarios.map(email => ({ email })),
           subject: assunto,
           htmlContent: html,
-          textContent: texto || html.replace(/<[^>]+>/g, '')
+          textContent: texto || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
         })
       });
+
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
         console.error('[BREVO API ERROR ' + resp.status + ']:', errText);
         return false;
       }
+
+      const resData = await resp.json().catch(() => ({}));
+      console.log('[BREVO API SUCCESS] E-mail "' + assunto + '" entregue para ' + destinatarios.join(', ') + ' (ID: ' + (resData.messageId || 'OK') + ')');
       return true;
     }
 
     if (resendKey) {
-      const fromSender = (env?.RESEND_SENDER_EMAIL || fromStr || 'onboarding@resend.dev').trim();
+      const fromSender = (env?.RESEND_SENDER_EMAIL || senderEmail || 'onboarding@resend.dev').trim();
       const resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -640,10 +668,10 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
         },
         body: JSON.stringify({
           from: fromSender.includes('<') ? fromSender : 'HUB ES+ <' + fromSender + '>',
-          to: [para],
+          to: destinatarios,
           subject: assunto,
           html: html,
-          text: texto || html.replace(/<[^>]+>/g, '')
+          text: texto || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
         })
       });
       if (!resp.ok) {
@@ -1158,6 +1186,12 @@ export async function onRequest(context) {
       const cleanEmail = String(email).toLowerCase().trim();
       const existing = await d1First(db, `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
       if (existing) {
+        if (existing.status === 'PENDENTE') {
+          return jsonResponse({ success: false, message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a homologação do Administrador Geral.' }, 409);
+        }
+        if (existing.status === 'ATIVO') {
+          return jsonResponse({ success: false, message: 'Este e-mail já possui cadastro ativo no sistema.' }, 409);
+        }
         return jsonResponse({ success: false, message: 'Este e-mail já possui cadastro ou solicitação registrada.' }, 409);
       }
       const tempHash = await bcrypt.hash(crypto.randomUUID(), 10);
@@ -1174,9 +1208,53 @@ export async function onRequest(context) {
         ip,
         user_agent: userAgent
       });
+
+      // 1. Notifica o Administrador Geral (Higor) sobre nova solicitação de acesso
+      const adminEmails = getAdminNotificationEmails(env);
+      const dataHoraBR = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const htmlAvisoAdmin = gerarTemplateEmail({
+        titulo: 'Nova Solicitação de Acesso',
+        saudacao: 'Administrador Geral',
+        mensagemPrincipal: `Uma nova solicitação de acesso foi submetida na tela de login da plataforma <strong>HUB ES+</strong>.<br><br>` +
+          `<strong>Dados do Solicitante:</strong><br>` +
+          `• <strong>Nome:</strong> ${String(nome).trim()}<br>` +
+          `• <strong>E-mail:</strong> ${cleanEmail}<br>` +
+          `• <strong>Data/Hora:</strong> ${dataHoraBR}<br>` +
+          `• <strong>Status:</strong> PENDENTE DE HOMOLOGAÇÃO<br><br>` +
+          `Acesse o módulo de Auditoria & Governança para avaliar o pedido e homologar o acesso deste colaborador.`,
+        botaoTexto: 'Avaliar Solicitação no Painel',
+        botaoUrl: url.origin + '/#auditoria',
+        rodapeAviso: 'Notificação automática de governança gerada pelo HUB ES+ SECULT.'
+      });
+
+      await enviarEmailGenericoD1(env, {
+        para: adminEmails,
+        assunto: `[HUB ES+] Nova Solicitação de Acesso: ${String(nome).trim()}`,
+        html: htmlAvisoAdmin
+      });
+
+      // 2. Notifica o Usuário confirmando que o pedido foi recebido
+      const htmlConfirmacaoUsuario = gerarTemplateEmail({
+        titulo: 'Solicitação de Cadastro Recebida',
+        saudacao: String(nome).trim(),
+        mensagemPrincipal: `Recebemos sua solicitação de cadastro no sistema integrado <strong>HUB ES+ SECULT</strong>.<br><br>` +
+          `Seu pedido foi registrado com o protocolo <strong>#${res.insertId}</strong> e está em análise pela equipe de Administração e Governança da SECULT.<br><br>` +
+          `Assim que seu acesso for homologado, você receberá uma nova notificação neste endereço de e-mail com as instruções para acesso à plataforma.`,
+        botaoTexto: 'Acessar Portal HUB ES+',
+        botaoUrl: url.origin,
+        rodapeAviso: 'Se você não realizou esta solicitação, desconsidere este e-mail com segurança.'
+      });
+
+      const userEmailSent = await enviarEmailGenericoD1(env, {
+        para: cleanEmail,
+        assunto: 'Solicitação de Cadastro Recebida - HUB ES+ SECULT',
+        html: htmlConfirmacaoUsuario
+      });
+
       return jsonResponse({
         success: true,
-        message: 'Solicitação de cadastro enviada com sucesso! Aguarde a aprovação do Administrador Geral.',
+        userEmailSent,
+        message: 'Solicitação enviada com sucesso! O Administrador Geral foi notificado e uma confirmação foi enviada para o seu e-mail.',
         data: { id: res.insertId }
       }, 201);
     }
@@ -3036,19 +3114,61 @@ export async function onRequest(context) {
           ip,
           user_agent: userAgent
         });
+
+        // 1. Notifica o usuário por e-mail que o acesso foi homologado e ativado
+        const htmlAprovacao = gerarTemplateEmail({
+          titulo: 'Seu Acesso foi Aprovado!',
+          saudacao: nomeFinal,
+          mensagemPrincipal: `Temos o prazer de informar que sua solicitação de acesso ao sistema integrado <strong>HUB ES+ SECULT</strong> foi avaliada e <strong>aprovada com sucesso</strong>!<br><br>` +
+            `<strong>Perfil Atribuído:</strong> ${perfilFinal}<br>` +
+            (senha && String(senha).trim().length >= 8
+              ? `<strong>Senha Inicial Provisória:</strong> <code style="background:#e2e8f0;padding:3px 8px;border-radius:6px;font-family:monospace;font-size:14px;color:#0f172a;">${String(senha).trim()}</code><br><span style="font-size:12px;color:#64748b;">(Recomendamos alterá-la no seu menu de perfil após o primeiro acesso).</span>`
+              : `Você já pode fazer login na plataforma utilizando a sua senha previamente definida.`),
+          botaoTexto: 'Acessar o Painel HUB ES+',
+          botaoUrl: url.origin,
+          rodapeAviso: 'Acesso institucional governamental auditado e sujeito às normas da SECULT / Governo do ES.'
+        });
+
+        const emailEnviado = await enviarEmailGenericoD1(env, {
+          para: cleanEmail,
+          assunto: 'Seu Acesso ao HUB ES+ foi Aprovado!',
+          html: htmlAprovacao
+        });
+
         return jsonResponse({
           success: true,
           ativacao_direta: true,
-          message: `Acesso de "${nomeFinal}" aprovado e ativado com sucesso!`
+          emailEnviado,
+          message: `Acesso de "${nomeFinal}" aprovado com sucesso! Notificação enviada para ${cleanEmail}.`
         });
       }
 
       const matchRejeitar = route.match(/^\/auditoria\/solicitacoes\/(\d+)\/rejeitar$/);
       if (matchRejeitar && method === 'POST') {
         const id = matchRejeitar[1];
+        const solicitacao = await d1First(db, `SELECT nome, email FROM usuarios WHERE id = ? LIMIT 1`, [id]);
         await d1Run(db, `UPDATE usuarios SET status = 'REJEITADO', deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`, [id]);
         await registrarAuditoria(db, { usuario_id: usuario.id, acao: 'REJEITAR_CADASTRO', entidade: 'usuarios', entidade_id: Number(id), descricao: `Solicitação #${id} rejeitada.`, ip, user_agent: userAgent });
-        return jsonResponse({ success: true, message: 'Solicitação rejeitada.' });
+
+        if (solicitacao?.email) {
+          const htmlRejeicao = gerarTemplateEmail({
+            titulo: 'Atualização sobre Solicitação de Cadastro',
+            saudacao: solicitacao.nome || 'Colaborador',
+            mensagemPrincipal: `Informamos que sua solicitação de cadastro no sistema integrado <strong>HUB ES+ SECULT</strong> não foi homologada neste momento pela Administração Geral.<br><br>` +
+              `Caso necessite de esclarecimentos adicionais ou acredite que se trata de uma inconsistência, por favor entre em contato com a equipe de gestão institucional do HUB ES+.`,
+            botaoTexto: 'Visitar HUB ES+',
+            botaoUrl: url.origin,
+            rodapeAviso: 'HUB ES+ • Secretaria da Cultura (SECULT) • Governo do Estado do Espírito Santo.'
+          });
+
+          await enviarEmailGenericoD1(env, {
+            para: solicitacao.email,
+            assunto: 'Atualização sobre sua Solicitação de Cadastro - HUB ES+',
+            html: htmlRejeicao
+          });
+        }
+
+        return jsonResponse({ success: true, message: 'Solicitação rejeitada e notificação enviada ao solicitante.' });
       }
 
       const matchReenviar = route.match(/^\/auditoria\/usuarios\/(\d+)\/reenviar-ativacao$/);
