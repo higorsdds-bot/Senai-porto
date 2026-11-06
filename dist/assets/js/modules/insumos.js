@@ -82,19 +82,17 @@ window.InsumosModule = {
 
         <!-- Abas de Navegação -->
         <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700">
-          <button id="tab-btn-estoque" class="px-4 py-2.5 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
-            this.activeTab === 'estoque' 
-              ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' 
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }">
+          <button id="tab-btn-estoque" class="px-4 py-2.5 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${this.activeTab === 'estoque'
+        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+        : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+      }">
             <i data-lucide="boxes" class="w-4 h-4"></i>
             Materiais & Estoque Atual (${this.items.length})
           </button>
-          <button id="tab-btn-historico" class="px-4 py-2.5 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${
-            this.activeTab === 'historico' 
-              ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' 
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }">
+          <button id="tab-btn-historico" class="px-4 py-2.5 text-xs font-bold transition-all border-b-2 flex items-center gap-2 ${this.activeTab === 'historico'
+        ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400'
+        : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+      }">
             <i data-lucide="history" class="w-4 h-4"></i>
             Histórico & Rastreabilidade (${this.historico.length})
           </button>
@@ -166,17 +164,17 @@ window.InsumosModule = {
         </div>
 
         <!-- Tabela de Insumos -->
-        ${filtered.length === 0 ? 
-          window.UI.renderEmptyState({
-            title: 'Nenhum insumo encontrado',
-            description: 'Nenhum material atende aos filtros de busca ou estoque selecionados.',
-            actionLabel: window.Auth.hasPermission('insumos.criar') ? 'Novo Insumo' : null,
-            onActionClick: () => this._openFormModal(document.getElementById('main-content'))
-          })
-          : `
+        ${filtered.length === 0 ?
+        window.UI.renderEmptyState({
+          title: 'Nenhum insumo encontrado',
+          description: 'Nenhum material atende aos filtros de busca ou estoque selecionados.',
+          actionLabel: window.Auth.hasPermission('insumos.criar') ? 'Novo Insumo' : null,
+          onActionClick: () => this._openFormModal(document.getElementById('main-content'))
+        })
+        : `
           <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto hub-scrollbar">
+              <table class="w-full min-w-[760px] text-left text-xs">
                 <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th class="p-3.5">ID</th>
@@ -189,9 +187,9 @@ window.InsumosModule = {
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                   ${paginatedItems.map(item => {
-                    const isCritical = item.quantidade <= item.estoque_minimo;
-                    const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
-                    return `
+          const isCritical = item.quantidade <= item.estoque_minimo;
+          const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
+          return `
                       <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
                         <td class="p-3.5 font-mono text-slate-400 font-medium">#${item.id}</td>
                         <td class="p-3.5">
@@ -237,7 +235,7 @@ window.InsumosModule = {
                         </td>
                       </tr>
                     `;
-                  }).join('')}
+        }).join('')}
                 </tbody>
               </table>
             </div>
@@ -347,8 +345,8 @@ window.InsumosModule = {
 
         <!-- Tabela de Histórico & Rastreabilidade -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[860px] text-left text-xs">
               <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                 <tr>
                   <th class="p-3.5">Data & Hora Exata</th>
@@ -369,16 +367,16 @@ window.InsumosModule = {
                     </td>
                   </tr>
                 ` : paginados.map(mov => {
-                  const dataHora = mov.created_at ? new Date(mov.created_at).toLocaleString('pt-BR') : '-';
+      const dataHora = mov.created_at ? new Date(mov.created_at).toLocaleString('pt-BR') : '-';
 
-                  const badgeTipo = {
-                    'ENTRADA': 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-                    'SAIDA': 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
-                    'TRANSFERENCIA': 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
-                    'AJUSTE': 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                  }[mov.tipo] || 'bg-slate-100 text-slate-700';
+      const badgeTipo = {
+        'ENTRADA': 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+        'SAIDA': 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+        'TRANSFERENCIA': 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
+        'AJUSTE': 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+      }[mov.tipo] || 'bg-slate-100 text-slate-700';
 
-                  return `
+      return `
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
                       <td class="p-3.5 font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         ${dataHora}
@@ -409,7 +407,7 @@ window.InsumosModule = {
                       </td>
                     </tr>
                   `;
-                }).join('')}
+    }).join('')}
               </tbody>
             </table>
           </div>

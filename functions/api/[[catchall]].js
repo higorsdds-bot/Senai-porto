@@ -1133,7 +1133,8 @@ export async function onRequest(context) {
       }
 
       if (!usuario) {
-        await registrarAuditoria(db, { acao: 'LOGIN_FALHOU', descricao: `Email inexistente: ${email}`, ip, user_agent: userAgent });
+        const sanitizedEmail = String(email || '').slice(0, 80).replace(/[\r\n\t]/g, ' ').trim();
+        await registrarAuditoria(db, { acao: 'LOGIN_FALHOU', descricao: `Tentativa com email inexistente: ${sanitizedEmail}`, ip, user_agent: userAgent });
         return jsonResponse({ success: false, message: 'Credenciais inválidas.' }, 401);
       }
 

@@ -9,6 +9,16 @@ window.DashboardModule = {
   abaFilaAtiva: 'TODAS',
   demandasConsolidadas: [],
 
+  _esc(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m]));
+  },
+
   async render(container) {
     // Skeleton minimalista no estilo Vercel
     container.innerHTML = `
@@ -20,7 +30,12 @@ window.DashboardModule = {
           </div>
           <div class="h-10 w-44 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
         </div>
-        <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+          <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+          <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+          <div class="h-28 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-8 h-96 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
           <div class="lg:col-span-4 h-96 bg-slate-200 dark:bg-slate-850 rounded-2xl"></div>
@@ -85,11 +100,11 @@ window.DashboardModule = {
       const podeVerComunicados = window.Auth?.isAdmin() || window.Auth?.hasPermission('comunicados.visualizar');
       const todosAlta = podeVerComunicados ? listaComunicados.filter(c => c.prioridade === 'alta') : [];
 
-      const timeKey = window.Auth?.getUserStorageKey 
-        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp') 
+      const timeKey = window.Auth?.getUserStorageKey
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_timestamp')
         : 'hub_comunicados_alta_vistos_timestamp';
-      const idsKey = window.Auth?.getUserStorageKey 
-        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids') 
+      const idsKey = window.Auth?.getUserStorageKey
+        ? window.Auth.getUserStorageKey('hub_comunicados_alta_vistos_ids')
         : 'hub_comunicados_alta_vistos_ids';
 
       const vistosTimestamp = parseInt(localStorage.getItem(timeKey) || '0', 10);
@@ -218,7 +233,7 @@ window.DashboardModule = {
           ...listaOcorrencias.slice(0, 3).map(o => ({
             autor: listaUsuarios.find(u => Number(u.id) === Number(o.usuario_id))?.nome || 'Colaborador',
             acao: 'Ocorrência Técnica Registrada',
-            descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado' }...`,
+            descricao: `${o.local} • ${o.descricao ? o.descricao.slice(0, 50) : 'Chamado'}...`,
             hora: this._formatTimeAgo(new Date(o.created_at || Date.now())),
             entidade: 'ocorrencias'
           })),
@@ -328,7 +343,7 @@ window.DashboardModule = {
                 Operações 100% Online
               </span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5 flex items-center gap-3">
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5 flex flex-wrap items-center gap-2.5">
               Centro Integrado de Operações
               ${advertenciasPendentes > 0 && ehAdminGeral ? `
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white animate-pulse">
@@ -361,110 +376,110 @@ window.DashboardModule = {
         </div>
 
         <!-- ================================================================= -->
-        <!-- TELEMETRY STRIP INTEGRADA (Estilo Vercel / Stripe - Sem caixas de IA) -->
+        <!-- INDICADORES OPERACIONAIS (CARDS INDIVIDUAIS COM GAP)             -->
         <!-- ================================================================= -->
-        <div class="telemetry-strip">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           
-          <!-- Célula 1: Chamados & Manutenção -->
-          <div onclick="window.location.hash = '#ocorrencias'" class="telemetry-cell cursor-pointer group">
+          <!-- Card 1: Chamados & Manutenção -->
+          <div onclick="window.location.hash = '#ocorrencias'" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-blue-500/50 hover:shadow-lg transition-all flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Ocorrências em Aberto
               </span>
-              <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Fila ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+            <div class="mt-3 flex items-baseline gap-2 flex-wrap">
               <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${ocorrenciasAbertas}</span>
               <span class="text-xs font-semibold ${ocorrenciasAbertas > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
                 ${ocorrenciasAbertas > 0 ? 'Exige atenção' : 'Normal'}
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>SLA Resolução: <strong>${slaOcorrencias}%</strong></span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>SLA Resolução: <strong class="text-slate-700 dark:text-slate-200">${slaOcorrencias}%</strong></span>
               <span class="font-mono text-xs text-slate-400">Manutenção</span>
             </div>
           </div>
 
-          <!-- Célula 2: Compras & Suprimentos (ou Acervo Documental para perfis sem compras) -->
+          <!-- Card 2: Compras & Suprimentos (ou Acervo Documental para perfis sem compras) -->
           ${podeVerCompras ? `
-            <div onclick="window.location.hash = '#compras'" class="telemetry-cell cursor-pointer group">
+            <div onclick="window.location.hash = '#compras'" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-amber-500/50 hover:shadow-lg transition-all flex flex-col justify-between">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Suprimentos Pendentes
                 </span>
-                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                   Pedidos ↗
                 </span>
               </div>
-              <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+              <div class="mt-3 flex items-baseline gap-2 flex-wrap">
                 <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${comprasPendentes}</span>
                 <span class="text-xs font-semibold text-amber-600 dark:text-amber-400">
                   Aguardando cotação
                 </span>
               </div>
-              <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>Fluxo de Compras</span>
                 <span class="font-mono text-xs text-slate-400">Almoxarifado</span>
               </div>
             </div>
           ` : `
-            <div onclick="window.location.hash = '${podeVerDocumentos ? '#documentos' : '#equipamentos'}'" class="telemetry-cell cursor-pointer group">
+            <div onclick="window.location.hash = '${podeVerDocumentos ? '#documentos' : '#equipamentos'}'" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-indigo-500/50 hover:shadow-lg transition-all flex flex-col justify-between">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Acervo & Patrimônio
                 </span>
-                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                   Consultar ↗
                 </span>
               </div>
-              <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+              <div class="mt-3 flex items-baseline gap-2 flex-wrap">
                 <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${totalDocs + totalEquipamentos}</span>
                 <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                   Itens ativos
                 </span>
               </div>
-              <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>${totalDocs} docs • ${totalEquipamentos} ativos</span>
                 <span class="font-mono text-xs text-slate-400">Repositório</span>
               </div>
             </div>
           `}
 
-          <!-- Célula 3: Agenda & Espaços -->
-          <div onclick="window.location.hash = '#agenda'" class="telemetry-cell cursor-pointer group">
+          <!-- Card 3: Agenda & Espaços -->
+          <div onclick="window.location.hash = '#agenda'" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-sky-500/50 hover:shadow-lg transition-all flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Eventos Agendados
               </span>
-              <span class="text-xs font-bold text-sky-600 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-sky-600 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Agenda ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+            <div class="mt-3 flex items-baseline gap-2 flex-wrap">
               <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">${eventosAgendados}</span>
               <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">
                 Auditórios & Labs
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Capacidade Ativa</span>
               <span class="font-mono text-xs text-slate-400">Espaços</span>
             </div>
           </div>
 
-          <!-- Célula 4: Estoque & Patrimônio -->
-          <div onclick="window.location.hash = '#insumos'" class="telemetry-cell cursor-pointer group">
+          <!-- Card 4: Estoque & Patrimônio -->
+          <div onclick="window.location.hash = '#insumos'" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-emerald-500/50 hover:shadow-lg transition-all flex flex-col justify-between">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Almoxarifado & Insumos
               </span>
-              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Estoque ↗
               </span>
             </div>
-            <div class="mt-2.5 flex items-baseline gap-2 flex-wrap">
+            <div class="mt-3 flex items-baseline gap-2 flex-wrap">
               <span class="text-2xl sm:text-3xl font-black ${insumosCriticos > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'} tracking-tight">
                 ${insumosCriticos > 0 ? insumosCriticos : 'OK'}
               </span>
@@ -472,7 +487,7 @@ window.DashboardModule = {
                 ${insumosCriticos > 0 ? 'Estoque Crítico' : 'Nível Conforme'}
               </span>
             </div>
-            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>${totalDocs} docs • ${totalEquipamentos} patrs.</span>
               <span class="font-mono text-xs text-slate-400">Inventário</span>
             </div>
@@ -488,17 +503,17 @@ window.DashboardModule = {
           <!-- =============================================================== -->
           <!-- COLUNA PRINCIPAL (70% - 8 Colunas): Demandas & Gráfico Estruturado -->
           <!-- =============================================================== -->
-          <div class="lg:col-span-8 space-y-6">
+          <div class="lg:col-span-8 space-y-6 min-w-0">
 
             <!-- BLOCO 1: Fila Operacional Crítica (Demandas Unificadas com Abas) -->
             <div class="bento-surface overflow-hidden">
               <!-- Topo da Tabela com Filtros de Abas Rápidas -->
-              <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
+              <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+                <div class="min-w-0">
                   <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
-                    Fila Operacional Crítica
-                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <i data-lucide="layers" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                    <span>Fila Operacional Crítica</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
                       ${this.demandasConsolidadas.length} ativas
                     </span>
                   </h3>
@@ -507,16 +522,16 @@ window.DashboardModule = {
                   </p>
                 </div>
 
-                <!-- Abas Rápidas -->
-                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <!-- Abas Rápidas: Flex-wrap garante que nunca corte botões como Insumos ou Advertências -->
+                <div class="flex items-center gap-1.5 flex-wrap shrink-0">
                   ${[
-                    { id: 'TODAS', label: 'Todas' },
-                    { id: 'OCORRENCIA', label: 'Chamados' },
-                    { id: 'COMPRA', label: 'Compras' },
-                    { id: 'ADVERTENCIA', label: 'Advertências' },
-                    { id: 'INSUMO', label: 'Insumos' }
-                  ].map(aba => `
-                    <button data-aba-fila="${aba.id}" class="${!abasFilaDisponiveis.some(a => a.id === aba.id) ? 'hidden' : 'px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ' + (this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200')}">
+        { id: 'TODAS', label: 'Todas' },
+        { id: 'OCORRENCIA', label: 'Chamados' },
+        { id: 'COMPRA', label: 'Compras' },
+        { id: 'ADVERTENCIA', label: 'Advertências' },
+        { id: 'INSUMO', label: 'Insumos' }
+      ].map(aba => `
+                    <button data-aba-fila="${aba.id}" class="${!abasFilaDisponiveis.some(a => a.id === aba.id) ? 'hidden' : 'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ' + (this.abaFilaAtiva === aba.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold shadow-sm' : 'bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700')}">
                       ${aba.label}
                     </button>
                   `).join('')}
@@ -524,8 +539,8 @@ window.DashboardModule = {
               </div>
 
               <!-- Tabela de Demandas de Alta Densidade -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+              <div class="overflow-x-auto hub-scrollbar">
+                <table class="w-full min-w-[660px] text-left text-xs">
                   <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="py-3 px-4">Tag / Tipo</th>
@@ -550,8 +565,8 @@ window.DashboardModule = {
                           <span class="text-xs text-slate-400 block">${item.tipoLabel}</span>
                         </td>
                         <td class="py-3 px-4">
-                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate">${item.titulo}</span>
-                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate">${item.detalhe}</span>
+                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate" title="${this._esc(item.titulo)}">${item.titulo}</span>
+                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate" title="${this._esc(item.detalhe)}">${item.detalhe}</span>
                         </td>
                         <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           ${item.solicitante}
@@ -605,7 +620,7 @@ window.DashboardModule = {
           <!-- =============================================================== -->
           <!-- COLUNA LATERAL DE GOVERNANÇA & FEED (30% - 4 Colunas)           -->
           <!-- =============================================================== -->
-          <div class="lg:col-span-4 space-y-6">
+          <div class="lg:col-span-4 space-y-6 min-w-0">
 
             <!-- BLOCO 1: Live Activity Feed (Feed de Eventos em Tempo Real) -->
             <div class="bento-surface p-5">
@@ -622,8 +637,8 @@ window.DashboardModule = {
               <!-- Lista de Eventos com Linha Contínua -->
               <div class="space-y-4">
                 ${eventosFeed.map(ev => {
-                  const iniciais = ev.autor.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-                  return `
+        const iniciais = ev.autor.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        return `
                     <div class="feed-node">
                       <div class="feed-node-dot"></div>
                       <div class="flex items-baseline justify-between gap-2">
@@ -638,7 +653,7 @@ window.DashboardModule = {
                       </p>
                     </div>
                   `;
-                }).join('')}
+      }).join('')}
               </div>
 
               <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">

@@ -123,8 +123,8 @@ window.ComprasModule = {
           })
           : `
           <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto hub-scrollbar">
+              <table class="w-full min-w-[720px] text-left text-xs">
                 <thead class="bg-slate-50/80 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th class="px-6 py-3.5">ID</th>
@@ -138,12 +138,13 @@ window.ComprasModule = {
                   ${paginatedItems.map(item => {
                     const isOwner = Number(item.solicitante_id) === Number(currentUserId);
                     const canEditThisItem = canEdit || (isOwner && item.status === 'pendente');
+                    const prodEscaped = (item.produto || '').replace(/"/g, '&quot;');
 
                     return `
                       <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
                         <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
-                          <span class="max-w-xs line-clamp-1">${item.produto}</span>
+                          <span class="max-w-xs line-clamp-1" title="${prodEscaped}">${item.produto}</span>
                           ${item.valor_estimado ? `<span class="block text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">R$ ${Number(item.valor_estimado).toFixed(2)}</span>` : ''}
                         </td>
                         ${ownRequestsOnly ? '' : `<td class="px-6 py-4 text-slate-600 dark:text-slate-300">

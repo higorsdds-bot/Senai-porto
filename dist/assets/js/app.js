@@ -143,6 +143,11 @@ class AppRouter {
     this.atualizarBadgeComunicados();
     setInterval(() => this.atualizarBadgeComunicados(), 60000);
 
+    // Inicialização da Governança de Cookies & LGPD
+    if (window.LGPD && typeof window.LGPD.init === 'function') {
+      window.LGPD.init();
+    }
+
     // Rota inicial
     this.handleRoute();
   }

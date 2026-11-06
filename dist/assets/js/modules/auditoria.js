@@ -292,14 +292,22 @@ const AuditoriaModule = {
               </div>
             </div>
 
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2.5">
+              <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-blue-950 block font-bold mb-0.5">Ativação Segura por E-mail</strong>
+                Ao aprovar, o sistema enviará automaticamente um <strong>link seguro ao e-mail do colaborador</strong> para que ele autentique a conta e <strong>defina sua própria senha</strong>.
+              </div>
+            </div>
+
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="block text-xs font-bold text-slate-700">Redefinir Senha (Opcional)</label>
+                <label class="block text-xs font-bold text-slate-700">Definir Senha Inicial Provisória (Opcional)</label>
                 <button type="button" id="btn-gerar-senha-aprovar" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
                   <i data-lucide="sparkles" class="w-3 h-3"></i> Gerar Senha
                 </button>
               </div>
-              <input type="password" id="aprovar-user-senha" minlength="8" placeholder="Deixe em branco para manter a senha atual"
+              <input type="password" id="aprovar-user-senha" minlength="8" placeholder="Deixe em branco para o usuário definir sua senha pelo link de e-mail"
                 class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs bg-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
             </div>
 
@@ -1085,8 +1093,8 @@ const AuditoriaModule = {
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Usuário</th>
@@ -1338,8 +1346,8 @@ const AuditoriaModule = {
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[850px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Nome</th>
@@ -1354,11 +1362,11 @@ const AuditoriaModule = {
               </thead>
               <tbody id="tbody-usuarios" class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${usuarios.map(u => {
-                  const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
-                  const isAtivo = u.status === 'ATIVO';
-                  const extras = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
+        const isMe = usuarioAtual && Number(usuarioAtual.id) === Number(u.id);
+        const isAtivo = u.status === 'ATIVO';
+        const extras = Array.isArray(u.permissoes_adicionais) ? u.permissoes_adicionais : [];
 
-                  return `
+        return `
                   <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors user-row"
                       data-nome="${this._esc(u.nome).toLowerCase()}"
                       data-email="${this._esc(u.email).toLowerCase()}"
@@ -1452,7 +1460,7 @@ const AuditoriaModule = {
                       </div>
                     </td>
                   </tr>`;
-                }).join('')}
+      }).join('')}
               </tbody>
             </table>
           </div>
@@ -1558,8 +1566,8 @@ const AuditoriaModule = {
             <span class="text-[11px] text-slate-400">Exibindo os 50 mais recentes</span>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[750px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Data/Hora</th>
