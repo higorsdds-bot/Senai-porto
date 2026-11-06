@@ -110,13 +110,14 @@ window.AdvertenciasModule = {
           </div>
         </div>
 
-        <!-- BENTO KPI CARDS (Padrão Bento Grid desacoplado com gap igual ao Dashboard) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+        <!-- BENTO KPI CARDS (Padrão Bento Grid 4 Cards com gap do Dashboard) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          
           <!-- Card 1: Total Geral -->
           <div id="card-kpi-total" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-blue-500/50 hover:shadow-lg transition-all flex flex-col justify-between ${this.filtroStatus === 'TODOS' ? 'ring-2 ring-blue-500/30 border-blue-500/50' : ''}">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Total Geral
+                Total de Advertências
               </span>
               <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Todas ↗
@@ -124,18 +125,20 @@ window.AdvertenciasModule = {
             </div>
             <div class="mt-3 flex items-baseline gap-2 flex-wrap">
               <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">${total}</span>
-              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Registros</span>
+              <span class="text-xs font-semibold ${total > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}">
+                ${total > 0 ? 'Registradas' : 'Nenhuma'}
+              </span>
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Base do sistema</span>
-              <span class="font-mono text-xs text-slate-400">Geral</span>
+              <span>Base Disciplinar</span>
+              <span class="font-mono text-xs text-slate-400">Histórico</span>
             </div>
           </div>
 
           <!-- Card 2: Aguardando Aceite -->
           <div id="card-kpi-pendentes" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-amber-500/50 hover:shadow-lg transition-all flex flex-col justify-between ${pendentes > 0 ? 'border-amber-500/40 bg-amber-50/20 dark:bg-amber-950/10' : ''} ${this.filtroStatus === 'PENDENTE' ? 'ring-2 ring-amber-500/30 border-amber-500/50' : ''}">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Aguardando Aceite
               </span>
               <span class="text-xs font-bold text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
@@ -143,9 +146,9 @@ window.AdvertenciasModule = {
               </span>
             </div>
             <div class="mt-3 flex items-baseline gap-2 flex-wrap">
-              <span class="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 tracking-tight font-mono">${pendentes}</span>
-              <span class="text-xs font-semibold ${pendentes > 0 ? 'text-amber-600 dark:text-amber-400 animate-pulse' : 'text-slate-400'}">
-                ${pendentes > 0 ? 'Requer chancela' : 'Fila zerada'}
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">${pendentes}</span>
+              <span class="text-xs font-semibold ${pendentes > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                ${pendentes > 0 ? 'Exige atenção' : 'Normal'}
               </span>
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -157,62 +160,47 @@ window.AdvertenciasModule = {
           <!-- Card 3: Aceitas / Aplicadas -->
           <div id="card-kpi-aplicadas" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-emerald-500/50 hover:shadow-lg transition-all flex flex-col justify-between ${this.filtroStatus === 'APLICADA' ? 'ring-2 ring-emerald-500/30 border-emerald-500/50' : ''}">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Aceitas / Aplicadas
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Medidas Vigentes
               </span>
               <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                 Ativas ↗
               </span>
             </div>
             <div class="mt-3 flex items-baseline gap-2 flex-wrap">
-              <span class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">${aplicadas}</span>
-              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Vigentes</span>
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">${aplicadas}</span>
+              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                ${aplicadas > 0 ? 'Homologadas' : 'Nenhuma'}
+              </span>
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Homologadas pelo Admin</span>
-              <span class="font-mono text-xs text-emerald-500">Com Validade</span>
+              <span>Validade Jurídica</span>
+              <span class="font-mono text-xs text-slate-400">Chanceladas</span>
             </div>
           </div>
 
-          <!-- Card 4: Rejeitadas -->
-          <div id="card-kpi-rejeitadas" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-rose-500/50 hover:shadow-lg transition-all flex flex-col justify-between ${this.filtroStatus === 'REJEITADA' ? 'ring-2 ring-rose-500/30 border-rose-500/50' : ''}">
+          <!-- Card 4: Rejeitadas & Revogadas -->
+          <div id="card-kpi-rejeitadas" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-slate-400/50 hover:shadow-lg transition-all flex flex-col justify-between ${this.filtroStatus === 'REJEITADA' ? 'ring-2 ring-slate-500/30 border-slate-500/50' : ''}">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Rejeitadas
+                Rejeitadas / Revogadas
               </span>
               <span class="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                Recusadas ↗
+                Arquivo ↗
               </span>
             </div>
             <div class="mt-3 flex items-baseline gap-2 flex-wrap">
-              <span class="text-2xl sm:text-3xl font-black text-slate-700 dark:text-slate-300 tracking-tight font-mono">${rejeitadas}</span>
-              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Não aprovadas</span>
+              <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">${rejeitadas + revogadas}</span>
+              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                ${rejeitadas} rej. • ${revogadas} rev.
+              </span>
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Descartadas</span>
-              <span class="font-mono text-xs text-slate-400">Indeferidas</span>
+              <span>Processos Concluídos</span>
+              <span class="font-mono text-xs text-slate-400">Histórico</span>
             </div>
           </div>
 
-          <!-- Card 5: Revogadas -->
-          <div id="card-kpi-revogadas" class="bento-surface p-4 sm:p-5 cursor-pointer group hover:border-slate-500/50 hover:shadow-lg transition-all flex flex-col justify-between ${this.filtroStatus === 'REVOGADA' ? 'ring-2 ring-slate-500/30 border-slate-500/50' : ''}">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Revogadas
-              </span>
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                Anuladas ↗
-              </span>
-            </div>
-            <div class="mt-3 flex items-baseline gap-2 flex-wrap">
-              <span class="text-2xl sm:text-3xl font-black text-slate-600 dark:text-slate-400 tracking-tight font-mono">${revogadas}</span>
-              <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Sem efeito</span>
-            </div>
-            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Anuladas formalmente</span>
-              <span class="font-mono text-xs text-slate-400">Arquivadas</span>
-            </div>
-          </div>
         </div>
 
         <!-- BANNER DE HOMOLOGAÇÃO DO ADMINISTRADOR GERAL (QUANDO HOUVER PENDÊNCIAS) -->
