@@ -548,53 +548,69 @@ router.post('/solicitar-cadastro', async (req, res) => {
 
     // Evitar cadastros duplicados e tratar solicitações repetidas de acordo com o status
     const [existing] = await pool.query(
-      `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`,
+      `SELECT id, status, deleted_at FROM usuarios WHERE email = ? LIMIT 1`,
       [cleanEmail]
     );
 
+    let solicitacaoId = null;
+    const senhaPlaceholder = crypto.randomBytes(32).toString('hex');
+    const senhaHash = await bcrypt.hash(senhaPlaceholder, 12);
+
     if (existing.length > 0) {
       const st = existing[0].status;
-      if (st === 'PENDENTE') {
+      if (existing[0].deleted_at !== null || st === 'REJEITADO') {
+        // Usuário previamente rejeitado ou desativado: reativa para PENDENTE com os novos dados
+        await pool.query(
+          `UPDATE usuarios SET nome = ?, senha = ?, perfil = 'OPERADOR', setor_id = ?, status = 'PENDENTE', deleted_at = NULL, updated_at = NOW() WHERE id = ?`,
+          [String(nome).trim(), senhaHash, setor_id || null, existing[0].id]
+        );
+        solicitacaoId = existing[0].id;
+      } else if (st === 'PENDENTE') {
         return res.status(409).json({
           success: false,
           message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a aprovação do Administrador Geral.'
         });
-      }
-      if (st === 'AGUARDANDO_ATIVACAO') {
+      } else if (st === 'AGUARDANDO_ATIVACAO') {
         return res.status(409).json({
           success: false,
           message: 'Seu cadastro já foi aprovado! Verifique a mensagem com o link de ativação enviada para sua caixa de entrada.'
         });
-      }
-      if (st === 'REJEITADO') {
+      } else if (st === 'ATIVO') {
         return res.status(409).json({
           success: false,
-          message: 'Uma solicitação anterior para este e-mail foi rejeitada. Entre em contato com a equipe de gestão do HUB ES+.'
+          message: 'Este e-mail já possui cadastro ativo no sistema. Se você esqueceu sua senha, utilize a opção "Esqueci minha senha" na tela de login.'
+        });
+      } else {
+        return res.status(409).json({
+          success: false,
+          message: `Este e-mail já está cadastrado no sistema com status ${st}.`
         });
       }
-      return res.status(409).json({
-        success: false,
-        message: 'Este e-mail já está cadastrado no sistema.'
-      });
+    } else {
+      try {
+        const [result] = await pool.query(
+          `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)
+           VALUES (?, ?, ?, 'OPERADOR', ?, 'PENDENTE')`,
+          [String(nome).trim(), cleanEmail, senhaHash, setor_id || null]
+        );
+        solicitacaoId = result.insertId;
+      } catch (dbErr) {
+        if (dbErr.code === 'ER_DUP_ENTRY' || dbErr.message?.includes('Duplicate entry')) {
+          return res.status(409).json({
+            success: false,
+            message: 'Este e-mail já possui cadastro ou solicitação registrada no sistema. Se já possui cadastro, tente fazer login ou recuperar sua senha.'
+          });
+        }
+        throw dbErr;
+      }
     }
-
-    // Como a senha definitiva será definida pelo próprio usuário via link seguro de ativação,
-    // geramos um hash seguro temporário para preencher a coluna obrigatória do banco.
-    const senhaPlaceholder = crypto.randomBytes(32).toString('hex');
-    const senhaHash = await bcrypt.hash(senhaPlaceholder, 12);
-
-    const [result] = await pool.query(
-      `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status)
-       VALUES (?, ?, ?, 'OPERADOR', ?, 'PENDENTE')`,
-      [String(nome).trim(), cleanEmail, senhaHash, setor_id || null]
-    );
 
     // Registra na auditoria sem armazenar senhas ou dados sensíveis
     await registrarAuditoria({
       usuario_id: null,
       acao: 'SOLICITACAO_CADASTRO',
       entidade: 'usuarios',
-      entidade_id: result.insertId,
+      entidade_id: solicitacaoId,
       descricao: `Novo pedido de cadastro para "${String(nome).trim()}" (${cleanEmail}). Status: PENDENTE.`,
       ip,
       user_agent: userAgent
@@ -607,7 +623,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
           adminEmails,
           usuarioNome: String(nome).trim(),
           usuarioEmail: cleanEmail,
-          solicitacaoId: result.insertId,
+          solicitacaoId: solicitacaoId,
           origem: 'Tela de Login (Auto-solicitação)'
         });
       })
@@ -619,7 +635,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
     notificarRecebimentoSolicitacaoUsuario({
       usuarioNome: String(nome).trim(),
       usuarioEmail: cleanEmail,
-      solicitacaoId: result.insertId
+      solicitacaoId: solicitacaoId
     }).catch(err => {
       console.error('[AUTH] Erro ao enviar e-mail de confirmação para o solicitante:', err.message);
     });
@@ -627,7 +643,7 @@ router.post('/solicitar-cadastro', async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Solicitação de cadastro enviada com sucesso! O Administrador Geral foi notificado e você receberá um e-mail com o link de ativação assim que for aprovado.',
-      data: { id: result.insertId }
+      data: { id: solicitacaoId }
     });
   } catch (err) {
     console.error('[AUTH] Erro ao solicitar cadastro:', err.message);

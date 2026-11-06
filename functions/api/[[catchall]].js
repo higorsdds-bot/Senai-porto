@@ -1184,26 +1184,64 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Informe nome completo e e-mail válido.' }, 422);
       }
       const cleanEmail = String(email).toLowerCase().trim();
-      const existing = await d1First(db, `SELECT id, status FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1`, [cleanEmail]);
-      if (existing) {
-        if (existing.status === 'PENDENTE') {
-          return jsonResponse({ success: false, message: 'Já existe uma solicitação de cadastro pendente com este e-mail. Aguarde a homologação do Administrador Geral.' }, 409);
-        }
-        if (existing.status === 'ATIVO') {
-          return jsonResponse({ success: false, message: 'Este e-mail já possui cadastro ativo no sistema.' }, 409);
-        }
-        return jsonResponse({ success: false, message: 'Este e-mail já possui cadastro ou solicitação registrada.' }, 409);
-      }
+      const existing = await d1First(db, `SELECT id, status, deleted_at FROM usuarios WHERE email = ? LIMIT 1`, [cleanEmail]);
+
+      let solicitacaoId = null;
       const tempHash = await bcrypt.hash(crypto.randomUUID(), 10);
-      const res = await d1Run(
-        db,
-        `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, 'OPERADOR', ?, 'PENDENTE')`,
-        [String(nome).trim(), cleanEmail, tempHash, setor_id || null]
-      );
+
+      if (existing) {
+        if (existing.deleted_at !== null || existing.status === 'REJEITADO') {
+          // Usuário previamente rejeitado ou desativado: reativa para PENDENTE com os novos dados
+          await d1Run(
+            db,
+            `UPDATE usuarios SET nome = ?, senha = ?, perfil = 'OPERADOR', setor_id = ?, status = 'PENDENTE', deleted_at = NULL, updated_at = datetime('now') WHERE id = ?`,
+            [String(nome).trim(), tempHash, setor_id || null, existing.id]
+          );
+          solicitacaoId = existing.id;
+        } else if (existing.status === 'PENDENTE') {
+          return jsonResponse({
+            success: false,
+            message: 'Já existe uma solicitação de cadastro pendente para este e-mail. Por favor, aguarde a aprovação do Administrador Geral.'
+          }, 409);
+        } else if (existing.status === 'AGUARDANDO_ATIVACAO') {
+          return jsonResponse({
+            success: false,
+            message: 'Seu cadastro já foi aprovado! Verifique a mensagem com o link de ativação enviada para sua caixa de entrada.'
+          }, 409);
+        } else if (existing.status === 'ATIVO') {
+          return jsonResponse({
+            success: false,
+            message: 'Este e-mail já possui cadastro ativo no sistema. Se você esqueceu sua senha, utilize a opção "Esqueci minha senha" na tela de login.'
+          }, 409);
+        } else {
+          return jsonResponse({
+            success: false,
+            message: `Este e-mail já está registrado no sistema com status ${existing.status}.`
+          }, 409);
+        }
+      } else {
+        try {
+          const res = await d1Run(
+            db,
+            `INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, 'OPERADOR', ?, 'PENDENTE')`,
+            [String(nome).trim(), cleanEmail, tempHash, setor_id || null]
+          );
+          solicitacaoId = res.insertId;
+        } catch (dbErr) {
+          if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('SQLITE_CONSTRAINT'))) {
+            return jsonResponse({
+              success: false,
+              message: 'Este e-mail já possui cadastro ou solicitação registrada no sistema. Se já possui cadastro, tente fazer login ou recuperar sua senha.'
+            }, 409);
+          }
+          throw dbErr;
+        }
+      }
+
       await registrarAuditoria(db, {
         acao: 'SOLICITACAO_CADASTRO',
         entidade: 'usuarios',
-        entidade_id: res.insertId,
+        entidade_id: solicitacaoId,
         descricao: `Solicitação de cadastro para ${nome} (${cleanEmail}).`,
         ip,
         user_agent: userAgent
@@ -1238,7 +1276,7 @@ export async function onRequest(context) {
         titulo: 'Solicitação de Cadastro Recebida',
         saudacao: String(nome).trim(),
         mensagemPrincipal: `Recebemos sua solicitação de cadastro no sistema integrado <strong>HUB ES+ SECULT</strong>.<br><br>` +
-          `Seu pedido foi registrado com o protocolo <strong>#${res.insertId}</strong> e está em análise pela equipe de Administração e Governança da SECULT.<br><br>` +
+          `Seu pedido foi registrado com o protocolo <strong>#${solicitacaoId}</strong> e está em análise pela equipe de Administração e Governança da SECULT.<br><br>` +
           `Assim que seu acesso for homologado, você receberá uma nova notificação neste endereço de e-mail com as instruções para acesso à plataforma.`,
         botaoTexto: 'Acessar Portal HUB ES+',
         botaoUrl: url.origin,
@@ -1255,7 +1293,7 @@ export async function onRequest(context) {
         success: true,
         userEmailSent,
         message: 'Solicitação enviada com sucesso! O Administrador Geral foi notificado e uma confirmação foi enviada para o seu e-mail.',
-        data: { id: res.insertId }
+        data: { id: solicitacaoId }
       }, 201);
     }
 
@@ -1696,7 +1734,7 @@ export async function onRequest(context) {
       return jsonResponse({
         success: true,
         message: 'Colaborador pré-cadastrado com sucesso! Encaminhado para aprovação do Administrador Geral.',
-        data: { id: res.insertId }
+        data: { id: solicitacaoId }
       }, 201);
     }
 
@@ -1794,22 +1832,43 @@ export async function onRequest(context) {
         return jsonResponse({ success: false, message: 'Nome e e-mail são obrigatórios.' }, 422);
       }
       const cleanEmail = String(email).toLowerCase().trim();
-      const dup = await d1First(db, 'SELECT id FROM usuarios WHERE email = ? AND deleted_at IS NULL LIMIT 1', [cleanEmail]);
-      if (dup) {
-        return jsonResponse({ success: false, message: 'E-mail já cadastrado no sistema.' }, 422);
-      }
+      const dup = await d1First(db, 'SELECT id, deleted_at FROM usuarios WHERE email = ? LIMIT 1', [cleanEmail]);
 
       const porEmail = (modo_senha === 'email' || enviar_email_ativacao === true || !senha);
       const senhaHash = await bcrypt.hash(porEmail ? crypto.randomUUID() : String(senha), 10);
       const statusFinal = porEmail ? 'AGUARDANDO_ATIVACAO' : (isUserAdmin(usuario) ? (status || 'ATIVO') : 'PENDENTE');
       const perfilFinal = perfil || 'OPERADOR';
-      const res = await d1Run(
-        db,
-        'INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, ?, ?, ?)',
-        [String(nome).trim(), cleanEmail, senhaHash, perfilFinal, setor_id || null, statusFinal]
-      );
+
+      let targetUserId = null;
+      if (dup) {
+        if (dup.deleted_at === null) {
+          return jsonResponse({ success: false, message: 'Já existe um usuário ativo cadastrado com este e-mail.' }, 409);
+        }
+        // Se estava previamente excluído, reativa com os novos dados sem quebrar constraint UNIQUE:
+        await d1Run(
+          db,
+          'UPDATE usuarios SET nome = ?, senha = ?, perfil = ?, setor_id = ?, status = ?, deleted_at = NULL, updated_at = datetime("now") WHERE id = ?',
+          [String(nome).trim(), senhaHash, perfilFinal, setor_id || null, statusFinal, dup.id]
+        );
+        targetUserId = dup.id;
+      } else {
+        try {
+          const res = await d1Run(
+            db,
+            'INSERT INTO usuarios (nome, email, senha, perfil, setor_id, status) VALUES (?, ?, ?, ?, ?, ?)',
+            [String(nome).trim(), cleanEmail, senhaHash, perfilFinal, setor_id || null, statusFinal]
+          );
+          targetUserId = res.insertId;
+        } catch (dbErr) {
+          if (dbErr.message && (dbErr.message.includes('UNIQUE') || dbErr.message.includes('SQLITE_CONSTRAINT'))) {
+            return jsonResponse({ success: false, message: 'Já existe um usuário registrado com este e-mail no sistema.' }, 409);
+          }
+          throw dbErr;
+        }
+      }
+
       if (Array.isArray(permissoes_adicionais)) {
-        await syncPermissoesExtrasUsuarioD1(db, res.insertId, permissoes_adicionais);
+        await syncPermissoesExtrasUsuarioD1(db, targetUserId, permissoes_adicionais);
       }
 
       let linkAtivacao = null;
@@ -1820,7 +1879,7 @@ export async function onRequest(context) {
         await d1Run(
           db,
           "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
-          [res.insertId, tokenHash, ip]
+          [targetUserId, tokenHash, ip]
         );
         linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
         const htmlEmail = gerarTemplateEmail({
@@ -1842,7 +1901,7 @@ export async function onRequest(context) {
         usuario_id: usuario.id,
         acao: 'CRIAR_USUARIO',
         entidade: 'usuarios',
-        entidade_id: res.insertId,
+        entidade_id: targetUserId,
         descricao: porEmail
           ? 'Usuário "' + nome + '" (' + cleanEmail + ') cadastrado com envio de link de ativação. (Email enviado: ' + (emailEnviado ? 'SIM' : 'NÃO') + ')'
           : 'Usuário "' + nome + '" (' + cleanEmail + ') criado com perfil ' + perfilFinal + '.',
