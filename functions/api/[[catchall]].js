@@ -1370,8 +1370,14 @@ export async function onRequest(context) {
          WHERE t.token_hash = ? AND u.deleted_at IS NULL LIMIT 1`,
         [tokenHash]
       );
-      if (!item) return jsonResponse({ success: false, message: 'Link de ativação não encontrado.' }, 400);
-      if (item.usado_em) return jsonResponse({ success: false, message: 'Este link já foi utilizado.' }, 400);
+      if (!item) return jsonResponse({ success: false, message: 'Link de ativação não encontrado ou expirado.' }, 400);
+      if (item.usado_em) return jsonResponse({ success: false, message: 'Este link de ativação já foi utilizado.' }, 400);
+      if (item.expira_em) {
+        const expDate = new Date(String(item.expira_em).replace(' ', 'T') + 'Z');
+        if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+          return jsonResponse({ success: false, message: 'Este link de ativação expirou (validade de 48 horas). Solicite um novo link ao administrador.' }, 400);
+        }
+      }
       return jsonResponse({
         success: true,
         data: {
@@ -1395,7 +1401,7 @@ export async function onRequest(context) {
       const tokenHash = await sha256Hex(String(token).trim());
       const item = await d1First(
         db,
-        `SELECT t.id AS token_id, t.usuario_id, t.usado_em, u.nome, u.email
+        `SELECT t.id AS token_id, t.usuario_id, t.usado_em, t.expira_em, u.nome, u.email
          FROM tokens_ativacao t
          JOIN usuarios u ON u.id = t.usuario_id
          WHERE t.token_hash = ? AND u.deleted_at IS NULL LIMIT 1`,
@@ -1403,6 +1409,12 @@ export async function onRequest(context) {
       );
       if (!item || item.usado_em) {
         return jsonResponse({ success: false, message: 'Link de ativação inválido ou já utilizado.' }, 400);
+      }
+      if (item.expira_em) {
+        const expDate = new Date(String(item.expira_em).replace(' ', 'T') + 'Z');
+        if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+          return jsonResponse({ success: false, message: 'Este link de ativação expirou. Solicite um novo link ao administrador.' }, 400);
+        }
       }
       const senhaHash = await bcrypt.hash(String(senha), 10);
       await d1Run(db, `UPDATE usuarios SET senha = ?, status = 'ATIVO', updated_at = datetime('now') WHERE id = ?`, [senhaHash, item.usuario_id]);
@@ -1412,7 +1424,7 @@ export async function onRequest(context) {
         acao: 'ATIVACAO_CONTA',
         entidade: 'usuarios',
         entidade_id: item.usuario_id,
-        descricao: `Conta ativada com sucesso por ${item.nome} (${item.email}).`,
+        descricao: `Conta ativada com sucesso e senha definida por ${item.nome} (${item.email}).`,
         ip,
         user_agent: userAgent
       });
@@ -3145,17 +3157,23 @@ export async function onRequest(context) {
         const perfilFinal = perfil || 'OPERADOR';
         const setorFinal = setor_id !== undefined && setor_id !== '' ? Number(setor_id) : atual.setor_id;
 
+        // Se o administrador informou uma senha provisória, salvamos seu hash
+        let senhaParam = null;
         if (senha && String(senha).trim().length >= 8) {
-          const hash = await bcrypt.hash(String(senha).trim(), 10);
+          senhaParam = await bcrypt.hash(String(senha).trim(), 10);
+        }
+
+        // A conta é homologada com status AGUARDANDO_ATIVACAO para autenticação via link de e-mail e definição de senha pelo usuário
+        if (senhaParam) {
           await d1Run(
             db,
-            `UPDATE usuarios SET status = 'ATIVO', nome = ?, email = ?, perfil = ?, setor_id = ?, senha = ?, updated_at = datetime('now') WHERE id = ?`,
-            [nomeFinal, cleanEmail, perfilFinal, setorFinal, hash, id]
+            `UPDATE usuarios SET status = 'AGUARDANDO_ATIVACAO', nome = ?, email = ?, perfil = ?, setor_id = ?, senha = ?, updated_at = datetime('now') WHERE id = ?`,
+            [nomeFinal, cleanEmail, perfilFinal, setorFinal, senhaParam, id]
           );
         } else {
           await d1Run(
             db,
-            `UPDATE usuarios SET status = 'ATIVO', nome = ?, email = ?, perfil = ?, setor_id = ?, updated_at = datetime('now') WHERE id = ?`,
+            `UPDATE usuarios SET status = 'AGUARDANDO_ATIVACAO', nome = ?, email = ?, perfil = ?, setor_id = ?, updated_at = datetime('now') WHERE id = ?`,
             [nomeFinal, cleanEmail, perfilFinal, setorFinal, id]
           );
         }
@@ -3164,41 +3182,66 @@ export async function onRequest(context) {
           await syncPermissoesExtrasUsuarioD1(db, Number(id), permissoes_adicionais);
         }
 
+        // Invalida tokens anteriores não utilizados
+        try {
+          await d1Run(db, `DELETE FROM tokens_ativacao WHERE usuario_id = ? AND usado_em IS NULL`, [id]);
+        } catch (_) {}
+
+        // Gera token de ativação seguro de alta entropia (64 caracteres hex)
+        const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+        const tokenHash = await sha256Hex(rawToken);
+
+        await d1Run(
+          db,
+          "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
+          [id, tokenHash, ip]
+        );
+
+        const linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+
+        let setorNome = 'Geral';
+        if (setorFinal) {
+          const sRow = await d1First(db, `SELECT nome FROM setores WHERE id = ? LIMIT 1`, [setorFinal]);
+          if (sRow?.nome) setorNome = sRow.nome;
+        }
+
         await registrarAuditoria(db, {
           usuario_id: usuario.id,
           acao: 'APROVAR_CADASTRO',
           entidade: 'usuarios',
           entidade_id: Number(id),
-          descricao: `Solicitação #${id} ("${nomeFinal}") aprovada com perfil ${perfilFinal}.`,
+          descricao: `Solicitação #${id} ("${nomeFinal}") homologada com perfil ${perfilFinal}. Link seguro de ativação e definição de senha gerado.`,
           ip,
           user_agent: userAgent
         });
 
-        // 1. Notifica o usuário por e-mail que o acesso foi homologado e ativado
+        // Envia e-mail ao usuário com o link seguro de ativação para autenticar a conta e definir a senha
         const htmlAprovacao = gerarTemplateEmail({
-          titulo: 'Seu Acesso foi Aprovado!',
+          titulo: 'Seu Acesso foi Homologado!',
           saudacao: nomeFinal,
-          mensagemPrincipal: `Temos o prazer de informar que sua solicitação de acesso ao sistema integrado <strong>HUB ES+ SECULT</strong> foi avaliada e <strong>aprovada com sucesso</strong>!<br><br>` +
-            `<strong>Perfil Atribuído:</strong> ${perfilFinal}<br>` +
-            (senha && String(senha).trim().length >= 8
-              ? `<strong>Senha Inicial Provisória:</strong> <code style="background:#e2e8f0;padding:3px 8px;border-radius:6px;font-family:monospace;font-size:14px;color:#0f172a;">${String(senha).trim()}</code><br><span style="font-size:12px;color:#64748b;">(Recomendamos alterá-la no seu menu de perfil após o primeiro acesso).</span>`
-              : `Você já pode fazer login na plataforma utilizando a sua senha previamente definida.`),
-          botaoTexto: 'Acessar o Painel HUB ES+',
-          botaoUrl: url.origin,
-          rodapeAviso: 'Acesso institucional governamental auditado e sujeito às normas da SECULT / Governo do ES.'
+          mensagemPrincipal: `Temos a satisfação de informar que sua solicitação de acesso à plataforma integrada <strong>HUB ES+ SECULT</strong> foi avaliada e <strong>aprovada pela Administração Geral</strong>!<br><br>` +
+            `<strong>Perfil / Nível de Acesso:</strong> ${perfilFinal}<br>` +
+            `<strong>Setor Atribuído:</strong> ${setorNome}<br><br>` +
+            `Para autenticar sua conta com segurança e liberar seu acesso ao painel, clique no botão abaixo para <strong>definir a sua senha pessoal</strong> de acesso:`,
+          botaoTexto: 'Autenticar Conta e Definir Senha',
+          botaoUrl: linkAtivacao,
+          rodapeAviso: 'Por motivos de governança e segurança institucional, este link de ativação é de uso único e expira em 48 horas.'
         });
 
         const emailEnviado = await enviarEmailGenericoD1(env, {
           para: cleanEmail,
-          assunto: 'Seu Acesso ao HUB ES+ foi Aprovado!',
+          assunto: 'Ative sua Conta - HUB ES+ SECULT',
           html: htmlAprovacao
         });
 
         return jsonResponse({
           success: true,
-          ativacao_direta: true,
+          ativacao_direta: false,
           emailEnviado,
-          message: `Acesso de "${nomeFinal}" aprovado com sucesso! Notificação enviada para ${cleanEmail}.`
+          linkAtivacao,
+          message: emailEnviado
+            ? `Solicitação de "${nomeFinal}" aprovada com sucesso! Um e-mail com o link de ativação e definição de senha foi enviado para ${cleanEmail}.`
+            : `Solicitação aprovada! Link de ativação gerado com sucesso. (Você pode copiar o link gerado abaixo e enviar ao colaborador se necessário).`
         });
       }
 

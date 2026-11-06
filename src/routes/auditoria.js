@@ -292,7 +292,7 @@ router.post('/solicitacoes/:id/aprovar', async (req, res) => {
     }
 
     const definiuSenhaDireta = Boolean(senha && String(senha).trim().length >= 8);
-    const statusAposAprovacao = definiuSenhaDireta ? 'ATIVO' : 'AGUARDANDO_ATIVACAO';
+    const statusAposAprovacao = 'AGUARDANDO_ATIVACAO';
 
     let sql = `UPDATE usuarios SET status = ?, perfil = ?, setor_id = ?, nome = ?, email = ?, updated_at = NOW()`;
     const params = [statusAposAprovacao, perfilFinal, setorFinal, nomeFinal, emailFinal];
