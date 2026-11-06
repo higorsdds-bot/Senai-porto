@@ -462,8 +462,8 @@ window.UsuariosModule = {
 
         <!-- Tabela -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[780px] text-left text-xs border-collapse">
               <thead class="bg-slate-50/75 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th class="px-5 py-3.5">Colaborador</th>

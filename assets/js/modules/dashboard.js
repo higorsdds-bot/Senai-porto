@@ -9,6 +9,16 @@ window.DashboardModule = {
   abaFilaAtiva: 'TODAS',
   demandasConsolidadas: [],
 
+  _esc(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m]));
+  },
+
   async render(container) {
     // Skeleton minimalista no estilo Vercel
     container.innerHTML = `
@@ -328,7 +338,7 @@ window.DashboardModule = {
                 Operações 100% Online
               </span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5 flex items-center gap-3">
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1.5 flex flex-wrap items-center gap-2.5">
               Centro Integrado de Operações
               ${advertenciasPendentes > 0 && ehAdminGeral ? `
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white animate-pulse">
@@ -488,7 +498,7 @@ window.DashboardModule = {
           <!-- =============================================================== -->
           <!-- COLUNA PRINCIPAL (70% - 8 Colunas): Demandas & Gráfico Estruturado -->
           <!-- =============================================================== -->
-          <div class="lg:col-span-8 space-y-6">
+          <div class="lg:col-span-8 space-y-6 min-w-0">
 
             <!-- BLOCO 1: Fila Operacional Crítica (Demandas Unificadas com Abas) -->
             <div class="bento-surface overflow-hidden">
@@ -524,8 +534,8 @@ window.DashboardModule = {
               </div>
 
               <!-- Tabela de Demandas de Alta Densidade -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+              <div class="overflow-x-auto hub-scrollbar">
+                <table class="w-full min-w-[660px] text-left text-xs">
                   <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="py-3 px-4">Tag / Tipo</th>
@@ -550,8 +560,8 @@ window.DashboardModule = {
                           <span class="text-xs text-slate-400 block">${item.tipoLabel}</span>
                         </td>
                         <td class="py-3 px-4">
-                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate">${item.titulo}</span>
-                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate">${item.detalhe}</span>
+                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate" title="${this._esc(item.titulo)}">${item.titulo}</span>
+                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate" title="${this._esc(item.detalhe)}">${item.detalhe}</span>
                         </td>
                         <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           ${item.solicitante}
@@ -605,7 +615,7 @@ window.DashboardModule = {
           <!-- =============================================================== -->
           <!-- COLUNA LATERAL DE GOVERNANÇA & FEED (30% - 4 Colunas)           -->
           <!-- =============================================================== -->
-          <div class="lg:col-span-4 space-y-6">
+          <div class="lg:col-span-4 space-y-6 min-w-0">
 
             <!-- BLOCO 1: Live Activity Feed (Feed de Eventos em Tempo Real) -->
             <div class="bento-surface p-5">

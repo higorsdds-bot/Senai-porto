@@ -123,8 +123,8 @@ window.EquipamentosModule = {
           })
           : `
           <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto hub-scrollbar">
+              <table class="w-full min-w-[780px] text-left text-xs">
                 <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th class="p-3.5 w-16 text-center">Foto</th>
@@ -164,8 +164,8 @@ window.EquipamentosModule = {
                           `}
                         </td>
                         <td class="p-3.5">
-                          <div class="font-bold text-slate-900 dark:text-white leading-tight">${this._esc(item.nome)}</div>
-                          ${item.descricao ? `<div class="text-[11px] text-slate-400 max-w-xs truncate mt-0.5">${this._esc(item.descricao)}</div>` : ''}
+                          <div class="font-bold text-slate-900 dark:text-white leading-tight" title="${this._esc(item.nome)}">${this._esc(item.nome)}</div>
+                          ${item.descricao ? `<div class="text-[11px] text-slate-400 max-w-xs truncate mt-0.5" title="${this._esc(item.descricao)}">${this._esc(item.descricao)}</div>` : ''}
                         </td>
                         <td class="p-3.5 font-mono">
                           <span class="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">

@@ -584,6 +584,7 @@ html:not(.dark) table tbody tr:hover {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #f1f5f9;
   transition: background-color 0.15s ease;
+  min-width: 0;
 }
 
 .telemetry-cell .label {
@@ -691,4 +692,43 @@ html:not(.dark) table tbody tr:hover {
   background-color: #0b1320;
   border-color: #38bdf8;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+
+/* ==========================================================================
+   ROBUSTEZ VISUAL: SCROLLBARS DE TABELAS & PROTEÇÃO CONTRA CORTE
+   ========================================================================== */
+.hub-scrollbar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hub-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.hub-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 9999px;
+}
+
+.dark .hub-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.hub-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark .hub-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.hub-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .hub-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

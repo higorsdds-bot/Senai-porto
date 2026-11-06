@@ -1085,8 +1085,8 @@ const AuditoriaModule = {
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Usuário</th>
@@ -1338,8 +1338,8 @@ const AuditoriaModule = {
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-hub-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[850px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Nome</th>
@@ -1558,8 +1558,8 @@ const AuditoriaModule = {
             <span class="text-[11px] text-slate-400">Exibindo os 50 mais recentes</span>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[750px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                   <th class="py-3 px-4">Data/Hora</th>

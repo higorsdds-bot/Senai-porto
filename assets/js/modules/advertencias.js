@@ -217,8 +217,8 @@ window.AdvertenciasModule = {
 
             <!-- Tabela de Alta Densidade Scannable -->
             <div class="bento-surface overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+              <div class="overflow-x-auto hub-scrollbar">
+                <table class="w-full min-w-[680px] text-left text-xs">
                   <thead class="bg-slate-50/80 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 font-mono text-[10px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="p-3">Colaborador</th>
