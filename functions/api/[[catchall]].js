@@ -691,42 +691,42 @@ async function enviarEmailGenericoD1(env, { para, assunto, html, texto }) {
 
 function gerarTemplateEmail({ titulo, saudacao, mensagemPrincipal, botaoTexto, botaoUrl, rodapeAviso }) {
   return '<!DOCTYPE html>' +
-'<html lang="pt-BR">' +
-'<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>' +
-'<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">' +
-'  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f1f5f9;padding:32px 16px;">' +
-'    <tr>' +
-'      <td align="center">' +
-'        <table role="presentation" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);overflow:hidden;border:1px solid #e2e8f0;">' +
-'          <tr>' +
-'            <td style="background:linear-gradient(135deg, #0b1320 0%, #1e293b 100%);padding:28px 32px;text-align:center;">' +
-'              <h1 style="margin:0;color:#38bdf8;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HUB ES+</h1>' +
-'              <p style="margin:4px 0 0 0;color:#94a3b8;font-size:12px;font-weight:500;">SECULT • Governo do Estado do Espírito Santo</p>' +
-'            </td>' +
-'          </tr>' +
-'          <tr>' +
-'            <td style="padding:32px;">' +
-'              <h2 style="margin:0 0 16px 0;color:#0f172a;font-size:18px;font-weight:700;">' + titulo + '</h2>' +
-'              <p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#334155;">Olá <strong>' + saudacao + '</strong>,</p>' +
-'              <div style="font-size:14px;line-height:22px;color:#334155;margin-bottom:24px;">' +
-'                ' + mensagemPrincipal +
-'              </div>' +
-'              ' + (botaoUrl ? '<div style="text-align:center;margin:32px 0;"><a href="' + botaoUrl + '" target="_blank" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;box-shadow:0 2px 4px rgba(37,99,235,0.2);">' + botaoTexto + '</a></div><p style="font-size:12px;line-height:18px;color:#64748b;margin:24px 0 0 0;word-break:break-all;">Se o botão não funcionar, copie e cole o link no navegador:<br><a href="' + botaoUrl + '" style="color:#2563eb;text-decoration:underline;">' + botaoUrl + '</a></p>' : '') +
-'              ' + (rodapeAviso ? '<div style="margin-top:24px;padding:12px 16px;background-color:#f8fafc;border-left:4px solid #3b82f6;border-radius:4px;font-size:12px;color:#64748b;">' + rodapeAviso + '</div>' : '') +
-'            </td>' +
-'          </tr>' +
-'          <tr>' +
-'            <td style="background-color:#f8fafc;padding:20px 32px;text-align:center;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;">' +
-'              <p style="margin:0;">HUB ES+ • Plataforma Integrada de Gestão Administrativa</p>' +
-'              <p style="margin:4px 0 0 0;">Mensagem automática do sistema. Por favor, não responda a este e-mail.</p>' +
-'            </td>' +
-'          </tr>' +
-'        </table>' +
-'      </td>' +
-'    </tr>' +
-'  </table>' +
-'</body>' +
-'</html>';
+    '<html lang="pt-BR">' +
+    '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>' +
+    '<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;">' +
+    '  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f1f5f9;padding:32px 16px;">' +
+    '    <tr>' +
+    '      <td align="center">' +
+    '        <table role="presentation" width="100%" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);overflow:hidden;border:1px solid #e2e8f0;">' +
+    '          <tr>' +
+    '            <td style="background:linear-gradient(135deg, #0b1320 0%, #1e293b 100%);padding:28px 32px;text-align:center;">' +
+    '              <h1 style="margin:0;color:#38bdf8;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HUB ES+</h1>' +
+    '              <p style="margin:4px 0 0 0;color:#94a3b8;font-size:12px;font-weight:500;">SECULT • Governo do Estado do Espírito Santo</p>' +
+    '            </td>' +
+    '          </tr>' +
+    '          <tr>' +
+    '            <td style="padding:32px;">' +
+    '              <h2 style="margin:0 0 16px 0;color:#0f172a;font-size:18px;font-weight:700;">' + titulo + '</h2>' +
+    '              <p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#334155;">Olá <strong>' + saudacao + '</strong>,</p>' +
+    '              <div style="font-size:14px;line-height:22px;color:#334155;margin-bottom:24px;">' +
+    '                ' + mensagemPrincipal +
+    '              </div>' +
+    '              ' + (botaoUrl ? '<div style="text-align:center;margin:32px 0;"><a href="' + botaoUrl + '" target="_blank" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;box-shadow:0 2px 4px rgba(37,99,235,0.2);">' + botaoTexto + '</a></div><p style="font-size:12px;line-height:18px;color:#64748b;margin:24px 0 0 0;word-break:break-all;">Se o botão não funcionar, copie e cole o link no navegador:<br><a href="' + botaoUrl + '" style="color:#2563eb;text-decoration:underline;">' + botaoUrl + '</a></p>' : '') +
+    '              ' + (rodapeAviso ? '<div style="margin-top:24px;padding:12px 16px;background-color:#f8fafc;border-left:4px solid #3b82f6;border-radius:4px;font-size:12px;color:#64748b;">' + rodapeAviso + '</div>' : '') +
+    '            </td>' +
+    '          </tr>' +
+    '          <tr>' +
+    '            <td style="background-color:#f8fafc;padding:20px 32px;text-align:center;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;">' +
+    '              <p style="margin:0;">HUB ES+ • Plataforma Integrada de Gestão Administrativa</p>' +
+    '              <p style="margin:4px 0 0 0;">Mensagem automática do sistema. Por favor, não responda a este e-mail.</p>' +
+    '            </td>' +
+    '          </tr>' +
+    '        </table>' +
+    '      </td>' +
+    '    </tr>' +
+    '  </table>' +
+    '</body>' +
+    '</html>';
 }
 
 // ─── Permissões e Módulos do Usuário no D1 ───────────────────────────────────
@@ -741,7 +741,7 @@ async function obterPermissoesEModulos(db, usuario) {
     try {
       const todas = await d1All(db, `SELECT chave FROM permissoes`);
       for (const r of todas) permSet.add(r.chave);
-    } catch (_) {}
+    } catch (_) { }
   } else {
     if (FIXED_PROFILE_PERMISSIONS[perfilNorm]) {
       for (const p of FIXED_PROFILE_PERMISSIONS[perfilNorm]) permSet.add(p);
@@ -755,7 +755,7 @@ async function obterPermissoesEModulos(db, usuario) {
         [perfilNorm]
       );
       for (const r of permsProfile) permSet.add(r.chave);
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const permsUser = await d1All(
@@ -769,7 +769,7 @@ async function obterPermissoesEModulos(db, usuario) {
         if (r.concedida) permSet.add(r.chave);
         else permSet.delete(r.chave);
       }
-    } catch (_) {}
+    } catch (_) { }
 
     expandImpliedPermissions(permSet);
   }
@@ -778,8 +778,8 @@ async function obterPermissoesEModulos(db, usuario) {
   const modulos = isAdmin
     ? Object.keys(MODULE_PERMISSIONS)
     : Object.entries(MODULE_PERMISSIONS)
-        .filter(([, reqPerms]) => reqPerms.some(p => permSet.has(p)))
-        .map(([mod]) => mod);
+      .filter(([, reqPerms]) => reqPerms.some(p => permSet.has(p)))
+      .map(([mod]) => mod);
 
   return { permissoes, modulos };
 }
@@ -977,14 +977,14 @@ let _dbInitPromise = null;
 async function ensureDbInit(db) {
   if (_dbInitPromise) return _dbInitPromise;
   _dbInitPromise = (async () => {
-    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) { }
     try {
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_del_created ON ocorrencias(deleted_at, created_at DESC)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_status ON ocorrencias(status, deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equipamentos_del ON equipamentos(deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_usuarios_del ON usuarios(deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_comunicados_del ON comunicados(destinatario_perfil, deleted_at)');
-    } catch (_) {}
+    } catch (_) { }
   })();
   return _dbInitPromise;
 }
@@ -1420,7 +1420,7 @@ export async function onRequest(context) {
     }
 
     // ─── A partir daqui todas as rotas exigem JWT válido ─────────────────────
-    
+
     // ─── Streaming de Fotos / Imagens Binárias com Cache HTTP de 24h ─────────────
     const matchOcorrenciaFoto = route.match(/^\/ocorrencias\/(\d+)\/foto$/);
     if (matchOcorrenciaFoto && method === 'GET') {
@@ -1557,7 +1557,7 @@ export async function onRequest(context) {
       }
 
       // Garante coluna foto_url se ainda não existir
-      try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) {}
+      try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) { }
 
       if (fotoLimpa !== undefined) {
         await d1Run(db, `UPDATE usuarios SET nome = ?, email = ?, foto_url = ?, updated_at = datetime('now') WHERE id = ?`, [nomeLimpo, emailLimpo, fotoLimpa, usuario.id]);
