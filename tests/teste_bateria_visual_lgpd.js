@@ -77,6 +77,8 @@ assert(dashboardContent.includes('lg:col-span-8 space-y-6 min-w-0'), 'Coluna pri
 assert(dashboardContent.includes('lg:col-span-4 space-y-6 min-w-0'), 'Coluna lateral de 30% da Bento Grid possui min-w-0 contra expansão indevida');
 assert(dashboardContent.includes('flex flex-wrap items-center gap-2.5'), 'Cabeçalho principal do dashboard suporta quebra suave de badges de alerta sem estourar margem');
 assert(dashboardContent.includes('hub-scrollbar'), 'Tabela de alta densidade da Fila Crítica utiliza scrollbar estilizada');
+assert(dashboardContent.includes('gap-4 sm:gap-5'), 'Cards superiores de telemetria possuem espaçamento (gap) explícito entre eles');
+assert(dashboardContent.includes('flex items-center gap-1.5 flex-wrap shrink-0'), 'Abas da Fila Operacional Crítica possuem flex-wrap para que nenhum botão seja cortado');
 
 const styleCssPath = path.join(ROOT_DIR, 'assets', 'css', 'style.css');
 const styleCssContent = fs.readFileSync(styleCssPath, 'utf8');

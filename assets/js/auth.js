@@ -674,10 +674,10 @@ class AuthManager {
       if (window.lucide) lucide.createIcons({ root: tela });
       return;
     }
-      tela = document.createElement('div');
-      tela.id = 'tela-login';
-      tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
-      tela.innerHTML = `
+    tela = document.createElement('div');
+    tela.id = 'tela-login';
+    tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
+    tela.innerHTML = `
         <div class="relative w-full max-w-md bg-white dark:bg-[#0b1320] rounded-3xl shadow-hub-lg p-6 sm:p-8 my-8 border border-slate-100 dark:border-slate-800 transition-all text-slate-800 dark:text-slate-100">
           <!-- BOTÃO RÁPIDO DE ALTERNÂNCIA DE TEMA NO LOGIN -->
           <button type="button" id="btn-login-tema-toggle"
@@ -823,93 +823,93 @@ class AuthManager {
             <span class="text-[11px] text-slate-400">HUB ES+ • Segurança e Governança Integrada</span>
           </div>
         </div>`;
-      document.body.appendChild(tela);
+    document.body.appendChild(tela);
 
-      // Alternância rápida de Tema no Login
-      tela.querySelector('#btn-login-tema-toggle')?.addEventListener('click', () => {
-        if (window.Tema) {
-          window.Tema.alternar();
-          if (window.lucide) lucide.createIcons();
+    // Alternância rápida de Tema no Login
+    tela.querySelector('#btn-login-tema-toggle')?.addEventListener('click', () => {
+      if (window.Tema) {
+        window.Tema.alternar();
+        if (window.lucide) lucide.createIcons();
+      }
+    });
+
+    // Alternância entre Login e Solicitar Cadastro
+    const tabLogin = tela.querySelector('#tab-login');
+    const tabCadastro = tela.querySelector('#tab-cadastro');
+    const formLogin = tela.querySelector('#form-login');
+    const formCadastro = tela.querySelector('#form-cadastro');
+    const feedbackEl = tela.querySelector('#login-feedback');
+
+    const mostrarFeedback = (msg, tipo = 'erro') => {
+      feedbackEl.textContent = msg;
+      feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
+        tipo === 'sucesso'
+          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+          : tipo === 'aviso'
+            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+            : 'bg-red-50 text-red-600 border border-red-200'
+      );
+      feedbackEl.classList.remove('hidden');
+    };
+
+    const limparFeedback = () => feedbackEl.classList.add('hidden');
+
+    const formEsqueci = tela.querySelector('#form-esqueci-senha');
+    const btnEsqueciSenha = tela.querySelector('#btn-esqueci-senha');
+    const btnVoltarLogin = tela.querySelector('#btn-voltar-login');
+    const abasNavegacao = tela.querySelector('.flex.p-1.bg-slate-100');
+
+    if (btnEsqueciSenha) {
+      btnEsqueciSenha.addEventListener('click', () => {
+        limparFeedback();
+        formLogin.classList.add('hidden');
+        formCadastro.classList.add('hidden');
+        formEsqueci?.classList.remove('hidden');
+        abasNavegacao?.classList.add('hidden');
+        const recEmail = tela.querySelector('#recup-email');
+        if (recEmail) {
+          recEmail.value = tela.querySelector('#login-email')?.value || '';
+          recEmail.focus();
         }
+        if (window.lucide) lucide.createIcons();
       });
+    }
 
-      // Alternância entre Login e Solicitar Cadastro
-      const tabLogin = tela.querySelector('#tab-login');
-      const tabCadastro = tela.querySelector('#tab-cadastro');
-      const formLogin = tela.querySelector('#form-login');
-      const formCadastro = tela.querySelector('#form-cadastro');
-      const feedbackEl = tela.querySelector('#login-feedback');
+    if (btnVoltarLogin) {
+      btnVoltarLogin.addEventListener('click', () => {
+        limparFeedback();
+        formEsqueci?.classList.add('hidden');
+        formCadastro.classList.add('hidden');
+        formLogin.classList.remove('hidden');
+        abasNavegacao?.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      });
+    }
 
-      const mostrarFeedback = (msg, tipo = 'erro') => {
-        feedbackEl.textContent = msg;
-        feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed ' + (
-          tipo === 'sucesso'
-            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            : tipo === 'aviso'
-              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-              : 'bg-red-50 text-red-600 border border-red-200'
-        );
-        feedbackEl.classList.remove('hidden');
-      };
-
-      const limparFeedback = () => feedbackEl.classList.add('hidden');
-
-      const formEsqueci = tela.querySelector('#form-esqueci-senha');
-      const btnEsqueciSenha = tela.querySelector('#btn-esqueci-senha');
-      const btnVoltarLogin = tela.querySelector('#btn-voltar-login');
-      const abasNavegacao = tela.querySelector('.flex.p-1.bg-slate-100');
-
-      if (btnEsqueciSenha) {
-        btnEsqueciSenha.addEventListener('click', () => {
-          limparFeedback();
-          formLogin.classList.add('hidden');
-          formCadastro.classList.add('hidden');
-          formEsqueci?.classList.remove('hidden');
-          abasNavegacao?.classList.add('hidden');
-          const recEmail = tela.querySelector('#recup-email');
-          if (recEmail) {
-            recEmail.value = tela.querySelector('#login-email')?.value || '';
-            recEmail.focus();
-          }
-          if (window.lucide) lucide.createIcons();
-        });
-      }
-
-      if (btnVoltarLogin) {
-        btnVoltarLogin.addEventListener('click', () => {
-          limparFeedback();
-          formEsqueci?.classList.add('hidden');
-          formCadastro.classList.add('hidden');
-          formLogin.classList.remove('hidden');
-          abasNavegacao?.classList.remove('hidden');
-          if (window.lucide) lucide.createIcons();
-        });
-      }
-
-      if (formEsqueci) {
-        formEsqueci.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          limparFeedback();
-          const email = tela.querySelector('#recup-email')?.value.trim();
-          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            mostrarFeedback('Informe um e-mail válido.', 'erro');
-            return;
-          }
-          const btnSubmit = tela.querySelector('#btn-enviar-recuperacao');
-          const textoOriginal = btnSubmit ? btnSubmit.innerHTML : 'Enviar Link de Recuperação';
-          if (btnSubmit) {
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = 'Enviando link...';
-          }
-          try {
-            const res = (typeof window.API?.esqueciSenha === 'function')
-              ? await window.API.esqueciSenha({ email })
-              : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
-            const linkAtivacao = res?.linkAtivacao || res?.data?.linkAtivacao;
-            const emailEnviado = res?.emailEnviado ?? res?.data?.emailEnviado;
-            const msg = res?.message || (emailEnviado ? 'Link seguro enviado para o seu e-mail!' : 'Link seguro de redefinição gerado com sucesso!');
-            if (linkAtivacao) {
-              feedbackEl.innerHTML = `
+    if (formEsqueci) {
+      formEsqueci.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        limparFeedback();
+        const email = tela.querySelector('#recup-email')?.value.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          mostrarFeedback('Informe um e-mail válido.', 'erro');
+          return;
+        }
+        const btnSubmit = tela.querySelector('#btn-enviar-recuperacao');
+        const textoOriginal = btnSubmit ? btnSubmit.innerHTML : 'Enviar Link de Recuperação';
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.innerHTML = 'Enviando link...';
+        }
+        try {
+          const res = (typeof window.API?.esqueciSenha === 'function')
+            ? await window.API.esqueciSenha({ email })
+            : await window.API.request('/auth/esqueci-senha', { method: 'POST', body: JSON.stringify({ email }) });
+          const linkAtivacao = res?.linkAtivacao || res?.data?.linkAtivacao;
+          const emailEnviado = res?.emailEnviado ?? res?.data?.emailEnviado;
+          const msg = res?.message || (emailEnviado ? 'Link seguro enviado para o seu e-mail!' : 'Link seguro de redefinição gerado com sucesso!');
+          if (linkAtivacao) {
+            feedbackEl.innerHTML = `
                       <div class="font-semibold text-emerald-900">${msg}</div>
                       <div class="mt-2.5 p-3 bg-white rounded-xl border border-emerald-300 shadow-sm text-left">
                         <div class="text-[11px] text-slate-500 font-bold mb-1 flex items-center gap-1.5">
@@ -921,137 +921,137 @@ class AuthManager {
                         </a>
                       </div>
                     `;
-              feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
-              feedbackEl.classList.remove('hidden');
-              if (window.lucide) lucide.createIcons();
-            } else {
-              mostrarFeedback(msg, 'sucesso');
-            }
-          } catch (err) {
-            mostrarFeedback(err.message || 'Erro ao processar recuperação de senha.', 'erro');
-          } finally {
-            if (btnSubmit) {
-              btnSubmit.disabled = false;
-              btnSubmit.innerHTML = textoOriginal;
-            }
-          }
-        });
-      }
-
-      tabLogin.addEventListener('click', () => {
-        limparFeedback();
-        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
-        tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
-        formLogin.classList.remove('hidden');
-        formCadastro.classList.add('hidden');
-      });
-
-      tabCadastro.addEventListener('click', () => {
-        limparFeedback();
-        tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
-        tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
-        formCadastro.classList.remove('hidden');
-        formLogin.classList.add('hidden');
-      });
-
-      // Submit: Formulário de Login
-
-      const seletorCargos = tela.querySelector('#seletor-cargos-teste');
-      if (seletorCargos) {
-        seletorCargos.addEventListener('change', (e) => {
-          const opt = e.target.selectedOptions?.[0];
-          if (opt && opt.value) {
-            tela.querySelector('#login-email').value = opt.value;
-            tela.querySelector('#login-senha').value = opt.getAttribute('data-pass') || 'Teste@2026!';
-          }
-        });
-      }
-
-      formLogin.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        limparFeedback();
-        const email = tela.querySelector('#login-email').value.trim();
-        const senha = tela.querySelector('#login-senha').value;
-        const btn = tela.querySelector('#btn-login');
-
-        if (!email || !senha) {
-          mostrarFeedback('Preencha o e-mail e a senha.');
-          return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Autenticando...';
-        try {
-          await this.login(email, senha);
-
-          this.ocultarTelaLogin();
-          this.preencherInfoUsuario();
-          window.dispatchEvent(new Event('hub:login'));
-          if (window.lucide) lucide.createIcons();
-
-          // Exibe opções de acessibilidade e escolha de tema (dark/light) pós-login em assistente wizard
-          if (window.Acessibilidade && typeof window.Acessibilidade.mostrarModalPosLogin === 'function') {
-            window.Acessibilidade.mostrarModalPosLogin(this.usuario, () => {
-              if (window.lucide) lucide.createIcons();
-            });
-          }
-        } catch (err) {
-          const msg = err.message || 'Credenciais inválidas.';
-          if (msg.toLowerCase().includes('pendente')) {
-            mostrarFeedback(msg, 'aviso');
+            feedbackEl.className = 'mb-4 text-xs font-semibold rounded-xl px-4 py-3 leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200';
+            feedbackEl.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
           } else {
-            mostrarFeedback(msg, 'erro');
+            mostrarFeedback(msg, 'sucesso');
           }
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Entrar no Sistema';
-        }
-      });
-
-      // Submit: Solicitação de Cadastro
-      formCadastro.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        limparFeedback();
-        const nome = tela.querySelector('#cad-nome').value.trim();
-        const email = tela.querySelector('#cad-email').value.trim();
-        const btn = tela.querySelector('#btn-solicitar');
-
-        if (!nome || nome.length < 3) {
-          mostrarFeedback('Nome precisa ter no mínimo 3 caracteres.');
-          return;
-        }
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          mostrarFeedback('Por favor, informe um e-mail válido.');
-          return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Enviando Solicitação...';
-        try {
-          const res = await window.API.solicitarCadastro({ nome, email });
-          formCadastro.reset();
-          mostrarFeedback(
-            res?.message || 'Solicitação enviada com sucesso! Aguarde a notificação por e-mail após a aprovação do Administrador.',
-            'sucesso'
-          );
-          // Alterna para a aba de login após 3.5 segundos
-          setTimeout(() => tabLogin.click(), 3500);
         } catch (err) {
-          mostrarFeedback(err.message || 'Erro ao enviar solicitação de cadastro.', 'erro');
+          mostrarFeedback(err.message || 'Erro ao processar recuperação de senha.', 'erro');
         } finally {
-          btn.disabled = false;
-          btn.textContent = 'Enviar Solicitação de Cadastro';
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = textoOriginal;
+          }
         }
       });
+    }
 
-      // Botão "Continuar como Visitante"
-      tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
-        this.entrarComoVisitante();
+    tabLogin.addEventListener('click', () => {
+      limparFeedback();
+      tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+      tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+      formLogin.classList.remove('hidden');
+      formCadastro.classList.add('hidden');
+    });
+
+    tabCadastro.addEventListener('click', () => {
+      limparFeedback();
+      tabCadastro.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+      tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+      formCadastro.classList.remove('hidden');
+      formLogin.classList.add('hidden');
+    });
+
+    // Submit: Formulário de Login
+
+    const seletorCargos = tela.querySelector('#seletor-cargos-teste');
+    if (seletorCargos) {
+      seletorCargos.addEventListener('change', (e) => {
+        const opt = e.target.selectedOptions?.[0];
+        if (opt && opt.value) {
+          tela.querySelector('#login-email').value = opt.value;
+          tela.querySelector('#login-senha').value = opt.getAttribute('data-pass') || 'Teste@2026!';
+        }
       });
+    }
 
-      tela.classList.remove('hidden');
-      document.getElementById('app-conteudo')?.classList.add('hidden');
-      if (window.lucide) lucide.createIcons();
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      limparFeedback();
+      const email = tela.querySelector('#login-email').value.trim();
+      const senha = tela.querySelector('#login-senha').value;
+      const btn = tela.querySelector('#btn-login');
+
+      if (!email || !senha) {
+        mostrarFeedback('Preencha o e-mail e a senha.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Autenticando...';
+      try {
+        await this.login(email, senha);
+
+        this.ocultarTelaLogin();
+        this.preencherInfoUsuario();
+        window.dispatchEvent(new Event('hub:login'));
+        if (window.lucide) lucide.createIcons();
+
+        // Exibe opções de acessibilidade e escolha de tema (dark/light) pós-login em assistente wizard
+        if (window.Acessibilidade && typeof window.Acessibilidade.mostrarModalPosLogin === 'function') {
+          window.Acessibilidade.mostrarModalPosLogin(this.usuario, () => {
+            if (window.lucide) lucide.createIcons();
+          });
+        }
+      } catch (err) {
+        const msg = err.message || 'Credenciais inválidas.';
+        if (msg.toLowerCase().includes('pendente')) {
+          mostrarFeedback(msg, 'aviso');
+        } else {
+          mostrarFeedback(msg, 'erro');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar no Sistema';
+      }
+    });
+
+    // Submit: Solicitação de Cadastro
+    formCadastro.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      limparFeedback();
+      const nome = tela.querySelector('#cad-nome').value.trim();
+      const email = tela.querySelector('#cad-email').value.trim();
+      const btn = tela.querySelector('#btn-solicitar');
+
+      if (!nome || nome.length < 3) {
+        mostrarFeedback('Nome precisa ter no mínimo 3 caracteres.');
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mostrarFeedback('Por favor, informe um e-mail válido.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando Solicitação...';
+      try {
+        const res = await window.API.solicitarCadastro({ nome, email });
+        formCadastro.reset();
+        mostrarFeedback(
+          res?.message || 'Solicitação enviada com sucesso! Aguarde a notificação por e-mail após a aprovação do Administrador.',
+          'sucesso'
+        );
+        // Alterna para a aba de login após 3.5 segundos
+        setTimeout(() => tabLogin.click(), 3500);
+      } catch (err) {
+        mostrarFeedback(err.message || 'Erro ao enviar solicitação de cadastro.', 'erro');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Solicitação de Cadastro';
+      }
+    });
+
+    // Botão "Continuar como Visitante"
+    tela.querySelector('#btn-voltar-visitante')?.addEventListener('click', () => {
+      this.entrarComoVisitante();
+    });
+
+    tela.classList.remove('hidden');
+    document.getElementById('app-conteudo')?.classList.add('hidden');
+    if (window.lucide) lucide.createIcons();
   }
 
   ocultarTelaAtivacao() {
