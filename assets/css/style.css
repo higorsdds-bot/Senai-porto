@@ -71,6 +71,75 @@ body {
 }
 
 /* ==========================================================================
+   FUNDO AMBIENTE TECNOLÓGICO COM OPACIDADE (LOOP PROFISSIONAL)
+   ========================================================================== */
+.fundo-ambiente-tech {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.fundo-ambiente-tech img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.07;
+  filter: saturate(1.15);
+  transition: opacity 0.5s ease;
+  will-change: opacity;
+}
+
+html.dark .fundo-ambiente-tech img,
+.dark .fundo-ambiente-tech img {
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  filter: saturate(1.35) brightness(1.1);
+}
+
+/* Destaque sutil na tela de login */
+#tela-login .fundo-ambiente-tech img {
+  opacity: 0.22;
+}
+
+html.dark #tela-login .fundo-ambiente-tech img,
+.dark #tela-login .fundo-ambiente-tech img {
+  opacity: 0.32;
+  mix-blend-mode: screen;
+}
+
+.fundo-ambiente-tech .fundo-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 35%, transparent 25%, rgba(248, 250, 252, 0.6) 75%, rgba(248, 250, 252, 0.95) 100%);
+  transition: background 0.5s ease;
+}
+
+html.dark .fundo-ambiente-tech .fundo-overlay,
+.dark .fundo-ambiente-tech .fundo-overlay {
+  background: radial-gradient(circle at 50% 35%, transparent 20%, rgba(4, 9, 20, 0.4) 65%, rgba(4, 9, 20, 0.88) 100%);
+}
+
+#tela-login .fundo-ambiente-tech .fundo-overlay {
+  background: radial-gradient(circle at 50% 50%, transparent 15%, rgba(4, 9, 20, 0.55) 60%, rgba(4, 9, 20, 0.94) 100%);
+}
+
+/* Proteção de Acessibilidade: Alto Contraste */
+html.alto-contraste .fundo-ambiente-tech,
+.alto-contraste .fundo-ambiente-tech {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fundo-ambiente-tech img {
+    opacity: 0.04 !important;
+  }
+}
+
+/* ==========================================================================
    GLASSMORPHISM & SUPERFÍCIES REFINADAS
    ========================================================================== */
 .glass-panel {

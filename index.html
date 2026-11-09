@@ -58,18 +58,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Custom CSS para glassmorphism e animações -->
-  <link rel="stylesheet" href="assets/css/style.css?v=2.5.0" />
-  <link rel="stylesheet" href="assets/css/acessibilidade.css?v=2.5.0" />
-  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2.5.0" />
+  <link rel="stylesheet" href="assets/css/style.css?v=2.5.1" />
+  <link rel="stylesheet" href="assets/css/acessibilidade.css?v=2.5.1" />
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2.5.1" />
 
   <!-- VLibras: Tradutor Oficial de Língua Brasileira de Sinais -->
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 </head>
 
 <body
-  class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
+  class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col selection:bg-blue-600 selection:text-white relative">
 
-  <div id="app-conteudo" class="flex-1 flex flex-col min-h-screen">
+  <!-- ================================================================= -->
+  <!-- FUNDO AMBIENTE TECNOLÓGICO COM OPACIDADE (LOOP PROFISSIONAL) -->
+  <!-- ================================================================= -->
+  <div class="fundo-ambiente-tech" aria-hidden="true">
+    <img src="assets/img/fundo-tecnologico.gif" alt="" />
+    <div class="fundo-overlay"></div>
+  </div>
+
+  <div id="app-conteudo" class="relative z-10 flex-1 flex flex-col min-h-screen">
     <!-- ================================================================= -->
     <!-- TOP NAVBAR (PADRÃO DESKTOP & MOBILE COM BORDA SUAVE INTEGRADA) -->
     <!-- ================================================================= -->
@@ -717,32 +725,32 @@
   <!-- ================================================================= -->
   <!-- SCRIPTS DA APLICAÇÃO (EM ORDEM DE DEPENDÊNCIA) -->
   <!-- ================================================================= -->
-  <script src="assets/js/config.js?v=2.5.0"></script>
-  <script src="assets/js/tema.js?v=2.5.0"></script>
-  <script src="assets/js/acessibilidade.js?v=2.5.0"></script>
-  <script src="assets/js/mock.js?v=2.5.0"></script>
-  <script src="assets/js/api.js?v=2.5.0"></script>
-  <script src="assets/js/auth.js?v=2.5.0"></script>
-  <script src="assets/js/ui.js?v=2.5.0"></script>
-  <script src="assets/js/lgpd.js?v=2.5.0"></script>
+  <script src="assets/js/config.js?v=2.5.1"></script>
+  <script src="assets/js/tema.js?v=2.5.1"></script>
+  <script src="assets/js/acessibilidade.js?v=2.5.1"></script>
+  <script src="assets/js/mock.js?v=2.5.1"></script>
+  <script src="assets/js/api.js?v=2.5.1"></script>
+  <script src="assets/js/auth.js?v=2.5.1"></script>
+  <script src="assets/js/ui.js?v=2.5.1"></script>
+  <script src="assets/js/lgpd.js?v=2.5.1"></script>
 
   <!-- todos os módulos -->
-  <script src="assets/js/modules/dashboard.js?v=2.5.0"></script>
-  <script src="assets/js/modules/ocorrencias.js?v=2.5.0"></script>
-  <script src="assets/js/modules/documentos.js?v=2.5.0"></script>
-  <script src="assets/js/modules/insumos.js?v=2.5.0"></script>
-  <script src="assets/js/modules/compras.js?v=2.5.0"></script>
-  <script src="assets/js/modules/agenda.js?v=2.5.0"></script>
-  <script src="assets/js/modules/comunicacao.js?v=2.5.0"></script>
-  <script src="assets/js/modules/indicadores.js?v=2.5.0"></script>
-  <script src="assets/js/modules/limpeza.js?v=2.5.0"></script>
-  <script src="assets/js/modules/equipamentos.js?v=2.5.0"></script>
-  <script src="assets/js/modules/usuarios.js?v=2.5.0"></script>
-  <script src="assets/js/modules/advertencias.js?v=2.5.0"></script>
-  <script src="assets/js/modules/auditoria.js?v=2.5.0"></script>
+  <script src="assets/js/modules/dashboard.js?v=2.5.1"></script>
+  <script src="assets/js/modules/ocorrencias.js?v=2.5.1"></script>
+  <script src="assets/js/modules/documentos.js?v=2.5.1"></script>
+  <script src="assets/js/modules/insumos.js?v=2.5.1"></script>
+  <script src="assets/js/modules/compras.js?v=2.5.1"></script>
+  <script src="assets/js/modules/agenda.js?v=2.5.1"></script>
+  <script src="assets/js/modules/comunicacao.js?v=2.5.1"></script>
+  <script src="assets/js/modules/indicadores.js?v=2.5.1"></script>
+  <script src="assets/js/modules/limpeza.js?v=2.5.1"></script>
+  <script src="assets/js/modules/equipamentos.js?v=2.5.1"></script>
+  <script src="assets/js/modules/usuarios.js?v=2.5.1"></script>
+  <script src="assets/js/modules/advertencias.js?v=2.5.1"></script>
+  <script src="assets/js/modules/auditoria.js?v=2.5.1"></script>
 
   <!-- app.js por último de verdade -->
-  <script src="assets/js/app.js?v=2.5.0"></script>
+  <script src="assets/js/app.js?v=2.5.1"></script>
 
 </body>
 

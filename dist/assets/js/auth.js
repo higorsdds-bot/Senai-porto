@@ -676,9 +676,15 @@ class AuthManager {
     }
     tela = document.createElement('div');
     tela.id = 'tela-login';
-    tela.className = 'fixed inset-0 z-[999] bg-hub-navy/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto';
+    tela.className = 'fixed inset-0 z-[999] bg-[#040914]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto relative selection:bg-blue-600 selection:text-white';
     tela.innerHTML = `
-        <div class="relative w-full max-w-md bg-white dark:bg-[#0b1320] rounded-3xl shadow-hub-lg p-6 sm:p-8 my-8 border border-slate-100 dark:border-slate-800 transition-all text-slate-800 dark:text-slate-100">
+        <!-- FUNDO AMBIENTE TECNOLÓGICO COM OPACIDADE NA TELA DE LOGIN -->
+        <div class="fundo-ambiente-tech absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+          <img src="assets/img/fundo-tecnologico.gif" alt="" class="w-full h-full object-cover" />
+          <div class="fundo-overlay"></div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-md bg-white/95 dark:bg-[#0b1320]/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 sm:p-8 my-8 border border-slate-100 dark:border-slate-800 transition-all text-slate-800 dark:text-slate-100">
           <!-- BOTÃO RÁPIDO DE ALTERNÂNCIA DE TEMA NO LOGIN -->
           <button type="button" id="btn-login-tema-toggle"
             class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
