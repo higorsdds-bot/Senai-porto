@@ -26,6 +26,20 @@ class AppRouter {
         moduleKey: 'documentos',
         permissions: ['documentos.visualizar', 'documentos.enviar', 'documentos.baixar']
       },
+      'gerador-documentos': {
+        title: 'Gerador de Documentos Oficiais',
+        module: window.DocumentosModule,
+        navId: 'nav-gerador-documentos',
+        moduleKey: 'documentos',
+        permissions: ['documentos.visualizar', 'documentos.criar', 'documentos.gerar']
+      },
+      'documentos-gerador': {
+        title: 'Gerador de Documentos Oficiais',
+        module: window.DocumentosModule,
+        navId: 'nav-gerador-documentos',
+        moduleKey: 'documentos',
+        permissions: ['documentos.visualizar', 'documentos.criar', 'documentos.gerar']
+      },
       'insumos': {
         title: 'Controle de Insumos',
         module: window.InsumosModule,
@@ -262,6 +276,9 @@ class AppRouter {
       || window[hash.charAt(0).toUpperCase() + hash.slice(1) + 'Module'];
 
     if (mod && typeof mod.render === 'function') {
+      if ((hash === 'gerador-documentos' || hash === 'documentos-gerador') && window.DocumentosModule) {
+        window.DocumentosModule.activeTab = 'gerador';
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       mod.render(this.contentContainer);
     } else {
