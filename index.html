@@ -58,9 +58,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Custom CSS para glassmorphism e animações -->
-  <link rel="stylesheet" href="assets/css/style.css?v=2.5.2" />
-  <link rel="stylesheet" href="assets/css/acessibilidade.css?v=2.5.2" />
-  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2.5.2" />
+  <link rel="stylesheet" href="assets/css/style.css?v=2.5.3" />
+  <link rel="stylesheet" href="assets/css/acessibilidade.css?v=2.5.3" />
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2.5.3" />
 
   <!-- VLibras: Tradutor Oficial de Língua Brasileira de Sinais -->
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
@@ -630,26 +630,26 @@
     <!-- ================================================================= -->
     <div id="global-search-container" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-1">
       <div
-        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 dark:bg-slate-900/60 p-2 sm:p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md shadow-sm">
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900/80 p-2 sm:p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md shadow-slate-950/10 backdrop-blur-md transition-colors">
         <div class="relative flex-1 max-w-xl">
           <i data-lucide="search"
             class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
           <input id="input-global-search" type="text"
             placeholder="Buscar no HUB ES+ (compras, insumos, ocorrências, agenda, avisos... pressione Enter)"
-            class="w-full pl-10 pr-20 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700/80 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all" />
+            class="w-full pl-10 pr-20 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-200 dark:border-slate-700/80 focus:border-blue-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all" />
           <kbd
-            class="hidden sm:inline-flex items-center absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-400 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">
+            class="hidden sm:inline-flex items-center absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">
             Enter ↵
           </kbd>
         </div>
-        <div class="hidden md:flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium pr-2">
+        <div class="hidden md:flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium pr-2">
           <span
             class="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
             <span class="w-2 h-2 rounded-full bg-emerald-500 status-ping"></span>
             Sistema Online
           </span>
           <span class="text-slate-300 dark:text-slate-700">•</span>
-          <span class="text-[11px] text-slate-400">Polo HUB ES+</span>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Polo HUB ES+</span>
         </div>
       </div>
     </div>
@@ -687,8 +687,7 @@
           </div>
 
           <!-- Centro: Links Rápidos Institucionais -->
-          <div
-            class="flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-400">
+          <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-slate-400">
             <a href="#comunicacao" class="hover:text-blue-400 dark:hover:text-sky-400 transition-colors">Central de
               Comunicados</a>
             <span class="text-slate-600">•</span>
@@ -704,8 +703,7 @@
               <span>Privacidade & Cookies (LGPD)</span>
             </button>
             <span class="text-slate-600">•</span>
-            <span
-              class="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
+            <span class="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
               Operacional v2026.5
             </span>
@@ -735,22 +733,22 @@
   <script src="assets/js/lgpd.js?v=2.5.2"></script>
 
   <!-- todos os módulos -->
-  <script src="assets/js/modules/dashboard.js?v=2.5.2"></script>
-  <script src="assets/js/modules/ocorrencias.js?v=2.5.2"></script>
-  <script src="assets/js/modules/documentos.js?v=2.5.2"></script>
-  <script src="assets/js/modules/insumos.js?v=2.5.2"></script>
-  <script src="assets/js/modules/compras.js?v=2.5.2"></script>
-  <script src="assets/js/modules/agenda.js?v=2.5.2"></script>
-  <script src="assets/js/modules/comunicacao.js?v=2.5.2"></script>
-  <script src="assets/js/modules/indicadores.js?v=2.5.2"></script>
-  <script src="assets/js/modules/limpeza.js?v=2.5.2"></script>
-  <script src="assets/js/modules/equipamentos.js?v=2.5.2"></script>
-  <script src="assets/js/modules/usuarios.js?v=2.5.2"></script>
-  <script src="assets/js/modules/advertencias.js?v=2.5.2"></script>
-  <script src="assets/js/modules/auditoria.js?v=2.5.2"></script>
+  <script src="assets/js/modules/dashboard.js?v=2.5.3"></script>
+  <script src="assets/js/modules/ocorrencias.js?v=2.5.3"></script>
+  <script src="assets/js/modules/documentos.js?v=2.5.3"></script>
+  <script src="assets/js/modules/insumos.js?v=2.5.3"></script>
+  <script src="assets/js/modules/compras.js?v=2.5.3"></script>
+  <script src="assets/js/modules/agenda.js?v=2.5.3"></script>
+  <script src="assets/js/modules/comunicacao.js?v=2.5.3"></script>
+  <script src="assets/js/modules/indicadores.js?v=2.5.3"></script>
+  <script src="assets/js/modules/limpeza.js?v=2.5.3"></script>
+  <script src="assets/js/modules/equipamentos.js?v=2.5.3"></script>
+  <script src="assets/js/modules/usuarios.js?v=2.5.3"></script>
+  <script src="assets/js/modules/advertencias.js?v=2.5.3"></script>
+  <script src="assets/js/modules/auditoria.js?v=2.5.3"></script>
 
   <!-- app.js por último de verdade -->
-  <script src="assets/js/app.js?v=2.5.2"></script>
+  <script src="assets/js/app.js?v=2.5.3"></script>
 
 </body>
 
