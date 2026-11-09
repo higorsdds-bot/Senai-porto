@@ -86,41 +86,26 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.07;
-  filter: saturate(1.15);
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  filter: saturate(1.35) brightness(1.1);
   transition: opacity 0.5s ease;
   will-change: opacity;
 }
 
-html.dark .fundo-ambiente-tech img,
-.dark .fundo-ambiente-tech img {
-  opacity: 0.18;
-  mix-blend-mode: screen;
-  filter: saturate(1.35) brightness(1.1);
-}
-
-/* Destaque sutil na tela de login */
+/* Destaque na tela de login */
 #tela-login .fundo-ambiente-tech img {
-  opacity: 0.22;
-}
-
-html.dark #tela-login .fundo-ambiente-tech img,
-.dark #tela-login .fundo-ambiente-tech img {
-  opacity: 0.32;
+  opacity: 0.28;
   mix-blend-mode: screen;
 }
 
+/* O fundo escuro com vinheta radial se mantém em ambos os temas (o fundo não fica branco) */
 .fundo-ambiente-tech .fundo-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 35%, transparent 25%, rgba(248, 250, 252, 0.6) 75%, rgba(248, 250, 252, 0.95) 100%);
+  background: radial-gradient(circle at 50% 35%, transparent 20%, rgba(4, 9, 20, 0.42) 65%, rgba(4, 9, 20, 0.88) 100%);
   transition: background 0.5s ease;
-}
-
-html.dark .fundo-ambiente-tech .fundo-overlay,
-.dark .fundo-ambiente-tech .fundo-overlay {
-  background: radial-gradient(circle at 50% 35%, transparent 20%, rgba(4, 9, 20, 0.4) 65%, rgba(4, 9, 20, 0.88) 100%);
 }
 
 #tela-login .fundo-ambiente-tech .fundo-overlay {
@@ -137,6 +122,26 @@ html.alto-contraste .fundo-ambiente-tech,
   .fundo-ambiente-tech img {
     opacity: 0.04 !important;
   }
+}
+
+/* Base global: O fundo da página se mantém escuro e com o GIF mesmo no tema claro */
+body {
+  background-color: #080e18 !important;
+}
+
+/* Títulos principais e descrições na tela (fora de cards brancos) mantêm legibilidade */
+#main-content h1:not(.bg-white *):not(.bento-surface *):not([class*="bg-white"] *),
+#main-content h2:not(.bg-white *):not(.bento-surface *):not([class*="bg-white"] *) {
+  color: #ffffff !important;
+}
+
+#main-content p.text-slate-500:not(.bg-white *):not(.bento-surface *):not([class*="bg-white"] *),
+#main-content p.text-slate-600:not(.bg-white *):not(.bento-surface *):not([class*="bg-white"] *) {
+  color: #94a3b8 !important;
+}
+
+#main-content .border-slate-200:not(.bg-white *):not(.bento-surface *):not([class*="bg-white"] *) {
+  border-color: rgba(148, 163, 184, 0.18) !important;
 }
 
 /* ==========================================================================
