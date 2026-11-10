@@ -404,7 +404,6 @@ class AuthManager {
     btn.addEventListener('click', () => {
       this._modoVisitante = false;
       this.mostrarTelaLogin();
-      this.renderizarTelaLogin();
     });
     topbarRight.prepend(btn);
     if (window.lucide) lucide.createIcons();
@@ -462,7 +461,16 @@ class AuthManager {
 
   async logout() {
     this.pararHeartbeat();
-    try { await window.API.logout(); } catch (_) { }
+    // Fecha dropdown do usuário e menu mobile imediatamente
+    document.getElementById('user-dropdown-menu')?.classList.add('hidden');
+    const userChevron = document.getElementById('user-chevron');
+    if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+    window.App?._closeMobileMenu?.();
+
+    // Dispara o encerramento de sessão na API sem travar a saída na tela
+    try {
+      window.API?.logout?.().catch(() => {});
+    } catch (_) { }
     this.forcarLogout(true);
   }
 
@@ -476,10 +484,16 @@ class AuthManager {
       localStorage.removeItem(CONFIG.STORAGE_TOKEN);
       localStorage.removeItem(CONFIG.STORAGE_USUARIO);
     }
+    window.API?.clearCache?.();
     this.usuario = null;
     this.permissoes = [];
     this.modulos = [];
     this.permissionsReady = false;
+
+    // Fecha dropdown do usuário caso estivesse aberto
+    document.getElementById('user-dropdown-menu')?.classList.add('hidden');
+    const userChevron = document.getElementById('user-chevron');
+    if (userChevron) userChevron.style.transform = 'rotate(0deg)';
 
     // Limpa badge do sino na tela de login
     const badge = document.getElementById('badge-topbar-notifications');
@@ -491,7 +505,6 @@ class AuthManager {
     if (abrirLogin) {
       this._modoVisitante = false;
       this.mostrarTelaLogin();
-      this.renderizarTelaLogin();
     } else {
       this.entrarComoVisitante();
     }
@@ -677,12 +690,16 @@ class AuthManager {
     let tela = document.getElementById('tela-login');
     if (tela) {
       tela.classList.remove('hidden');
+      document.getElementById('app-conteudo')?.classList.add('hidden');
+      const feedbackEl = tela.querySelector('#login-feedback');
+      if (feedbackEl) feedbackEl.classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'auto' });
       if (window.lucide) lucide.createIcons({ root: tela });
       return;
     }
     tela = document.createElement('div');
     tela.id = 'tela-login';
-    tela.className = 'fixed inset-0 z-[999] bg-[#040914]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto relative selection:bg-blue-600 selection:text-white';
+    tela.className = 'fixed inset-0 z-[999] bg-[#040914]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto selection:bg-blue-600 selection:text-white';
     tela.innerHTML = `
         <!-- FUNDO AMBIENTE TECNOLÓGICO COM OPACIDADE NA TELA DE LOGIN -->
         <div class="fundo-ambiente-tech absolute inset-0 z-0 pointer-events-none" aria-hidden="true">

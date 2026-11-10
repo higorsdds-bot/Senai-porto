@@ -70,11 +70,11 @@ window.DocumentosModule = {
         window.API.getDocumentos().catch(() => []),
         window.API.getSetores().catch(() => [])
       ]);
-      this.items = (docsResult.status === 'fulfilled' && Array.isArray(docsResult.value)) 
-        ? docsResult.value 
+      this.items = (docsResult.status === 'fulfilled' && Array.isArray(docsResult.value))
+        ? docsResult.value
         : (window.MockDB?.getAll?.('documentos') || []);
-      this.setores = (setoresResult.status === 'fulfilled' && Array.isArray(setoresResult.value)) 
-        ? setoresResult.value 
+      this.setores = (setoresResult.status === 'fulfilled' && Array.isArray(setoresResult.value))
+        ? setoresResult.value
         : (window.MockDB?.getAll?.('setores') || []);
       this._renderView(container);
     } catch (err) {
@@ -165,9 +165,9 @@ window.DocumentosModule = {
               ${this.activeTab === 'gerador' ? 'Gerador de Documentos' : 'Gestão Documental'}
             </h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              ${this.activeTab === 'gerador' 
-                ? 'Cartas de Anuência, Autorizações e Relatórios Oficiais' 
-                : 'Armazenamento oficial de portarias, atas, contratos, normativas e termos do HUB ES+'}
+              ${this.activeTab === 'gerador'
+        ? 'Cartas de Anuência, Autorizações e Relatórios Oficiais'
+        : 'Armazenamento oficial de portarias, atas, contratos, normativas e termos do HUB ES+'}
             </p>
           </div>
 
@@ -351,12 +351,12 @@ window.DocumentosModule = {
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 ${paginatedItems.map(item => {
-                  const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
-                  const fileMeta = this._getFileMeta(item.extensao || (item.nome_original ? item.nome_original.split('.').pop() : ''));
-                  const isAtivo = item.status === 'ativo';
-                  const dataUpload = item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '';
+          const setor = this.setores.find(s => Number(s.id) === Number(item.setor_id))?.nome || item.setor_nome || 'Setor Geral';
+          const fileMeta = this._getFileMeta(item.extensao || (item.nome_original ? item.nome_original.split('.').pop() : ''));
+          const isAtivo = item.status === 'ativo';
+          const dataUpload = item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '';
 
-                  return `
+          return `
                     <tr class="hub-table-row">
                       <td class="px-6 py-4">
                         <div class="flex items-start gap-3">
@@ -435,7 +435,7 @@ window.DocumentosModule = {
                       </td>
                     </tr>
                   `;
-                }).join('')}
+        }).join('')}
               </tbody>
             </table>
           </div>
@@ -1061,18 +1061,18 @@ window.DocumentosModule = {
       try {
         const s = await window.API.getSetores().catch(() => []);
         if (Array.isArray(s) && s.length > 0) this.setores = s;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     const listaSetores = (Array.isArray(this.setores) && this.setores.length > 0)
       ? this.setores
       : [
-          { id: 1, nome: 'Administração Geral' },
-          { id: 2, nome: 'Recursos Humanos (RH)' },
-          { id: 3, nome: 'Infraestrutura & Redes (TI)' },
-          { id: 4, nome: 'Financeiro e Compras' },
-          { id: 5, nome: 'Operações e Logística' }
-        ];
+        { id: 1, nome: 'Administração Geral' },
+        { id: 2, nome: 'Recursos Humanos (RH)' },
+        { id: 3, nome: 'Infraestrutura & Redes (TI)' },
+        { id: 4, nome: 'Financeiro e Compras' },
+        { id: 5, nome: 'Operações e Logística' }
+      ];
 
     const modalContent = `
       <form id="form-documento" class="space-y-4" enctype="multipart/form-data" onsubmit="event.preventDefault()">
@@ -1298,7 +1298,7 @@ window.DocumentosModule = {
 
     window.UI.confirmModal({
       title: isArquivar ? 'Arquivar Documento?' : 'Reativar Documento?',
-      message: isArquivar 
+      message: isArquivar
         ? 'O documento continuará salvo no repositório, porém sinalizado como histórico arquivado.'
         : 'O documento voltará a figurar na listagem de documentos vigentes.',
       danger: false,
