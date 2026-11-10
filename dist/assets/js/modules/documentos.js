@@ -1064,17 +1064,28 @@ window.DocumentosModule = {
       } catch (_) {}
     }
 
+    const listaSetores = (Array.isArray(this.setores) && this.setores.length > 0)
+      ? this.setores
+      : [
+          { id: 1, nome: 'Administração Geral' },
+          { id: 2, nome: 'Recursos Humanos (RH)' },
+          { id: 3, nome: 'Infraestrutura & Redes (TI)' },
+          { id: 4, nome: 'Financeiro e Compras' },
+          { id: 5, nome: 'Operações e Logística' }
+        ];
+
     const modalContent = `
-      <form id="form-documento" class="space-y-4" enctype="multipart/form-data">
+      <form id="form-documento" class="space-y-4" enctype="multipart/form-data" onsubmit="event.preventDefault()">
         <!-- Título Oficial -->
         <div>
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Título do Documento *</label>
           <input 
             type="text" 
             name="titulo" 
+            id="doc-input-titulo"
             required 
             minlength="3"
-            value="${doc ? doc.titulo : ''}" 
+            value="${doc ? this._esc(doc.titulo) : ''}" 
             placeholder="Ex: Portaria Normativa nº 04/2026 - Uso de Equipamentos" 
             class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           />
@@ -1083,10 +1094,10 @@ window.DocumentosModule = {
         <!-- Setor de Vinculação -->
         <div>
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Setor Responsável *</label>
-          <select name="setor_id" required class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+          <select name="setor_id" id="doc-select-setor" required class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
             <option value="">Selecione o setor de lotação...</option>
-            ${(this.setores || []).map(s => `
-              <option value="${s.id}" ${doc && Number(doc.setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
+            ${listaSetores.map(s => `
+              <option value="${s.id}" ${doc && Number(doc.setor_id) === Number(s.id) ? 'selected' : ''}>${this._esc(s.nome)}</option>
             `).join('')}
           </select>
         </div>
@@ -1096,10 +1107,11 @@ window.DocumentosModule = {
           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Ementa / Descrição</label>
           <textarea 
             name="descricao" 
+            id="doc-input-descricao"
             rows="3" 
             placeholder="Breve resumo sobre o conteúdo do documento, finalidade e vigência..." 
             class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-          >${doc ? (doc.descricao || '') : ''}</textarea>
+          >${doc ? this._esc(doc.descricao || '') : ''}</textarea>
         </div>
 
         <!-- Arquivo Físico -->
@@ -1109,152 +1121,152 @@ window.DocumentosModule = {
             <input type="file" name="arquivo" id="input-arquivo-doc" ${isEdit ? '' : 'required'} class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg" />
             <i data-lucide="file-up" class="w-8 h-8 mx-auto text-blue-500 mb-2"></i>
             <p id="label-arquivo-doc" class="text-xs text-slate-600 dark:text-slate-400 font-medium">
-              ${doc ? `Arquivo atual: <span class="font-mono font-bold">${doc.nome_original}</span>` : 'Arraste ou clique para selecionar o arquivo (PDF, Office, Imagem)'}
+              ${doc ? `Arquivo atual: <span class="font-mono font-bold">${this._esc(doc.nome_original)}</span>` : 'Arraste ou clique para selecionar o arquivo (PDF, Office, Imagem)'}
             </p>
             <p class="text-[10px] text-slate-400 mt-1">Tamanho máximo suportado: 15MB</p>
           </div>
         </div>
 
-        <!-- Feedback e Botões -->
+        <!-- Feedback -->
         <div id="modal-doc-feedback" class="hidden text-xs rounded-xl p-3 font-semibold"></div>
-
-        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button type="button" onclick="window.UI.closeModal()" class="btn-secondary py-2 px-4 text-xs">Cancelar</button>
-          <button type="submit" id="btn-salvar-doc-modal" class="btn-primary py-2 px-4 text-xs">
-            <i data-lucide="check" class="w-4 h-4"></i>
-            ${isEdit ? 'Atualizar Documento' : 'Armazenar Arquivo'}
-          </button>
-        </div>
       </form>
     `;
 
-    window.UI.modal({
+    window.UI.openModal({
       title: isEdit ? 'Editar Metadados do Documento' : 'Armazenar Novo Documento',
-      content: modalContent,
-      size: 'md'
+      subtitle: 'Anexe portarias, atas, contratos, normativas ou termos oficiais ao acervo do HUB ES+.',
+      contentHtml: modalContent,
+      saveLabel: isEdit ? 'Atualizar Documento' : 'Armazenar Arquivo',
+      maxWidth: 'max-w-lg',
+      onSave: async () => {
+        const form = document.getElementById('form-documento');
+        const fileInput = document.getElementById('input-arquivo-doc');
+        const feedback = document.getElementById('modal-doc-feedback');
+
+        const mostrarErro = (msg) => {
+          if (feedback) {
+            feedback.className = 'text-xs rounded-xl p-3 font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 block';
+            feedback.textContent = msg;
+          }
+        };
+
+        if (feedback) feedback.className = 'hidden';
+
+        const titulo = (document.getElementById('doc-input-titulo')?.value || '').trim();
+        const setorId = document.getElementById('doc-select-setor')?.value || '';
+        const descricao = (document.getElementById('doc-input-descricao')?.value || '').trim();
+        const arq = fileInput?.files?.[0] || null;
+
+        if (!titulo || titulo.length < 3) {
+          mostrarErro('Informe um título oficial com no mínimo 3 caracteres.');
+          return false;
+        }
+
+        if (!setorId) {
+          mostrarErro('Selecione o setor responsável pelo documento.');
+          return false;
+        }
+
+        if (!isEdit && !arq) {
+          mostrarErro('Por favor, selecione ou arraste o arquivo digital para anexar.');
+          return false;
+        }
+
+        try {
+          let filePayload = null;
+          if (arq) {
+            const dataUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(arq);
+            });
+            filePayload = {
+              name: arq.name,
+              type: arq.type || 'application/octet-stream',
+              size: arq.size,
+              dataUrl
+            };
+          }
+
+          const payload = {
+            titulo,
+            setor_id: setorId,
+            descricao,
+            ...(filePayload ? {
+              _arquivo: filePayload,
+              nome_original: filePayload.name,
+              tamanho: filePayload.size,
+              mime_type: filePayload.type
+            } : {})
+          };
+
+          if (isEdit) {
+            await window.API.updateDocumento(editId, payload);
+            window.UI.toast({
+              title: 'Documento Atualizado',
+              message: 'Os metadados foram salvos com sucesso.',
+              type: 'success'
+            });
+          } else {
+            await window.API.createDocumento(payload);
+            window.UI.toast({
+              title: 'Documento Armazenado',
+              message: 'O arquivo oficial foi incorporado ao repositório digital.',
+              type: 'success'
+            });
+          }
+
+          this.activeTab = 'repositorio';
+          await this.render(mainContainer);
+          return true;
+        } catch (err) {
+          console.error('Erro ao salvar documento:', err);
+          mostrarErro(err.message || 'Falha ao processar o arquivo. Tente novamente.');
+          return false;
+        }
+      }
     });
 
-    setTimeout(() => {
-      const form = document.getElementById('form-documento');
-      const fileInput = document.getElementById('input-arquivo-doc');
-      const dropZone = document.getElementById('drop-zone-doc');
-      const fileText = document.getElementById('label-arquivo-doc');
-      const feedback = document.getElementById('modal-doc-feedback');
-      const btnSalvar = document.getElementById('btn-salvar-doc-modal');
+    const fileInput = document.getElementById('input-arquivo-doc');
+    const dropZone = document.getElementById('drop-zone-doc');
+    const fileText = document.getElementById('label-arquivo-doc');
 
-      if (form) {
-        form.addEventListener('submit', async (e) => {
+    if (dropZone && fileInput) {
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+          const f = fileInput.files[0];
+          if (fileText) {
+            fileText.innerHTML = `<span class="text-blue-600 dark:text-blue-400 font-extrabold font-mono">${this._esc(f.name)}</span> <span class="text-slate-400">(${this._formatBytes(f.size)})</span>`;
+          }
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
           e.preventDefault();
-          feedback.className = 'hidden';
-          btnSalvar.disabled = true;
-          btnSalvar.classList.add('opacity-50', 'cursor-not-allowed');
+          dropZone.classList.add('border-blue-500', 'bg-blue-50/20');
+        });
+      });
 
-          const formData = new FormData(form);
-          const titulo = formData.get('titulo');
-          const setorId = formData.get('setor_id');
-          const descricao = formData.get('descricao');
-          const arq = fileInput.files[0];
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-blue-500', 'bg-blue-50/20');
+        });
+      });
 
-          if (!isEdit && !arq) {
-            feedback.className = 'text-xs rounded-xl p-3 font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 block';
-            feedback.textContent = 'Por favor, anexe o arquivo digital a ser armazenado.';
-            btnSalvar.disabled = false;
-            btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
-            return;
+      dropZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          const f = e.dataTransfer.files[0];
+          if (fileText) {
+            fileText.innerHTML = `<span class="text-blue-600 dark:text-blue-400 font-extrabold font-mono">${this._esc(f.name)}</span> <span class="text-slate-400">(${this._formatBytes(f.size)})</span>`;
           }
-
-          try {
-            let filePayload = null;
-            if (arq) {
-              const dataUrl = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(arq);
-              });
-              filePayload = {
-                name: arq.name,
-                type: arq.type,
-                size: arq.size,
-                dataUrl
-              };
-            }
-
-            const payload = {
-              titulo,
-              setor_id: setorId,
-              descricao,
-              ...(filePayload ? { _arquivo: filePayload, nome_original: filePayload.name, tamanho: filePayload.size, mime_type: filePayload.type } : {})
-            };
-
-            if (isEdit) {
-              await window.API.updateDocumento(editId, payload);
-              window.UI.toast({
-                title: 'Documento Atualizado',
-                message: 'Os metadados foram salvos com sucesso.',
-                type: 'success'
-              });
-            } else {
-              await window.API.createDocumento(payload);
-              window.UI.toast({
-                title: 'Documento Armazenado',
-                message: 'O arquivo oficial foi incorporado ao repositório digital.',
-                type: 'success'
-              });
-            }
-
-            window.UI.closeModal();
-            await this.render(mainContainer);
-
-          } catch (err) {
-            console.error('Erro ao salvar documento:', err);
-            feedback.className = 'text-xs rounded-xl p-3 font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 block';
-            feedback.textContent = err.message || 'Falha ao processar o arquivo. Tente novamente.';
-          } finally {
-            btnSalvar.disabled = false;
-            btnSalvar.classList.remove('opacity-50', 'cursor-not-allowed');
-          }
-        });
-      }
-
-      if (dropZone && fileInput) {
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', () => {
-          if (fileInput.files.length > 0) {
-            const f = fileInput.files[0];
-            fileText.innerHTML = `<span class="text-blue-600 dark:text-blue-400 font-extrabold font-mono">${f.name}</span> <span class="text-slate-400">(${this._formatBytes(f.size)})</span>`;
-          }
-        });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-          dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-blue-500', 'bg-blue-50/20');
-          });
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-          dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-blue-500', 'bg-blue-50/20');
-          });
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            const f = e.dataTransfer.files[0];
-            if (fileText) {
-              fileText.innerHTML = `<span class="text-blue-600 dark:text-blue-400 font-extrabold font-mono">${f.name}</span> <span class="text-slate-400">(${this._formatBytes(f.size)})</span>`;
-            }
-          }
-        });
-      }
-
-      if (window.lucide) {
-        window.lucide.createIcons({ root: document.getElementById('hub-modal-container') });
-      }
-    }, 50);
+        }
+      });
+    }
   },
 
   async _downloadDoc(id, nomeOriginal) {
