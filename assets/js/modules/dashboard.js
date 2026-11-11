@@ -754,13 +754,76 @@ window.DashboardModule = {
       });
     });
 
-    // Exportação de relatório consolidado
+    // Exportação de relatório consolidado (Geração e download dinâmico de CSV)
     container.querySelector('#btn-export-kpis')?.addEventListener('click', () => {
-      window.UI.toast({
-        title: 'Relatório Executivo',
-        message: 'Relatório consolidado de telemetria e governança gerado com sucesso.',
-        type: 'success'
-      });
+      try {
+        const agora = new Date();
+        const dataFormatada = agora.toLocaleDateString('pt-BR');
+        const horaFormatada = agora.toLocaleTimeString('pt-BR');
+
+        const kpis = [
+          ['Métrica / Indicador Executivo', 'Valor Consolidado', 'Status / Referência'],
+          ['Total de Ocorrências Técnicas Registradas', String(data.ocorrencias?.length || 0), 'Base Geral'],
+          ['Ocorrências Pendentes / Em Aberto', String(data.ocorrencias?.filter(o => o.status === 'aberto' || o.status === 'em_andamento').length || 0), 'Atenção Operacional'],
+          ['Ocorrências Resolvidas', String(data.ocorrencias?.filter(o => o.status === 'resolvido').length || 0), 'Concluídas'],
+          ['Documentos Oficiais no Repositório', String(data.documentos?.length || 0), 'Acervo Digital Ativo'],
+          ['Solicitações de Compras & Suprimentos', String(data.compras?.length || 0), 'Histórico Geral'],
+          ['Eventos Agendados no Espaço', String(data.eventos?.length || 0), 'Agenda Ativa'],
+          ['Itens de Insumos Controlados', String(data.insumos?.length || 0), 'Almoxarifado'],
+          ['Total de Colaboradores Cadastrados', String(data.usuarios?.length || 0), 'Quadro de Pessoal'],
+          ['Colaboradores Ativos no Sistema', String(data.usuarios?.filter(u => u.status === 'ATIVO').length || 0), 'Acesso Liberado']
+        ];
+
+        let csvContent = '\uFEFF'; // BOM UTF-8 para correta acentuação no Excel
+        csvContent += `RELATÓRIO CONSOLIDADO DE TELEMETRIA E GOVERNANÇA - HUB ES+\n`;
+        csvContent += `Data de Emissão: ${dataFormatada} às ${horaFormatada}\n`;
+        csvContent += `Responsável: ${window.Auth?.getUsuario()?.nome || 'Administrador'}\n\n`;
+        csvContent += `--- INDICADORES E MÉTRICAS EXECUTIVAS ---\n`;
+
+        kpis.forEach(row => {
+          csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';') + '\n';
+        });
+
+        if (Array.isArray(this.demandasConsolidadas) && this.demandasConsolidadas.length > 0) {
+          csvContent += `\n--- FILA CONSOLIDADA DE DEMANDAS RECENTES ---\n`;
+          csvContent += ['Protocolo', 'Tipo', 'Título / Espaço', 'Solicitante', 'Status', 'Data'].map(v => `"${v}"`).join(';') + '\n';
+          this.demandasConsolidadas.forEach(d => {
+            const linha = [
+              d.tag || `#${d.id}`,
+              d.tipoLabel || d.tipo,
+              d.titulo || '',
+              d.solicitante || '',
+              d.statusLabel || d.status,
+              d.data ? new Date(d.data).toLocaleDateString('pt-BR') : ''
+            ];
+            csvContent += linha.map(val => `"${String(val).replace(/"/g, '""')}"`).join(';') + '\n';
+          });
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const nomeArquivo = `metricas_hub_es_${agora.getFullYear()}${(agora.getMonth() + 1).toString().padStart(2, '0')}${agora.getDate().toString().padStart(2, '0')}.csv`;
+        a.href = url;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        window.UI.toast({
+          title: 'Exportação Concluída',
+          message: `Arquivo "${nomeArquivo}" exportado com sucesso com todas as métricas consolidadas.`,
+          type: 'success'
+        });
+      } catch (err) {
+        console.error('Erro ao exportar métricas:', err);
+        window.UI.toast({
+          title: 'Erro na Exportação',
+          message: 'Não foi possível exportar o arquivo de métricas.',
+          type: 'error'
+        });
+      }
     });
   },
 

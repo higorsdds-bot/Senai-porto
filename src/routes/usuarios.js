@@ -34,7 +34,7 @@ const PERFIS_VALIDOS = [
 
 // Helper para garantir que as permissões adicionais existam em `permissoes` e sejam salvas em `usuario_permissoes`
 async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais) {
-  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => {});
+  await pool.query(`DELETE FROM usuario_permissoes WHERE usuario_id = ?`, [usuarioId]).catch(() => { });
   if (!Array.isArray(permissoesAdicionais) || permissoesAdicionais.length === 0) return;
 
   for (const rawChave of permissoesAdicionais) {
@@ -43,13 +43,13 @@ async function syncPermissoesExtrasUsuario(pool, usuarioId, permissoesAdicionais
     await pool.query(
       `INSERT IGNORE INTO permissoes (chave, nome) VALUES (?, ?)`,
       [chave, chave]
-    ).catch(() => {});
+    ).catch(() => { });
     await pool.query(
       `INSERT INTO usuario_permissoes (usuario_id, permissao_id, concedida)
        SELECT ?, id, 1 FROM permissoes WHERE chave = ?
        ON DUPLICATE KEY UPDATE concedida = 1`,
       [usuarioId, chave]
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -447,7 +447,7 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
       try {
         const [setorRows] = await pool.query('SELECT nome FROM setores WHERE id = ? LIMIT 1', [setor_id]);
         if (setorRows.length) setorNome = setorRows[0].nome;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     let linkAtivacao = null;
@@ -782,7 +782,7 @@ router.post('/', requirePermission('usuarios.criar'), async (req, res) => {
       try {
         const [setorRows] = await pool.query('SELECT nome FROM setores WHERE id = ? LIMIT 1', [setor_id]);
         if (setorRows.length) setorNome = setorRows[0].nome;
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // Dispara envio de e-mail com as credenciais provisórias de acesso
@@ -839,7 +839,7 @@ router.put('/:id', requirePermission('usuarios.editar'), async (req, res) => {
 
     // Regra de Governança: Protege o perfil ADMIN Geral contra alterações não autorizadas
     const [targetRows] = await pool.query(
-      `SELECT id, perfil FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      `SELECT id, nome, email, perfil, status FROM usuarios WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
       [id]
     );
 
@@ -895,6 +895,36 @@ router.put('/:id', requirePermission('usuarios.editar'), async (req, res) => {
       await syncPermissoesExtrasUsuario(pool, id, permissoes_adicionais);
     }
 
+    // Se o usuário era PENDENTE e agora foi aceito/aprovado para ATIVO ou AGUARDANDO_ATIVACAO, gera token e envia email de ativação
+    if (targetUser.status === 'PENDENTE' && ['ATIVO', 'AGUARDANDO_ATIVACAO'].includes(status || 'ATIVO')) {
+      try {
+        const rawToken = gerarTokenAtivacao();
+        const tokenHash = gerarHashToken(rawToken);
+        await pool.query(
+          `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+           VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 48 HOUR), ?)`,
+          [id, tokenHash, getClientIp(req)]
+        );
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const linkAtivacao = `${baseUrl}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+        let setorNome = null;
+        if (setor_id) {
+          const [sRows] = await pool.query('SELECT nome FROM setores WHERE id = ? LIMIT 1', [setor_id]);
+          if (sRows.length) setorNome = sRows[0].nome;
+        }
+        await enviarEmailAtivacaoConta({
+          usuarioNome: nome.trim(),
+          usuarioEmail: email.toLowerCase().trim(),
+          linkAtivacao,
+          setorNome,
+          perfil,
+          criadoPorNome: req.usuario?.nome || 'Administrador Geral'
+        });
+      } catch (eMail) {
+        console.warn('[USUARIOS PUT] Erro ao enviar email de ativação após aprovação:', eMail.message);
+      }
+    }
+
     // Invalida caches em memória para efeito instantâneo
     clearUserAuthCache(id);
     clearUserPermCache(id);
@@ -936,7 +966,7 @@ router.patch('/:id/status', requirePermission('usuarios.bloquear'), async (req, 
     const pool = getPool();
 
     // Governança: Apenas ADMIN pode alterar status de outro ADMIN
-    const [target] = await pool.query(`SELECT perfil FROM usuarios WHERE id = ? LIMIT 1`, [id]);
+    const [target] = await pool.query(`SELECT id, nome, email, perfil, status FROM usuarios WHERE id = ? LIMIT 1`, [id]);
     if (target.length && ['ADMIN', 'ADMIN_GERAL'].includes(String(target[0].perfil).toUpperCase())) {
       if (!['ADMIN', 'ADMIN_GERAL'].includes(String(req.usuario.perfil).toUpperCase())) {
         return res.status(403).json({
@@ -950,6 +980,31 @@ router.patch('/:id/status', requirePermission('usuarios.bloquear'), async (req, 
       `UPDATE usuarios SET status = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`,
       [status, id]
     );
+
+    // Se o usuário era PENDENTE e agora foi aceito/aprovado para ATIVO ou AGUARDANDO_ATIVACAO, gera token e envia email de ativação
+    if (target.length && target[0].status === 'PENDENTE' && ['ATIVO', 'AGUARDANDO_ATIVACAO'].includes(status)) {
+      try {
+        const rawToken = gerarTokenAtivacao();
+        const tokenHash = gerarHashToken(rawToken);
+        await pool.query(
+          `INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao)
+           VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 48 HOUR), ?)`,
+          [id, tokenHash, getClientIp(req)]
+        );
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const linkAtivacao = `${baseUrl}/#ativar-conta?token=${encodeURIComponent(rawToken)}`;
+        await enviarEmailAtivacaoConta({
+          usuarioNome: target[0].nome,
+          usuarioEmail: target[0].email,
+          linkAtivacao,
+          setorNome: 'Geral',
+          perfil: target[0].perfil,
+          criadoPorNome: req.usuario?.nome || 'Administrador Geral'
+        });
+      } catch (eMail) {
+        console.warn('[USUARIOS PATCH STATUS] Erro ao enviar email de ativação após aprovação:', eMail.message);
+      }
+    }
 
     clearUserAuthCache(id);
     clearUserPermCache(id);

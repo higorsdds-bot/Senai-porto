@@ -469,7 +469,7 @@ class AuthManager {
 
     // Dispara o encerramento de sessão na API sem travar a saída na tela
     try {
-      window.API?.logout?.().catch(() => {});
+      window.API?.logout?.().catch(() => { });
     } catch (_) { }
     this.forcarLogout(true);
   }

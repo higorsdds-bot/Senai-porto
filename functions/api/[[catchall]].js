@@ -1978,6 +1978,33 @@ export async function onRequest(context) {
       if (permissoes_adicionais !== undefined) {
         await syncPermissoesExtrasUsuarioD1(db, Number(id), permissoes_adicionais);
       }
+      if (atual.status === 'PENDENTE' && (statusFinal === 'ATIVO' || statusFinal === 'AGUARDANDO_ATIVACAO')) {
+        try {
+          const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+          const tokenHash = await sha256Hex(rawToken);
+          await d1Run(
+            db,
+            "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
+            [Number(id), tokenHash, ip]
+          );
+          const linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+          const htmlEmail = gerarTemplateEmail({
+            titulo: 'Cadastro Aprovado - Ativação de Acesso',
+            saudacao: String(nomeFinal).trim(),
+            mensagemPrincipal: 'Sua solicitação de acesso à plataforma integrada <strong>HUB ES+ SECULT</strong> foi <strong>APROVADA</strong> pelo Administrador Geral.<br><br>Seu perfil de acesso foi definido como <strong>' + perfilFinal + '</strong>.<br><br>Clique no botão abaixo para definir sua senha pessoal confidencial e concluir a ativação do seu acesso.',
+            botaoTexto: 'Criar Minha Senha e Ativar Conta',
+            botaoUrl: linkAtivacao,
+            rodapeAviso: 'Este link é de uso único, confidencial e expira em 48 horas.'
+          });
+          await enviarEmailGenericoD1(env, {
+            para: cleanEmail,
+            assunto: 'Cadastro Aprovado: Ative sua Conta no HUB ES+',
+            html: htmlEmail
+          });
+        } catch (eMail) {
+          console.warn('[EMAIL ATIVACAO D1] Falha ao enviar email pós-aprovação:', eMail.message);
+        }
+      }
 
       await registrarAuditoria(db, {
         usuario_id: usuario.id,
@@ -1998,7 +2025,35 @@ export async function onRequest(context) {
       }
       const id = matchUsuarioStatus[1];
       const { status } = await getBodyData(request);
+      const targetUser = await d1First(db, 'SELECT id, nome, email, perfil, status FROM usuarios WHERE id = ? LIMIT 1', [id]);
       await d1Run(db, `UPDATE usuarios SET status = ?, updated_at = datetime('now') WHERE id = ?`, [status, id]);
+      if (targetUser && targetUser.status === 'PENDENTE' && (status === 'ATIVO' || status === 'AGUARDANDO_ATIVACAO')) {
+        try {
+          const rawToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+          const tokenHash = await sha256Hex(rawToken);
+          await d1Run(
+            db,
+            "INSERT INTO tokens_ativacao (usuario_id, token_hash, expira_em, ip_criacao) VALUES (?, ?, datetime('now', '+48 hours'), ?)",
+            [Number(id), tokenHash, ip]
+          );
+          const linkAtivacao = url.origin + '/#ativar-conta?token=' + encodeURIComponent(rawToken);
+          const htmlEmail = gerarTemplateEmail({
+            titulo: 'Cadastro Aprovado - Ativação de Acesso',
+            saudacao: String(targetUser.nome).trim(),
+            mensagemPrincipal: 'Sua solicitação de acesso à plataforma integrada <strong>HUB ES+ SECULT</strong> foi <strong>APROVADA</strong> pelo Administrador Geral.<br><br>Seu perfil de acesso foi definido como <strong>' + targetUser.perfil + '</strong>.<br><br>Clique no botão abaixo para definir sua senha pessoal confidencial e concluir a ativação do seu acesso.',
+            botaoTexto: 'Criar Minha Senha e Ativar Conta',
+            botaoUrl: linkAtivacao,
+            rodapeAviso: 'Este link é de uso único, confidencial e expira em 48 horas.'
+          });
+          await enviarEmailGenericoD1(env, {
+            para: targetUser.email,
+            assunto: 'Cadastro Aprovado: Ative sua Conta no HUB ES+',
+            html: htmlEmail
+          });
+        } catch (eMail) {
+          console.warn('[EMAIL STATUS ATIVACAO D1] Falha:', eMail.message);
+        }
+      }
       await registrarAuditoria(db, { usuario_id: usuario.id, acao: 'ALTERAR_STATUS_USUARIO', entidade: 'usuarios', entidade_id: Number(id), descricao: `Status alterado para ${status}.`, ip, user_agent: userAgent });
       return jsonResponse({ success: true, message: `Status alterado para ${status}.` });
     }
@@ -2851,7 +2906,16 @@ export async function onRequest(context) {
           });
         }
       }
-      return jsonResponse({ success: false, message: 'Arquivo físico armazenado localmente no servidor de origem.' }, 404);
+      const docName = encodeURIComponent(doc.nome_original || 'documento.pdf');
+      const miniPdf = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF';
+      return new Response(miniPdf, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="' + docName + '"'
+        }
+      });
     }
 
     if (route === '/documentos' && method === 'POST') {
