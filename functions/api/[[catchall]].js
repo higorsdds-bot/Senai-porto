@@ -987,46 +987,13 @@ let _dbInitPromise = null;
 async function ensureDbInit(db) {
   if (_dbInitPromise) return _dbInitPromise;
   _dbInitPromise = (async () => {
-    try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) { }
-    const equipCols = [
-      'ALTER TABLE equipamentos ADD COLUMN data_aquisicao TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN numero_nf TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN nota_fiscal_url TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN nota_fiscal_nome TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN baixa_usuario_id INTEGER',
-      'ALTER TABLE equipamentos ADD COLUMN baixa_usuario_nome TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN baixa_motivo TEXT',
-      'ALTER TABLE equipamentos ADD COLUMN baixa_data DATETIME',
-      'ALTER TABLE equipamentos ADD COLUMN baixa_destino TEXT'
-    ];
-    for (const sql of equipCols) {
-      try { await d1Run(db, sql); } catch (_) { }
-    }
-    try {
-      await d1Run(db, `CREATE TABLE IF NOT EXISTS equipamentos_movimentacoes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        equipamento_id INTEGER NOT NULL,
-        tipo TEXT NOT NULL DEFAULT 'movimentacao',
-        local_origem TEXT,
-        local_destino TEXT,
-        responsavel_anterior_id INTEGER,
-        responsavel_anterior_nome TEXT,
-        responsavel_novo_id INTEGER,
-        responsavel_novo_nome TEXT,
-        movimentado_por_id INTEGER,
-        movimentado_por_nome TEXT,
-        observacao TEXT,
-        data_movimentacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
-      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equip_mov_equip_id ON equipamentos_movimentacoes(equipamento_id, data_movimentacao DESC)');
-    } catch (_) { }
     try {
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_del_created ON ocorrencias(deleted_at, created_at DESC)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_status ON ocorrencias(status, deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equipamentos_del ON equipamentos(deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_usuarios_del ON usuarios(deleted_at)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_comunicados_del ON comunicados(destinatario_perfil, deleted_at)');
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equip_mov_equip_id ON equipamentos_movimentacoes(equipamento_id, data_movimentacao DESC)');
     } catch (_) { }
   })();
   return _dbInitPromise;
@@ -2567,7 +2534,6 @@ export async function onRequest(context) {
     // 10. EQUIPAMENTOS (/equipamentos/*) — PATRIMONIO, NF, MOVIMENTACAO & BAIXA
     // =========================================================================
     if (route === '/equipamentos' && method === 'GET') {
-      await ensureDbInit(db);
       const estado = url.searchParams.get('estado');
       const q = url.searchParams.get('q');
       let conds = ['e.deleted_at IS NULL'];
@@ -2578,10 +2544,13 @@ export async function onRequest(context) {
         params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
       }
 
-      const rows = await d1All(
+      const data = await d1All(
         db,
-        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url,
-                e.data_aquisicao, e.numero_nf, e.nota_fiscal_url, e.nota_fiscal_nome,
+        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado,
+                CASE WHEN e.imagem_url LIKE 'data:%' THEN ('/api/v1/equipamentos/' || e.id || '/foto') ELSE e.imagem_url END AS imagem_url,
+                e.data_aquisicao, e.numero_nf,
+                CASE WHEN e.nota_fiscal_url LIKE 'data:%' THEN ('/api/v1/equipamentos/' || e.id || '/nota-fiscal') ELSE e.nota_fiscal_url END AS nota_fiscal_url,
+                e.nota_fiscal_nome,
                 e.baixa_usuario_id, e.baixa_usuario_nome, e.baixa_motivo, e.baixa_data, e.baixa_destino,
                 e.created_at, e.updated_at,
                 e.responsavel_id, u.nome AS responsavel_nome
@@ -2591,23 +2560,11 @@ export async function onRequest(context) {
          ORDER BY e.nome ASC`,
         params
       );
-      const data = rows.map(r => {
-        let imagem_url = r.imagem_url;
-        if (imagem_url && imagem_url.startsWith('data:')) {
-          imagem_url = `/api/v1/equipamentos/${r.id}/foto`;
-        }
-        let nota_fiscal_url = r.nota_fiscal_url;
-        if (nota_fiscal_url && nota_fiscal_url.startsWith('data:')) {
-          nota_fiscal_url = `/api/v1/equipamentos/${r.id}/nota-fiscal`;
-        }
-        return { ...r, imagem_url, nota_fiscal_url };
-      });
       return jsonResponse({ success: true, data });
     }
 
     const matchEqHistorico = route.match(/^\/equipamentos\/(\d+)\/historico$/);
     if (matchEqHistorico && method === 'GET') {
-      await ensureDbInit(db);
       const id = matchEqHistorico[1];
       const eq = await d1First(
         db,
@@ -2643,7 +2600,6 @@ export async function onRequest(context) {
 
     const matchEqMovimentar = route.match(/^\/equipamentos\/(\d+)\/movimentar$/);
     if (matchEqMovimentar && method === 'POST') {
-      await ensureDbInit(db);
       if (!hasPerm(auth, 'equipamentos.editar')) {
         return jsonResponse({ success: false, message: 'Sem permissão para movimentar patrimônio.' }, 403);
       }
@@ -2722,7 +2678,6 @@ export async function onRequest(context) {
 
     const matchEqBaixa = route.match(/^\/equipamentos\/(\d+)\/baixa$/);
     if (matchEqBaixa && method === 'POST') {
-      await ensureDbInit(db);
       if (!hasPerm(auth, 'equipamentos.editar')) {
         return jsonResponse({ success: false, message: 'Sem permissão para dar baixa em patrimônio.' }, 403);
       }
@@ -2797,7 +2752,6 @@ export async function onRequest(context) {
 
     const matchEqId = route.match(/^\/equipamentos\/(\d+)$/);
     if (matchEqId && method === 'GET') {
-      await ensureDbInit(db);
       const row = await d1First(
         db,
         `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url,
@@ -2816,7 +2770,6 @@ export async function onRequest(context) {
     }
 
     if (route === '/equipamentos' && method === 'POST') {
-      await ensureDbInit(db);
       const body = await getBodyData(request);
       const {
         nome, patrimonio, codigo_patrimonio, descricao, localizacao, local, estado, status,
@@ -2893,7 +2846,6 @@ export async function onRequest(context) {
     }
 
     if (matchEqId && method === 'PUT') {
-      await ensureDbInit(db);
       const id = matchEqId[1];
       const body = await getBodyData(request);
       const {
