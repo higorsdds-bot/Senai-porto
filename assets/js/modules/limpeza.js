@@ -221,13 +221,13 @@ window.LimpezaModule = {
                         <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">
                           <div class="flex items-center gap-2">
                             <i data-lucide="map-pin" class="w-4 h-4 text-sky-600 dark:text-sky-400"></i>
-                            <span>${item.local}</span>
+                            <span>${window.UI.escapeHtml(item.local)}</span>
                           </div>
                         </td>
                         <td class="px-6 py-4 text-slate-600 dark:text-slate-300">
                           <div class="flex items-center gap-1.5">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
-                            ${resp}
+                            ${window.UI.escapeHtml(resp)}
                           </div>
                         </td>
                         <td class="px-6 py-4">
@@ -373,7 +373,7 @@ window.LimpezaModule = {
             type="text" 
             name="local" 
             required 
-            value="${item ? item.local : ''}" 
+            value="${window.UI.escapeHtml(item ? item.local : '')}" 
             placeholder="Ex: Foyer Principal e Sanitários Bloco A" 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
           />
@@ -385,7 +385,7 @@ window.LimpezaModule = {
             <option value="">Selecione o responsável...</option>
             ${listaUsuarios.map(u => `
               <option value="${u.id}" ${item && Number(item.responsavel_id) === Number(u.id) ? 'selected' : (!item && currentUser?.id === u.id ? 'selected' : '')}>
-                ${u.nome} ${u.perfil ? `(${u.perfil})` : ''}
+                ${window.UI.escapeHtml(u.nome)} ${u.perfil ? `(${window.UI.escapeHtml(u.perfil)})` : ''}
               </option>
             `).join('')}
           </select>
@@ -455,7 +455,7 @@ window.LimpezaModule = {
           <p class="text-xs text-slate-500 dark:text-slate-400">Ambiente selecionado:</p>
           <div class="flex items-center gap-2 mt-0.5">
             <i data-lucide="map-pin" class="w-4 h-4 text-teal-600"></i>
-            <h4 class="text-sm font-bold text-slate-800 dark:text-white">${item.local}</h4>
+            <h4 class="text-sm font-bold text-slate-800 dark:text-white">${window.UI.escapeHtml(item.local)}</h4>
           </div>
         </div>
 

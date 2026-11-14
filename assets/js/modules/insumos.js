@@ -156,7 +156,7 @@ window.InsumosModule = {
               <select id="select-filtro-setor-insumo" class="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                 <option value="">Todos os Setores</option>
                 ${this.setores.map(s => `
-                  <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
+                  <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${window.UI.escapeHtml(s.nome)}</option>
                 `).join('')}
               </select>
             ` : ''}
@@ -198,22 +198,22 @@ window.InsumosModule = {
                               <i data-lucide="${isCritical ? 'alert-triangle' : 'box'}" class="w-4 h-4"></i>
                             </div>
                             <div>
-                              <span class="font-bold text-slate-900 dark:text-white">${item.nome}</span>
-                              ${item.descricao ? `<div class="text-[11px] text-slate-400 max-w-xs truncate">${item.descricao}</div>` : ''}
+                              <span class="font-bold text-slate-900 dark:text-white">${window.UI.escapeHtml(item.nome)}</span>
+                              ${item.descricao ? `<div class="text-[11px] text-slate-400 max-w-xs truncate">${window.UI.escapeHtml(item.descricao)}</div>` : ''}
                             </div>
                           </div>
                         </td>
                         <td class="p-3.5">
                           <div class="flex items-center gap-2">
                             <span class="text-sm font-extrabold ${isCritical ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100'}">${item.quantidade}</span>
-                            <span class="text-slate-500 font-mono text-[11px]">${item.unidade}</span>
+                            <span class="text-slate-500 font-mono text-[11px]">${window.UI.escapeHtml(item.unidade)}</span>
                             ${isCritical ? `
                               <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-900/50">Crítico</span>
                             ` : ''}
                           </div>
                         </td>
-                        <td class="p-3.5 text-slate-600 dark:text-slate-400 font-mono">${item.estoque_minimo} ${item.unidade}</td>
-                        <td class="p-3.5 text-slate-600 dark:text-slate-400">${setor}</td>
+                        <td class="p-3.5 text-slate-600 dark:text-slate-400 font-mono">${item.estoque_minimo} ${window.UI.escapeHtml(item.unidade)}</td>
+                        <td class="p-3.5 text-slate-600 dark:text-slate-400">${window.UI.escapeHtml(setor)}</td>
                         <td class="p-3.5 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1.5">
                             ${canStockOut || canMoveStock ? `
@@ -326,7 +326,7 @@ window.InsumosModule = {
             <select id="select-filtro-hist-insumo" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
               <option value="">Todos os Materiais</option>
               ${this.items.map(i => `
-                <option value="${i.id}" ${Number(this.filtroHistInsumo) === Number(i.id) ? 'selected' : ''}>${i.nome}</option>
+                <option value="${i.id}" ${Number(this.filtroHistInsumo) === Number(i.id) ? 'selected' : ''}>${window.UI.escapeHtml(i.nome)}</option>
               `).join('')}
             </select>
 
@@ -335,7 +335,7 @@ window.InsumosModule = {
               <input 
                 id="input-busca-hist" 
                 type="text" 
-                value="${this.filtroHistBusca}" 
+                value="${window.UI.escapeHtml(this.filtroHistBusca)}" 
                 placeholder="Buscar por local, responsável..." 
                 class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
@@ -509,7 +509,7 @@ window.InsumosModule = {
             type="text" 
             name="nome" 
             required 
-            value="${item ? item.nome : ''}" 
+            value="${item ? window.UI.escapeHtml(item.nome) : ''}" 
             placeholder="Ex: Café em Grãos Gourmet 1kg" 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
@@ -546,7 +546,7 @@ window.InsumosModule = {
               type="text" 
               name="unidade" 
               required 
-              value="${item ? item.unidade : 'unid'}" 
+              value="${item ? window.UI.escapeHtml(item.unidade) : 'unid'}" 
               placeholder="ex: cx, pct, unid, kg" 
               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono"
             />
@@ -558,7 +558,7 @@ window.InsumosModule = {
           <select name="setor_id" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
             <option value="">Sem setor específico (Geral)</option>
             ${this.setores.map(s => `
-              <option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
+              <option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${window.UI.escapeHtml(s.nome)}</option>
             `).join('')}
           </select>
         </div>
@@ -570,7 +570,7 @@ window.InsumosModule = {
             rows="2" 
             placeholder="Marca, lote ou orientações de armazenagem..." 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-          >${item && item.descricao ? item.descricao : ''}</textarea>
+          >${item && item.descricao ? window.UI.escapeHtml(item.descricao) : ''}</textarea>
         </div>
       </form>
     `;
@@ -624,10 +624,10 @@ window.InsumosModule = {
       <div class="space-y-4 text-xs">
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <p class="text-slate-600 dark:text-slate-300">
-            Material: <strong class="text-slate-900 dark:text-white">${item.nome}</strong>
+            Material: <strong class="text-slate-900 dark:text-white">${window.UI.escapeHtml(item.nome)}</strong>
           </p>
           <p class="text-[11px] text-slate-400 mt-0.5">
-            Saldo Atual Disponível: <strong>${item.quantidade} ${item.unidade}</strong>
+            Saldo Atual Disponível: <strong>${item.quantidade} ${window.UI.escapeHtml(item.unidade)}</strong>
           </p>
         </div>
 
@@ -645,7 +645,7 @@ window.InsumosModule = {
 
         <div>
           <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            ${onlyStockOut ? `Quantidade de Saída (${item.unidade}) *` : 'Quantidade a Movimentar *'}
+            ${onlyStockOut ? `Quantidade de Saída (${window.UI.escapeHtml(item.unidade)}) *` : 'Quantidade a Movimentar *'}
           </label>
           <input 
             type="number" 

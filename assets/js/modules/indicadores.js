@@ -12,7 +12,7 @@ window.IndicadoresModule = {
       <div class="space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
           <div class="space-y-1">
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Indicadores e Métricas Operacionais</h1>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Indicadores e Métricas Operacionais</h1>
             <p class="text-xs text-slate-500 font-medium">Relatórios analíticos do HUB ES+</p>
           </div>
         </div>
@@ -65,7 +65,7 @@ window.IndicadoresModule = {
                 </span>
                 <span class="text-xs text-slate-400">• Consolidado Semestral</span>
               </div>
-              <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Indicadores e Métricas Operacionais</h1>
+              <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Indicadores e Métricas Operacionais</h1>
               <p class="text-xs text-slate-500 font-medium">Performance de infraestrutura, logística e atendimento às demandas do HUB ES+</p>
             </div>
             

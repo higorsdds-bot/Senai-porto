@@ -16,6 +16,8 @@ window.OcorrenciasModule = {
   _paginaAtual: 1,
   _itensPorPagina: 9,
   _itensFiltrados: [],
+  _modoVisualizacao: 'cards',
+  _filtroResponsavel: '',
 
   async render(container) {
     this._equipamentosCarregados = false;
@@ -34,19 +36,30 @@ window.OcorrenciasModule = {
             <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Ocorrências Técnicas</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Registre e acompanhe chamados e problemas operacionais com fotos e pareceres técnicos.</p>
           </div>
-          <button id="btn-nova-ocorrencia" class="btn-primary">
-            <i data-lucide="plus" class="w-4 h-4"></i> Abrir Ocorrência
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-toggle-visao-ocorrencias" class="btn-secondary flex items-center gap-2 cursor-pointer">
+              <i data-lucide="list" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i>
+              <span>Listar Responsáveis</span>
+            </button>
+            <button id="btn-nova-ocorrencia" class="btn-primary">
+              <i data-lucide="plus" class="w-4 h-4"></i> Abrir Ocorrência
+            </button>
+          </div>
         </div>
 
         <!-- FILTROS E BUSCA OTIMIZADA -->
         <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div class="relative flex-1 max-w-lg">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input id="oc-busca" type="text" placeholder="Buscar por local, descrição, categoria ou número..."
+            <input id="oc-busca" type="text" placeholder="Buscar por local, descrição, categoria ou responsável..."
               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="oc-filtro-responsavel" class="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20">
+              <option value="">Todos os responsáveis</option>
+              <option value="assumidos">Já assumidos (com técnico)</option>
+              <option value="pendentes">Aguardando atribuição</option>
+            </select>
             <select id="oc-filtro-status" class="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/20">
               <option value="">Todos os status</option>
               <option value="aberto">Aberto</option>
@@ -241,6 +254,7 @@ window.OcorrenciasModule = {
     `;
 
     this._bind(container);
+    this._atualizarBotaoVisao(container);
     await this._carregar(container);
     if (window.lucide) lucide.createIcons();
   },
@@ -387,6 +401,16 @@ window.OcorrenciasModule = {
     if (btnFechar) btnFechar.addEventListener('click', () => { this._limparTudo(); formWrap.classList.add('hidden'); });
     if (btnCanc) btnCanc.addEventListener('click', () => { this._limparTudo(); formWrap.classList.add('hidden'); });
 
+    const btnToggleVisao = container.querySelector('#btn-toggle-visao-ocorrencias');
+    if (btnToggleVisao) {
+      btnToggleVisao.addEventListener('click', () => {
+        this._modoVisualizacao = this._modoVisualizacao === 'cards' ? 'lista' : 'cards';
+        this._paginaAtual = 1;
+        this._atualizarBotaoVisao(container);
+        this._renderCards(container);
+      });
+    }
+
     // Accordions / Blocos Expansíveis com Carregamento sob Demanda (Lazy Loading)
     const btnEquip = container.querySelector('#oc-btn-toggle-equipamento');
     const blocoEquip = container.querySelector('#oc-bloco-equipamento');
@@ -431,6 +455,16 @@ window.OcorrenciasModule = {
       this._carregar(container);
     });
 
+    const selResp = container.querySelector('#oc-filtro-responsavel');
+    if (selResp) {
+      selResp.value = this._filtroResponsavel || '';
+      selResp.addEventListener('change', () => {
+        this._filtroResponsavel = selResp.value;
+        this._paginaAtual = 1;
+        this._renderCards(container);
+      });
+    }
+
     // Paginação
     container.querySelector('#oc-btn-anterior')?.addEventListener('click', () => {
       if (this._paginaAtual > 1) {
@@ -440,7 +474,8 @@ window.OcorrenciasModule = {
     });
 
     container.querySelector('#oc-btn-proxima')?.addEventListener('click', () => {
-      const maxPag = Math.ceil(this._itensFiltrados.length / this._itensPorPagina) || 1;
+      const itensVisiveis = this._getItensVisiveis();
+      const maxPag = Math.ceil(itensVisiveis.length / this._getItensPorPagina()) || 1;
       if (this._paginaAtual < maxPag) {
         this._paginaAtual++;
         this._renderCards(container);
@@ -679,6 +714,33 @@ window.OcorrenciasModule = {
     }
   },
 
+  _getItensPorPagina() {
+    return this._modoVisualizacao === 'lista' ? 15 : this._itensPorPagina;
+  },
+
+  _getItensVisiveis() {
+    if (this._filtroResponsavel === 'assumidos') {
+      return this._itensFiltrados.filter(o => Boolean(o.responsavel_id || o.responsavel_nome));
+    }
+    if (this._filtroResponsavel === 'pendentes') {
+      return this._itensFiltrados.filter(o => !o.responsavel_id && !o.responsavel_nome);
+    }
+    return this._itensFiltrados;
+  },
+
+  _atualizarBotaoVisao(container) {
+    const btn = container.querySelector('#btn-toggle-visao-ocorrencias');
+    if (!btn) return;
+    const isLista = this._modoVisualizacao === 'lista';
+    btn.className = isLista
+      ? 'btn-secondary flex items-center gap-2 cursor-pointer border-blue-500/60 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+      : 'btn-secondary flex items-center gap-2 cursor-pointer';
+    btn.innerHTML = isLista
+      ? '<i data-lucide="layout-grid" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i><span>Voltar para Cards</span>'
+      : '<i data-lucide="list" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i><span>Listar Responsáveis</span>';
+    if (window.lucide) lucide.createIcons({ root: btn });
+  },
+
   _renderCards(container) {
     const lista = container.querySelector('#oc-lista');
     const wrapPaginacao = container.querySelector('#oc-paginacao');
@@ -687,7 +749,14 @@ window.OcorrenciasModule = {
     const btnAnt = container.querySelector('#oc-btn-anterior');
     const btnProx = container.querySelector('#oc-btn-proxima');
 
-    const total = this._itensFiltrados.length;
+    const itensVisiveis = this._getItensVisiveis();
+    const total = itensVisiveis.length;
+    const porPagina = this._getItensPorPagina();
+
+    lista.className = this._modoVisualizacao === 'lista'
+      ? 'space-y-4'
+      : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4';
+
     if (!total) {
       lista.innerHTML = `
         <div class="col-span-full py-12 text-center bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
@@ -700,12 +769,115 @@ window.OcorrenciasModule = {
       return;
     }
 
-    const totalPaginas = Math.ceil(total / this._itensPorPagina) || 1;
+    const totalPaginas = Math.ceil(total / porPagina) || 1;
     if (this._paginaAtual > totalPaginas) this._paginaAtual = totalPaginas;
-    const inicio = (this._paginaAtual - 1) * this._itensPorPagina;
-    const paginados = this._itensFiltrados.slice(inicio, inicio + this._itensPorPagina);
+    const inicio = (this._paginaAtual - 1) * porPagina;
+    const paginados = itensVisiveis.slice(inicio, inicio + porPagina);
 
-    lista.innerHTML = paginados.map(o => `
+    if (this._modoVisualizacao === 'lista') {
+      const totalAssumidos = itensVisiveis.filter(o => Boolean(o.responsavel_id || o.responsavel_nome)).length;
+      const totalAguardando = itensVisiveis.length - totalAssumidos;
+      const canAtender = window.Auth?.hasAnyPermission?.(['ocorrencias.assumir', 'ocorrencias.atender']) || window.Auth?.isAdmin?.();
+
+      lista.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chamados Listados</span>
+              <p class="text-lg font-black text-slate-900 dark:text-white">${itensVisiveis.length}</p>
+            </div>
+            <i data-lucide="list-checks" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Já Assumidos</span>
+              <p class="text-lg font-black text-emerald-600 dark:text-emerald-400">${totalAssumidos}</p>
+            </div>
+            <i data-lucide="user-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sem Responsável</span>
+              <p class="text-lg font-black text-amber-600 dark:text-amber-400">${totalAguardando}</p>
+            </div>
+            <i data-lucide="clock" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto hub-scrollbar">
+            <table class="w-full min-w-[880px] text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                <tr>
+                  <th class="p-3.5">Chamado</th>
+                  <th class="p-3.5">Local & Problema</th>
+                  <th class="p-3.5">Quem Assumiu</th>
+                  <th class="p-3.5">Solicitante</th>
+                  <th class="p-3.5">Status</th>
+                  <th class="p-3.5 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                ${paginados.map(o => {
+        const temResponsavel = Boolean(o.responsavel_nome);
+        const podeAssumirAgora = canAtender && !o.responsavel_id && o.status !== 'resolvido';
+        return `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                      <td class="p-3.5 align-top whitespace-nowrap">
+                        <div class="flex flex-col gap-1">
+                          <span class="font-mono font-bold text-slate-700 dark:text-slate-200">#OC-${o.id}</span>
+                          <div>${this._nivelBadge(o.nivel_atendimento)}</div>
+                        </div>
+                      </td>
+                      <td class="p-3.5 align-top max-w-xs">
+                        <div class="font-bold text-slate-900 dark:text-white truncate" title="${this._esc(o.local)}">${this._esc(o.local)}</div>
+                        ${o.tipo ? `<span class="inline-block text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded mt-1">${this._esc(o.tipo)}</span>` : ''}
+                        ${o.descricao ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-1" title="${this._esc(o.descricao)}">${this._esc(o.descricao)}</p>` : ''}
+                      </td>
+                      <td class="p-3.5 align-top whitespace-nowrap">
+                        ${temResponsavel ? `
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5 shrink-0"></i>
+                            ${this._esc(o.responsavel_nome)}
+                          </span>
+                        ` : `
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-semibold text-[11px]">
+                            <i data-lucide="user-x" class="w-3.5 h-3.5 shrink-0"></i>
+                            Aguardando técnico
+                          </span>
+                        `}
+                      </td>
+                      <td class="p-3.5 align-top whitespace-nowrap">
+                        <div class="font-semibold text-slate-700 dark:text-slate-200">${this._esc(o.usuario_nome || 'Colaborador')}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">${o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : ''}</div>
+                      </td>
+                      <td class="p-3.5 align-top whitespace-nowrap">
+                        ${this._statusBadge(o.status)}
+                      </td>
+                      <td class="p-3.5 align-top text-right whitespace-nowrap">
+                        <div class="inline-flex items-center justify-end gap-2">
+                          ${podeAssumirAgora ? `
+                            <button type="button" onclick="OcorrenciasModule.assumirChamado(${o.id})"
+                              class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all shadow-sm cursor-pointer">
+                              <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Assumir
+                            </button>
+                          ` : ''}
+                          <button type="button" onclick="OcorrenciasModule.abrirDetalhes(${o.id})"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 dark:bg-slate-700/70 dark:hover:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[11px] font-bold transition-colors cursor-pointer">
+                            Detalhes <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+      }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } else {
+      lista.innerHTML = paginados.map(o => `
       <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-all group">
         <div class="space-y-3">
           <div class="flex items-start justify-between gap-2">
@@ -758,10 +930,11 @@ window.OcorrenciasModule = {
           </button>
         </div>
       </div>`).join('');
+    }
 
     if (wrapPaginacao) {
-      wrapPaginacao.classList.toggle('hidden', total <= this._itensPorPagina);
-      if (infoPaginacao) infoPaginacao.textContent = `Exibindo ${inicio + 1} - ${Math.min(inicio + this._itensPorPagina, total)} de ${total} chamado(s)`;
+      wrapPaginacao.classList.toggle('hidden', total <= porPagina);
+      if (infoPaginacao) infoPaginacao.textContent = `Exibindo ${inicio + 1} - ${Math.min(inicio + porPagina, total)} de ${total} chamado(s)`;
       if (paginaEl) paginaEl.textContent = `${this._paginaAtual} / ${totalPaginas}`;
       if (btnAnt) btnAnt.disabled = this._paginaAtual <= 1;
       if (btnProx) btnProx.disabled = this._paginaAtual >= totalPaginas;
@@ -789,7 +962,7 @@ window.OcorrenciasModule = {
       const res = await window.API.request(`/ocorrencias/${id}`);
       const o = res?.data || res;
 
-      const canAtender = window.Auth?.hasPermission('ocorrencias.atender') || window.Auth?.isAdmin();
+      const canAtender = window.Auth?.hasAnyPermission?.(['ocorrencias.assumir', 'ocorrencias.atender']) || window.Auth?.isAdmin();
       const canEscalonar = window.Auth?.hasPermission('ocorrencias.escalonar') || window.Auth?.isAdmin();
       const canMudarStatus = window.Auth?.hasAnyPermission(['ocorrencias.editar', 'ocorrencias.atender', 'ocorrencias.fechar']) || window.Auth?.isAdmin();
 
@@ -967,7 +1140,10 @@ window.OcorrenciasModule = {
           type: 'success'
         });
       }
-      await this.abrirDetalhes(id);
+      const modalAberto = !document.getElementById('modal-detalhes-ocorrencia')?.classList.contains('hidden');
+      if (modalAberto) {
+        await this.abrirDetalhes(id);
+      }
       const container = document.getElementById('main-content');
       if (container) await this._carregar(container);
     } catch (err) {
@@ -1077,7 +1253,10 @@ window.OcorrenciasModule = {
     try {
       await window.API.updateOcorrenciaStatus(id, { status: novoStatus });
       if (window.UI?.toast) window.UI.toast({ title: 'Status Atualizado', message: `Ocorrência atualizada para "${novoStatus}".`, type: 'success' });
-      await this.abrirDetalhes(id);
+      const modalAberto = !document.getElementById('modal-detalhes-ocorrencia')?.classList.contains('hidden');
+      if (modalAberto) {
+        await this.abrirDetalhes(id);
+      }
       const container = document.getElementById('main-content');
       if (container) await this._carregar(container);
     } catch (err) {

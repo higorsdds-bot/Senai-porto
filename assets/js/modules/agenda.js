@@ -119,7 +119,7 @@ window.AgendaModule = {
               <select id="select-filtro-resp-evento" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                 <option value="">Todos os Responsáveis</option>
                 ${this.usuarios.map(u => `
-                  <option value="${u.id}" ${Number(this.responsavelFilter) === Number(u.id) ? 'selected' : ''}>${u.nome}</option>
+                  <option value="${u.id}" ${Number(this.responsavelFilter) === Number(u.id) ? 'selected' : ''}>${window.UI.escapeHtml(u.nome)}</option>
                 `).join('')}
               </select>
             ` : ''}
@@ -174,18 +174,18 @@ window.AgendaModule = {
                     </div>
 
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 mt-2">
-                      ${item.titulo || item.local}
+                      ${window.UI.escapeHtml(item.titulo || item.local)}
                     </h3>
-                    ${item.descricao ? `<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">${item.descricao}</p>` : ''}
+                    ${item.descricao ? `<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">${window.UI.escapeHtml(item.descricao)}</p>` : ''}
                     
                     <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2 text-xs text-slate-500 dark:text-slate-400">
                       <div class="flex items-center gap-2">
                         <i data-lucide="user-check" class="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0"></i>
-                        <span class="truncate">Responsável: <strong class="text-slate-700 dark:text-slate-200 font-medium">${resp}</strong></span>
+                        <span class="truncate">Responsável: <strong class="text-slate-700 dark:text-slate-200 font-medium">${window.UI.escapeHtml(resp)}</strong></span>
                       </div>
                       <div class="flex items-center gap-2">
                         <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0"></i>
-                        <span class="truncate">Espaço: <strong class="text-slate-700 dark:text-slate-200 font-medium">${item.local}</strong></span>
+                        <span class="truncate">Espaço: <strong class="text-slate-700 dark:text-slate-200 font-medium">${window.UI.escapeHtml(item.local)}</strong></span>
                       </div>
                       ${terminoFmt ? `
                       <div class="flex items-center gap-2">
@@ -282,7 +282,7 @@ window.AgendaModule = {
             type="text" 
             name="titulo" 
             required 
-            value="${item && item.titulo ? item.titulo : ''}" 
+            value="${window.UI.escapeHtml(item && item.titulo ? item.titulo : '')}" 
             placeholder="Ex: Workshop de Design Thinking & Economia Criativa" 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
           />
@@ -295,7 +295,7 @@ window.AgendaModule = {
             name="local" 
             required 
             minlength="3"
-            value="${item && item.local ? item.local : ''}" 
+            value="${window.UI.escapeHtml(item && item.local ? item.local : '')}" 
             placeholder="Ex: Auditório Master, Laboratório Maker, Estúdio Audiovisual..." 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
           />
@@ -309,7 +309,7 @@ window.AgendaModule = {
             rows="2"
             placeholder="Pauta da programação, público-alvo ou necessidades de infraestrutura..." 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-          >${item && item.descricao ? item.descricao : ''}</textarea>
+          >${window.UI.escapeHtml(item && item.descricao ? item.descricao : '')}</textarea>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,13 +342,13 @@ window.AgendaModule = {
               <select name="responsavel_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                 <option value="">Selecione o responsável...</option>
                 ${this.usuarios.map(u => `
-                  <option value="${u.id}" ${(item ? Number(item.responsavel_id) === Number(u.id) : Number(currentUser?.id) === Number(u.id)) ? 'selected' : ''}>${u.nome}</option>
+                  <option value="${u.id}" ${(item ? Number(item.responsavel_id) === Number(u.id) : Number(currentUser?.id) === Number(u.id)) ? 'selected' : ''}>${window.UI.escapeHtml(u.nome)}</option>
                 `).join('')}
               </select>
             ` : `
               <div class="flex items-center gap-2 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200">
                 <i data-lucide="user" class="w-4 h-4 text-slate-400 shrink-0"></i>
-                <span class="font-medium truncate">${currentUser?.nome || 'Operador Logado'}</span>
+                <span class="font-medium truncate">${window.UI.escapeHtml(currentUser?.nome || 'Operador Logado')}</span>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold ml-auto shrink-0">${currentUser?.perfil || 'OPERADOR'}</span>
               </div>
               <input type="hidden" name="responsavel_id" value="${item ? item.responsavel_id : (currentUser?.id || '')}" />

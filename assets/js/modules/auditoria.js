@@ -58,7 +58,7 @@ const AuditoriaModule = {
     return PERMISSOES_MODULOS_AUDITORIA.map(p => `
       <label class="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-blue-400 transition-colors">
         <input type="checkbox" value="${p.chave}" class="${cssClass} rounded text-blue-600 shrink-0">
-        <span class="truncate" title="${p.modulo}: ${p.acao}"><strong>${p.modulo}:</strong> ${p.acao}</span>
+        <span class="truncate" title="${this._esc(p.modulo)}: ${this._esc(p.acao)}"><strong>${this._esc(p.modulo)}:</strong> ${this._esc(p.acao)}</span>
       </label>
     `).join('');
   },
@@ -71,7 +71,7 @@ const AuditoriaModule = {
           <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 font-bold">
             <i data-lucide="shield-alert" class="w-7 h-7"></i>
           </div>
-          <h3 class="text-base font-extrabold text-slate-900">Acesso Restrito</h3>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white">Acesso Restrito</h3>
           <p class="text-xs text-slate-500 mt-2 leading-relaxed">
             O módulo de Auditoria é restrito exclusivamente a usuários com perfil <strong>Administrador (ADMIN)</strong> ou com permissão geral de governança.
           </p>
@@ -242,8 +242,8 @@ const AuditoriaModule = {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissões (Função) *</label>
-                <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Perfil de Permissões (Função) *</label>
+                <select id="aprovar-user-perfil" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                   <optgroup label="Administração e Governança">
                     <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
                     <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
@@ -272,8 +272,8 @@ const AuditoriaModule = {
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
-                <select id="aprovar-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Setor de Lotação</label>
+                <select id="aprovar-user-setor" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                   <option value="">Selecione o setor de lotação...</option>
                 </select>
               </div>
@@ -292,10 +292,10 @@ const AuditoriaModule = {
               </div>
             </div>
 
-            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2.5">
-              <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+            <div class="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl text-[11px] text-blue-900 dark:text-blue-200 leading-relaxed flex items-start gap-2.5">
+              <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
               <div>
-                <strong class="text-blue-950 block font-bold mb-0.5">Ativação Segura por E-mail</strong>
+                <strong class="text-blue-950 dark:text-blue-100 block font-bold mb-0.5">Ativação Segura por E-mail</strong>
                 Ao aprovar, o sistema enviará automaticamente um <strong>link seguro ao e-mail do colaborador</strong> para que ele autentique a conta e <strong>defina sua própria senha</strong>.
               </div>
             </div>
@@ -362,8 +362,8 @@ const AuditoriaModule = {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Permissão / Hierarquia *</label>
-                <select id="cad-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Perfil de Permissão / Hierarquia *</label>
+                <select id="cad-user-perfil" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <optgroup label="Administração e Governança">
                     <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
                     <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
@@ -393,8 +393,8 @@ const AuditoriaModule = {
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
-                <select id="cad-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Setor de Lotação</label>
+                <select id="cad-user-setor" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <option value="">Carregando setores...</option>
                 </select>
               </div>
@@ -479,8 +479,8 @@ const AuditoriaModule = {
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Cargo / Perfil de Acesso *</label>
-                <select id="edit-user-perfil" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Cargo / Perfil de Acesso *</label>
+                <select id="edit-user-perfil" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <optgroup label="Administração e Governança">
                     <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
                     <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
@@ -510,15 +510,15 @@ const AuditoriaModule = {
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
-                <select id="edit-user-setor" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Setor de Lotação</label>
+                <select id="edit-user-setor" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <option value="">Sem setor definido</option>
                 </select>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Status da Conta *</label>
-                <select id="edit-user-status" required class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Status da Conta *</label>
+                <select id="edit-user-status" required class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600">
                   <option value="ATIVO">ATIVO (Acesso liberado)</option>
                   <option value="INATIVO">INATIVO (Acesso pausado)</option>
                   <option value="BLOQUEADO">BLOQUEADO (Acesso revogado)</option>
@@ -588,23 +588,23 @@ const AuditoriaModule = {
       const emailAdmin = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail) ? userEmail : 'higor.sdds@gmail.com';
       const contentHtml = `
         <div class="space-y-4 text-xs">
-          <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900">
+          <div class="p-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl text-indigo-900 dark:text-indigo-200">
             <p class="font-bold flex items-center gap-1.5">
-              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600"></i> Diagnóstico Operacional de E-mail
+              <i data-lucide="mail-check" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i> Diagnóstico Operacional de E-mail
             </p>
-            <p class="mt-1 text-[11px] leading-relaxed text-indigo-800">
+            <p class="mt-1 text-[11px] leading-relaxed text-indigo-800 dark:text-indigo-300">
               Envie um e-mail de teste imediato para validar se seu provedor (Brevo API, Resend ou SMTP) está conectado e entregando mensagens sem bloqueios.
             </p>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">E-mail de Destino para Teste *</label>
-            <input type="email" id="input-teste-email-destino" value="${emailAdmin}" required
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">E-mail de Destino para Teste *</label>
+            <input type="email" id="input-teste-email-destino" value="${this._esc(emailAdmin)}" required
               placeholder="Ex: seu-email@gmail.com"
-              class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white" />
+              class="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" />
           </div>
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-[11px] space-y-1.5 leading-relaxed">
-            <p class="font-bold text-slate-700">Dicas para Provedor Brevo (Sendinblue):</p>
-            <ul class="list-disc pl-4 space-y-1 text-slate-500">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 text-[11px] space-y-1.5 leading-relaxed">
+            <p class="font-bold text-slate-700 dark:text-slate-200">Dicas para Provedor Brevo (Sendinblue):</p>
+            <ul class="list-disc pl-4 space-y-1 text-slate-500 dark:text-slate-400">
               <li>O remetente configurado deve corresponder ao e-mail confirmado da sua conta Brevo.</li>
               <li>Contas novas no Brevo podem direcionar o primeiro e-mail para a pasta <strong>Spam / Lixo Eletrônico</strong> ou para a aba <strong>Promoções</strong> do Gmail.</li>
               <li>Acompanhe o status em tempo real pelo painel Brevo em <strong>Transactional &gt; Statistics</strong>.</li>
@@ -644,23 +644,23 @@ const AuditoriaModule = {
                     title: 'Resultado do Teste de E-mail',
                     contentHtml: `
                       <div class="space-y-3 text-xs">
-                        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900">
-                          <p class="font-bold flex items-center gap-1.5 text-emerald-800">
+                        <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-900 dark:text-emerald-200">
+                          <p class="font-bold flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300">
                             ✅ Disparo Realizado com Sucesso!
                           </p>
-                          <p class="mt-1 text-[11px] leading-relaxed text-emerald-700">
-                            A requisição foi aceita pelo provedor <strong>${res?.provedor || 'BREVO_API'}</strong>.
+                          <p class="mt-1 text-[11px] leading-relaxed text-emerald-700 dark:text-emerald-300">
+                            A requisição foi aceita pelo provedor <strong>${this._esc(res?.provedor || 'BREVO_API')}</strong>.
                           </p>
                         </div>
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-700 space-y-1.5">
-                          <div><strong>Provedor:</strong> ${res?.provedor || 'BREVO_API'}</div>
-                          <div><strong>Remetente:</strong> ${res?.remetente || 'Configurado'}</div>
-                          <div><strong>Destinatário:</strong> ${dest}</div>
-                          ${res?.messageId ? `<div><strong>ID da Mensagem:</strong> <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200">${res.messageId}</code></div>` : ''}
+                        <div class="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-[11px] text-slate-700 dark:text-slate-300 space-y-1.5">
+                          <div><strong>Provedor:</strong> ${this._esc(res?.provedor || 'BREVO_API')}</div>
+                          <div><strong>Remetente:</strong> ${this._esc(res?.remetente || 'Configurado')}</div>
+                          <div><strong>Destinatário:</strong> ${this._esc(dest)}</div>
+                          ${res?.messageId ? `<div><strong>ID da Mensagem:</strong> <code class="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">${this._esc(res.messageId)}</code></div>` : ''}
                         </div>
-                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] space-y-1">
+                        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-900 dark:text-amber-200 text-[11px] space-y-1">
                           <p class="font-bold">⚠️ Não encontrou na Caixa de Entrada?</p>
-                          <ol class="list-decimal pl-4 space-y-1 text-amber-800">
+                          <ol class="list-decimal pl-4 space-y-1 text-amber-800 dark:text-amber-300">
                             <li>Verifique a pasta <strong>Spam (Lixo Eletrônico)</strong> e a aba <strong>Promoções</strong> do Gmail.</li>
                             <li>No painel da Brevo, acesse <strong>Transactional &gt; Real-time / Logs</strong> para verificar se a mensagem está com status "Delivered" ou em análise de primeira ativação.</li>
                           </ol>
@@ -752,14 +752,14 @@ const AuditoriaModule = {
               title: res?.emailEnviado ? 'Acesso Liberado com Sucesso' : 'Acesso Liberado (Atenção ao E-mail)',
               contentHtml: `
                 <div class="space-y-3 text-xs">
-                  <div class="p-3.5 ${res?.emailEnviado ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl">
-                    <p class="font-bold">${res?.message}</p>
+                  <div class="p-3.5 ${res?.emailEnviado ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200'} border rounded-xl">
+                    <p class="font-bold">${this._esc(res?.message)}</p>
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-700 mb-1">Link Direto de Ativação (Uso Único):</label>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Link Direto de Ativação (Uso Único):</label>
                     <div class="flex gap-2">
-                      <input type="text" id="input-link-ativacao-copiar" readonly value="${res.linkAtivacao}"
-                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-mono text-slate-700" />
+                      <input type="text" id="input-link-ativacao-copiar" readonly value="${this._esc(res.linkAtivacao)}"
+                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[11px] font-mono text-slate-700 dark:text-slate-200" />
                       <button type="button" id="btn-copiar-link-ativacao-modal"
                         class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs whitespace-nowrap">
                         Copiar
@@ -1082,12 +1082,12 @@ const AuditoriaModule = {
       }
 
       wrap.innerHTML = `
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+        <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0"></i>
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0"></i>
             <div>
-              <h5 class="text-xs font-bold text-amber-900">Solicitações de Acesso Pendentes (${pendentes.length})</h5>
-              <p class="text-[11px] text-amber-700">Usuários cadastrados na tela de login que necessitam de aprovação administrativa para acessar.</p>
+              <h5 class="text-xs font-bold text-amber-900 dark:text-amber-200">Solicitações de Acesso Pendentes (${pendentes.length})</h5>
+              <p class="text-[11px] text-amber-700 dark:text-amber-300">Usuários cadastrados na tela de login que necessitam de aprovação administrativa para acessar.</p>
             </div>
           </div>
         </div>
@@ -1110,7 +1110,7 @@ const AuditoriaModule = {
                   <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td class="py-3.5 px-4 font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                       <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                        ${this._iniciais(u.nome)}
+                        ${this._esc(this._iniciais(u.nome))}
                       </div>
                       <span>${this._esc(u.nome)}</span>
                     </td>
@@ -1174,7 +1174,7 @@ const AuditoriaModule = {
       try {
         const setores = await window.API.getSetores().catch(() => []);
         selectSetor.innerHTML = '<option value="">Selecione o setor de lotação...</option>' +
-          (setores || []).map(s => `<option value="${s.id}" ${setor_id && Number(setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>`).join('');
+          (setores || []).map(s => `<option value="${s.id}" ${setor_id && Number(setor_id) === Number(s.id) ? 'selected' : ''}>${this._esc(s.nome)}</option>`).join('');
       } catch (_) {
         selectSetor.innerHTML = '<option value="">Setor não atribuído</option>';
       }
@@ -1294,7 +1294,7 @@ const AuditoriaModule = {
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-hub-sm flex items-start gap-3 relative overflow-hidden">
               <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-bl-lg"></span>
               <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-extrabold text-xs shadow-md shrink-0">
-                ${this._iniciais(u.nome)}
+                ${this._esc(this._iniciais(u.nome))}
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
@@ -1374,7 +1374,7 @@ const AuditoriaModule = {
                       data-setor="${this._esc(u.setor_nome || '').toLowerCase()}">
                     <td class="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                       <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center text-[11px] font-bold shrink-0">
-                        ${this._iniciais(u.nome)}
+                        ${this._esc(this._iniciais(u.nome))}
                       </div>
                       <div class="flex flex-col">
                         <span>${this._esc(u.nome)}</span>

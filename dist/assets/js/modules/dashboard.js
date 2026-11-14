@@ -149,7 +149,7 @@ window.DashboardModule = {
           detalhe: `Qtd: ${c.quantidade || 1} • R$ ${(Number(c.valor_total || c.valor_estimado || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           solicitante: c.solicitante_nome || listaUsuarios.find(u => Number(u.id) === Number(c.solicitante_id))?.nome || 'Colaborador',
           status: 'pendente',
-          statusLabel: 'Pendente Aprovação',
+          statusLabel: 'Pendente',
           statusCor: 'bg-amber-500',
           data: c.created_at || c.data || new Date().toISOString(),
           rota: '#compras'
@@ -168,7 +168,7 @@ window.DashboardModule = {
             detalhe: `Colaborador: ${a.colaborador_nome} • Gravidade: ${a.gravidade}`,
             solicitante: a.solicitante_nome || 'Gestor',
             status: 'pendente',
-            statusLabel: 'Aguardando Aceite',
+            statusLabel: 'Pendente',
             statusCor: 'bg-amber-500',
             data: a.created_at || a.data_ocorrencia || new Date().toISOString(),
             rota: '#advertencias'
@@ -187,7 +187,7 @@ window.DashboardModule = {
           detalhe: `Atual: ${i.quantidade} ${i.unidade_medida || 'un'} • Mínimo: ${i.estoque_minimo}`,
           solicitante: 'Almoxarifado Central',
           status: 'critico',
-          statusLabel: 'Reposição Urgente',
+          statusLabel: 'Crítico',
           statusCor: 'bg-red-600',
           data: i.updated_at || new Date().toISOString(),
           rota: '#insumos'
@@ -540,14 +540,14 @@ window.DashboardModule = {
 
               <!-- Tabela de Demandas de Alta Densidade -->
               <div class="overflow-x-auto hub-scrollbar">
-                <table class="w-full min-w-[660px] text-left text-xs">
-                  <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <table class="w-full min-w-[540px] text-left text-xs">
+                  <thead class="bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
-                      <th class="py-3 px-4">Tag / Tipo</th>
-                      <th class="py-3 px-4">Demanda & Detalhes</th>
-                      <th class="py-3 px-4">Origem / Solicitante</th>
-                      <th class="py-3 px-4">Status</th>
-                      <th class="py-3 px-4 text-right">Ação</th>
+                      <th class="py-3 px-2.5 sm:px-3">Tag / Tipo</th>
+                      <th class="py-3 px-2.5 sm:px-3">Demanda & Detalhes</th>
+                      <th class="py-3 px-2.5 sm:px-3">Origem</th>
+                      <th class="py-3 px-2.5 sm:px-3">Status</th>
+                      <th class="py-3 px-2.5 sm:px-3 text-right">Ação</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
@@ -560,24 +560,24 @@ window.DashboardModule = {
                       </tr>
                     ` : filaFiltrada.slice(0, 6).map(item => `
                       <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-3 px-2.5 sm:px-3 whitespace-nowrap">
                           <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 block">${item.tag}</span>
-                          <span class="text-xs text-slate-400 block">${item.tipoLabel}</span>
+                          <span class="text-[11px] text-slate-400 block">${item.tipoLabel}</span>
                         </td>
-                        <td class="py-3 px-4">
-                          <span class="font-bold text-slate-900 dark:text-white block max-w-sm truncate" title="${this._esc(item.titulo)}">${item.titulo}</span>
-                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-sm truncate" title="${this._esc(item.detalhe)}">${item.detalhe}</span>
+                        <td class="py-3 px-2.5 sm:px-3 min-w-0">
+                          <span class="font-bold text-slate-900 dark:text-white block max-w-[180px] xl:max-w-[240px] truncate" title="${this._esc(item.titulo)}">${this._esc(item.titulo)}</span>
+                          <span class="text-xs text-slate-500 dark:text-slate-400 block max-w-[180px] xl:max-w-[240px] truncate" title="${this._esc(item.detalhe)}">${this._esc(item.detalhe)}</span>
                         </td>
-                        <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          ${item.solicitante}
+                        <td class="py-3 px-2.5 sm:px-3 text-slate-600 dark:text-slate-300">
+                          <span class="block max-w-[125px] truncate" title="${this._esc(item.solicitante)}">${this._esc(item.solicitante)}</span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            <span class="w-1.5 h-1.5 rounded-full ${item.statusCor}"></span>
+                        <td class="py-3 px-2.5 sm:px-3 whitespace-nowrap">
+                          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <span class="w-1.5 h-1.5 rounded-full ${item.statusCor} shrink-0"></span>
                             ${item.statusLabel}
                           </span>
                         </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                        <td class="py-3 px-2.5 sm:px-3 text-right whitespace-nowrap">
                           <button onclick="window.location.hash = '${item.rota}'" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-slate-700 dark:text-slate-200 cursor-pointer">
                             Examinar ↗
                           </button>
@@ -642,14 +642,14 @@ window.DashboardModule = {
                     <div class="feed-node">
                       <div class="feed-node-dot"></div>
                       <div class="flex items-baseline justify-between gap-2">
-                        <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${ev.autor}</span>
-                        <span class="text-xs text-slate-400 whitespace-nowrap">${ev.hora}</span>
+                        <span class="text-xs font-bold text-slate-900 dark:text-slate-100">${this._esc(ev.autor)}</span>
+                        <span class="text-xs text-slate-400 whitespace-nowrap">${this._esc(ev.hora)}</span>
                       </div>
                       <p class="text-xs font-semibold text-blue-600 dark:text-sky-400 mt-0.5 leading-snug">
-                        ${ev.acao}
+                        ${this._esc(ev.acao)}
                       </p>
                       <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
-                        ${ev.descricao}
+                        ${this._esc(ev.descricao)}
                       </p>
                     </div>
                   `;

@@ -573,9 +573,10 @@ class AppRouter {
     }
 
     if (window.UI?.toast) {
+      const esc = window.UI.escapeHtml ? window.UI.escapeHtml(query) : query;
       window.UI.toast({
         title: 'Busca Global',
-        message: `Navegando para o módulo correspondente ao termo "${query}"`,
+        message: `Navegando para o módulo correspondente ao termo "${esc}"`,
         type: 'info'
       });
     }

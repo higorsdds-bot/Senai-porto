@@ -11,6 +11,19 @@ class UIManager {
     this._ensureContainers();
   }
 
+  /**
+   * Escapa caracteres especiais HTML para prevenir XSS em template strings.
+   */
+  escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   _ensureContainers() {
     // Container de Toasts (canto inferior direito)
     if (!document.getElementById('hub-toast-container')) {
@@ -68,8 +81,8 @@ class UIManager {
     toast.innerHTML = `
       ${iconMap[type] || iconMap.info}
       <div class="flex-1 min-w-0 pr-1">
-        ${title ? `<h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white leading-tight">${title}</h4>` : ''}
-        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">${message}</p>
+        ${title ? `<h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white leading-tight">${this.escapeHtml(title)}</h4>` : ''}
+        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">${this.escapeHtml(message)}</p>
       </div>
       <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 -mr-1 -mt-1 rounded-lg" aria-label="Fechar notificação">
         <i data-lucide="x" class="w-4 h-4"></i>
@@ -497,23 +510,23 @@ class UIManager {
 
         <div>
           <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
-            ${item.titulo}
+            ${this.escapeHtml(item.titulo)}
           </h2>
         </div>
 
         <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
           <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line select-text">
-            ${item.mensagem}
+            ${this.escapeHtml(item.mensagem)}
           </p>
         </div>
 
         <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-sky-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-              ${autor.charAt(0).toUpperCase()}
+              ${this.escapeHtml(autor.charAt(0).toUpperCase())}
             </div>
             <div>
-              <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">${autor}</span>
+              <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">${this.escapeHtml(autor)}</span>
               <span class="block text-[10px] text-slate-400">Publicado no Mural Oficial</span>
             </div>
           </div>
@@ -633,19 +646,19 @@ class UIManager {
                   </div>
                   <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
-                    ${autor}
+                    ${this.escapeHtml(autor)}
                   </span>
                 </div>
 
                 <div>
                   <h3 class="text-base font-black text-slate-900 dark:text-white leading-snug">
-                    ${item.titulo}
+                    ${this.escapeHtml(item.titulo)}
                   </h3>
                 </div>
 
                 <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
                   <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line select-text">
-                    ${item.mensagem}
+                    ${this.escapeHtml(item.mensagem)}
                   </p>
                 </div>
               </div>

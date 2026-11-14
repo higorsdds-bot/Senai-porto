@@ -44,13 +44,7 @@ window.EquipamentosModule = {
       this.usuarios = Array.isArray(usuarios) ? usuarios : (usuarios?.data || []);
 
       if (equipamentos === null && (!this.items || this.items.length === 0)) {
-        const fallback = (window.MockDB && typeof window.MockDB.getAll === 'function') ? window.MockDB.getAll('equipamentos') : null;
-        if (Array.isArray(fallback) && fallback.length > 0) {
-          console.warn('[EQUIPAMENTOS] Utilizando dados de redundância local.');
-          this.items = fallback;
-        } else {
-          throw new Error('Não foi possível conectar ao catálogo de patrimônio. Verifique sua conexão e tente novamente.');
-        }
+        throw new Error('Não foi possível conectar ao catálogo de patrimônio. Verifique sua conexão e tente novamente.');
       }
       this._renderView(container);
     } catch (err) {

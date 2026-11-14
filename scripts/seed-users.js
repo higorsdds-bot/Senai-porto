@@ -44,3 +44,4 @@ ON CONFLICT(email) DO UPDATE SET
 const sqlPath = path.join(__dirname, '../src/database/seed_users.sql');
 fs.writeFileSync(sqlPath, sql, 'utf8');
 console.log('Wrote SQL to', sqlPath);
+

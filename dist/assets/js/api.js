@@ -6,8 +6,6 @@
 class ApiService {
   constructor() {
     this.baseUrl = window.CONFIG?.API_BASE_URL || '/api/v1';
-    this.useMock = window.CONFIG?.USE_MOCK ?? false;
-    this.delayMs = window.CONFIG?.MOCK_DELAY_MS || 300;
     this._cache = new Map();
   }
 
@@ -29,12 +27,12 @@ class ApiService {
   /**
    * Executa requisição GET com cache em memória (TTL em milissegundos).
    */
-  async cachedGet(endpoint, ttlMs = 25000, mockHandler = null) {
+  async cachedGet(endpoint, ttlMs = 25000) {
     const cached = this._cache.get(endpoint);
     if (cached && (Date.now() - cached.time < ttlMs)) {
       return cached.data;
     }
-    const data = await this.request(endpoint, { method: 'GET' }, mockHandler);
+    const data = await this.request(endpoint, { method: 'GET' });
     this._cache.set(endpoint, { time: Date.now(), data });
     return data;
   }
@@ -69,7 +67,13 @@ class ApiService {
     if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    let cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    if (cleanUrl.startsWith('/api/') && cleanUrl.includes('/foto')) {
+      const token = this.getToken();
+      if (token && !cleanUrl.includes('token=')) {
+        cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + `token=${encodeURIComponent(token)}`;
+      }
+    }
     if (this.baseUrl && this.baseUrl.startsWith('http')) {
       try {
         const parsed = new URL(this.baseUrl);
@@ -82,15 +86,11 @@ class ApiService {
     return cleanUrl;
   }
 
-  async _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
   /**
    * Executa requisição HTTP com Bearer token.
    * Se body for FormData, NÃO define Content-Type (o browser define o boundary).
    */
-  async request(endpoint, options = {}, mockHandler = null) {
+  async request(endpoint, options = {}) {
     const token = this.getToken();
 
     const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
@@ -103,48 +103,39 @@ class ApiService {
 
     const config = { ...options, headers };
 
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+    const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
-      if (response.status === 401) {
-        const errBody = await response.json().catch(() => ({}));
-        const msg = errBody.message || 'Sessão expirada. Faça login novamente.';
+    if (response.status === 401) {
+      const errBody = await response.json().catch(() => ({}));
+      const msg = errBody.message || 'Sessão expirada. Faça login novamente.';
 
-        // Qualquer 401 em endpoint autenticado indica sessão inválida ou ausente
-        if (!window.Auth?.isVisitante()) {
-          window.Auth?.forcarLogout();
-        }
-        throw new Error(msg);
+      // Qualquer 401 em endpoint autenticado indica sessão inválida ou ausente
+      if (!window.Auth?.isVisitante()) {
+        window.Auth?.forcarLogout();
       }
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        let msg = errorBody.message || `Erro HTTP ${response.status}`;
-        if (errorBody.errors && typeof errorBody.errors === 'object') {
-          const details = Object.values(errorBody.errors).join(' ');
-          if (details && !msg.includes(details)) {
-            msg = `${msg}: ${details}`;
-          }
-        }
-        const err = new Error(msg);
-        err.status = response.status;
-        err.errors = errorBody.errors || null;
-        throw err;
-      }
-      const json = await response.json();
-      // A API real devolve { success, data }; o mock devolve o dado puro.
-      // Desembrulha para os módulos receberem sempre o dado direto (array/objeto).
-      return (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json)
-        ? json.data
-        : json;
-    } catch (error) {
-      if (mockHandler && !error.status) {
-        console.warn(`[API FALLBACK] Mock para ${endpoint}`);
-        await this._sleep(150);
-        return await mockHandler();
-      }
-      throw error;
+      throw new Error(msg);
     }
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      let msg = errorBody.message || `Erro HTTP ${response.status}`;
+      if (errorBody.errors && typeof errorBody.errors === 'object') {
+        const details = Object.values(errorBody.errors).join(' ');
+        if (details && !msg.includes(details)) {
+          msg = `${msg}: ${details}`;
+        }
+      }
+      const err = new Error(msg);
+      err.status = response.status;
+      err.errors = errorBody.errors || null;
+      throw err;
+    }
+
+    const json = await response.json();
+    // Desembrulha { success, data } para os módulos receberem sempre o dado direto (array/objeto).
+    return (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json)
+      ? json.data
+      : json;
   }
 
   // =========================================================================
@@ -233,12 +224,11 @@ class ApiService {
   // USUÁRIOS
   // =========================================================================
   async getUsuarios() {
-    return this.cachedGet(CONFIG.ENDPOINTS.USUARIOS, 20000, () => window.MockDB.getAll('usuarios'));
+    return this.cachedGet(CONFIG.ENDPOINTS.USUARIOS, 20000);
   }
 
   async getUsuarioById(id) {
-    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, { method: 'GET' },
-      () => window.MockDB.getById('usuarios', id));
+    return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, { method: 'GET' });
   }
 
   async getUsuario(id) {
@@ -250,7 +240,7 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.USUARIOS, {
       method: 'POST',
       body: JSON.stringify(data)
-    }, () => window.MockDB.create('usuarios', data));
+    });
   }
 
   async updateUsuario(id, data) {
@@ -258,7 +248,7 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
-    }, () => window.MockDB.update('usuarios', id, data));
+    });
   }
 
   async updateUsuarioStatus(id, status) {
@@ -266,14 +256,14 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status })
-    }, () => window.MockDB.update('usuarios', id, { status }));
+    });
   }
 
   async deleteUsuario(id) {
     this.clearCache('usuarios');
     return this.request(`${CONFIG.ENDPOINTS.USUARIOS}/${id}`, {
       method: 'DELETE'
-    }, () => window.MockDB.delete('usuarios', id));
+    });
   }
 
   async preCadastrarUsuario(data) {
@@ -304,24 +294,22 @@ class ApiService {
   // SETORES
   // =========================================================================
   async getSetores() {
-    return this.cachedGet(CONFIG.ENDPOINTS.SETORES, 30000, () => window.MockDB.getAll('setores'));
+    return this.cachedGet(CONFIG.ENDPOINTS.SETORES, 30000);
   }
 
   // =========================================================================
   // COMPRAS
   // =========================================================================
   async getCompras() {
-    return this.request(CONFIG.ENDPOINTS.COMPRAS, { method: 'GET' }, () => window.MockDB.getAll('compras'));
+    return this.request(CONFIG.ENDPOINTS.COMPRAS, { method: 'GET' });
   }
 
   async createCompra(data) {
-    return this.request(CONFIG.ENDPOINTS.COMPRAS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('compras', data));
+    return this.request(CONFIG.ENDPOINTS.COMPRAS, { method: 'POST', body: JSON.stringify(data) });
   }
 
   async updateCompra(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('compras', id, data));
+    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async updateStatusCompra(id, status) {
@@ -336,15 +324,14 @@ class ApiService {
   }
 
   async deleteCompra(id) {
-    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('compras', id));
+    return this.request(`${CONFIG.ENDPOINTS.COMPRAS}/${id}`, { method: 'DELETE' });
   }
 
   // =========================================================================
   // EQUIPAMENTOS
   // =========================================================================
   async getEquipamentos() {
-    return this.request(CONFIG.ENDPOINTS.EQUIPAMENTOS, { method: 'GET' }, () => window.MockDB.getAll('equipamentos'));
+    return this.request(CONFIG.ENDPOINTS.EQUIPAMENTOS, { method: 'GET' });
   }
 
   async createEquipamento(data) {
@@ -352,7 +339,7 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.EQUIPAMENTOS, {
       method: 'POST',
       body: isFormData ? data : JSON.stringify(data)
-    }, () => window.MockDB.create('equipamentos', data));
+    });
   }
 
   async updateEquipamento(id, data) {
@@ -360,12 +347,11 @@ class ApiService {
     return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}`, {
       method: 'PUT',
       body: isFormData ? data : JSON.stringify(data)
-    }, () => window.MockDB.update('equipamentos', id, data));
+    });
   }
 
   async deleteEquipamento(id) {
-    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('equipamentos', id));
+    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}`, { method: 'DELETE' });
   }
 
   async getEquipamentoHistorico(id) {
@@ -395,7 +381,7 @@ class ApiService {
     if (filtros.setor_id) params.set('setor_id', filtros.setor_id);
     if (filtros.q) params.set('q', filtros.q);
     const qs = params.toString() ? `?${params.toString()}` : '';
-    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}${qs}`, { method: 'GET' }, () => window.MockDB.getAll('documentos'));
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}${qs}`, { method: 'GET' });
   }
 
   async getDocumentoById(id) {
@@ -407,7 +393,7 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.DOCUMENTOS, {
       method: 'POST',
       body: isFormData ? data : JSON.stringify(data)
-    }, () => window.MockDB.create('documentos', data));
+    });
   }
 
   async updateDocumento(id, data) {
@@ -426,8 +412,7 @@ class ApiService {
   }
 
   async deleteDocumento(id) {
-    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('documentos', id));
+    return this.request(`${CONFIG.ENDPOINTS.DOCUMENTOS}/${id}`, { method: 'DELETE' });
   }
 
   async downloadDocumento(id, nomePadrao = 'documento.pdf') {
@@ -478,8 +463,7 @@ class ApiService {
     if (filtros.status) params.set('status', filtros.status);
     if (filtros.q) params.set('q', filtros.q);
     const qs = params.toString() ? `?${params.toString()}` : '';
-    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}${qs}`, { method: 'GET' },
-      () => window.MockDB.getAll('ocorrencias'));
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}${qs}`, { method: 'GET' });
   }
 
   /**
@@ -491,28 +475,15 @@ class ApiService {
     return this.request(CONFIG.ENDPOINTS.OCORRENCIAS, {
       method: 'POST',
       body: isForm ? data : JSON.stringify(data)
-    }, () => {
-      let payload = data;
-      if (isForm) {
-        payload = Object.fromEntries(data);
-        if (payload.foto_base64 && !payload.foto_url) {
-          payload.foto_url = payload.foto_base64;
-        } else if (payload.foto && payload.foto instanceof File && !payload.foto_url) {
-          payload.foto_url = URL.createObjectURL(payload.foto);
-        }
-      }
-      return window.MockDB.create('ocorrencias', payload);
     });
   }
 
   async updateOcorrencia(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('ocorrencias', id, data));
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async deleteOcorrencia(id) {
-    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('ocorrencias', id));
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}`, { method: 'DELETE' });
   }
 
   async assumirOcorrencia(id) {
@@ -528,33 +499,37 @@ class ApiService {
     });
   }
 
+  async updateOcorrenciaStatus(id, data = {}) {
+    return this.request(`${CONFIG.ENDPOINTS.OCORRENCIAS}/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
   // =========================================================================
   // EVENTOS
   // =========================================================================
   async getEventos() {
-    return this.request(CONFIG.ENDPOINTS.EVENTOS, { method: 'GET' }, () => window.MockDB.getAll('eventos'));
+    return this.request(CONFIG.ENDPOINTS.EVENTOS, { method: 'GET' });
   }
 
   async createEvento(data) {
-    return this.request(CONFIG.ENDPOINTS.EVENTOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('eventos', data));
+    return this.request(CONFIG.ENDPOINTS.EVENTOS, { method: 'POST', body: JSON.stringify(data) });
   }
 
   async updateEvento(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('eventos', id, data));
+    return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async deleteEvento(id) {
-    return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('eventos', id));
+    return this.request(`${CONFIG.ENDPOINTS.EVENTOS}/${id}`, { method: 'DELETE' });
   }
 
   // =========================================================================
   // INSUMOS
   // =========================================================================
   async getInsumos() {
-    return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'GET' }, () => window.MockDB.getAll('insumos'));
+    return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'GET' });
   }
 
   async getHistoricoInsumos(filtros = {}) {
@@ -577,40 +552,34 @@ class ApiService {
   }
 
   async createInsumo(data) {
-    return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('insumos', data));
+    return this.request(CONFIG.ENDPOINTS.INSUMOS, { method: 'POST', body: JSON.stringify(data) });
   }
 
   async updateInsumo(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('insumos', id, data));
+    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async deleteInsumo(id) {
-    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('insumos', id));
+    return this.request(`${CONFIG.ENDPOINTS.INSUMOS}/${id}`, { method: 'DELETE' });
   }
 
   // =========================================================================
   // COMUNICADOS
   // =========================================================================
   async getComunicados() {
-    return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'GET' }, () => window.MockDB.getAll('comunicados'));
+    return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'GET' });
   }
 
   async getComunicado(id) {
-    return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'GET' },
-      () => window.MockDB.getById('comunicados', id));
+    return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'GET' });
   }
 
   async createComunicado(data) {
-    return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('comunicados', data));
+    return this.request(CONFIG.ENDPOINTS.COMUNICADOS, { method: 'POST', body: JSON.stringify(data) });
   }
 
   async deleteComunicado(id) {
-    return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('comunicados', id));
+    return this.request(`${CONFIG.ENDPOINTS.COMUNICADOS}/${id}`, { method: 'DELETE' });
   }
 
   // =========================================================================
@@ -666,29 +635,26 @@ class ApiService {
   // LIMPEZA
   // =========================================================================
   async getLimpeza() {
-    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'GET' }, () => window.MockDB.getAll('limpeza'));
+    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'GET' });
   }
 
   async createLimpeza(data) {
-    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'POST', body: JSON.stringify(data) },
-      () => window.MockDB.create('limpeza', data));
+    return this.request(CONFIG.ENDPOINTS.LIMPEZA, { method: 'POST', body: JSON.stringify(data) });
   }
 
   async updateLimpeza(id, data) {
-    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'PUT', body: JSON.stringify(data) },
-      () => window.MockDB.update('limpeza', id, data));
+    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async updateLimpezaStatus(id, status) {
     return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status })
-    }, () => window.MockDB.update('limpeza', id, { status }));
+    });
   }
 
   async deleteLimpeza(id) {
-    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'DELETE' },
-      () => window.MockDB.delete('limpeza', id));
+    return this.request(`${CONFIG.ENDPOINTS.LIMPEZA}/${id}`, { method: 'DELETE' });
   }
 
   // =========================================================================

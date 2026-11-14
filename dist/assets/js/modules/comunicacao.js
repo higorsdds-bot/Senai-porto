@@ -192,19 +192,19 @@ window.ComunicacaoModule = {
                     </div>
 
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-snug mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                      ${item.titulo}
+                      ${window.UI.escapeHtml(item.titulo)}
                     </h3>
                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3">
-                      ${item.mensagem}
+                      ${window.UI.escapeHtml(item.mensagem)}
                     </p>
                   </div>
 
                   <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                     <div class="flex items-center gap-2 min-w-0">
                       <div class="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold text-xs flex items-center justify-center shrink-0">
-                        ${autor.charAt(0).toUpperCase()}
+                        ${window.UI.escapeHtml(autor.charAt(0).toUpperCase())}
                       </div>
-                      <span class="text-xs text-slate-600 dark:text-slate-400 font-medium truncate max-w-[120px]">${autor}</span>
+                      <span class="text-xs text-slate-600 dark:text-slate-400 font-medium truncate max-w-[120px]">${window.UI.escapeHtml(autor)}</span>
                     </div>
 
                     <div class="flex items-center gap-1.5">
@@ -305,7 +305,7 @@ window.ComunicacaoModule = {
               <option value="">Selecione...</option>
               ${this.usuarios.map(u => `
                 <option value="${u.id}" ${usuarioLogado && Number(usuarioLogado.id) === Number(u.id) ? 'selected' : ''}>
-                  ${u.nome} (${u.perfil || 'Colaborador'})
+                  ${window.UI.escapeHtml(u.nome)} (${window.UI.escapeHtml(u.perfil || 'Colaborador')})
                 </option>
               `).join('')}
             </select>

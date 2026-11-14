@@ -73,7 +73,7 @@ window.ComprasModule = {
               </span>
               <span class="text-xs text-slate-400">• ${this.items.length} pedidos</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">${ownRequestsOnly ? 'Solicitação de Materiais de Consumo' : orderEntryOnly ? 'Entrada em Pedidos de Compra' : 'Gestão de Compras'}</h1>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">${ownRequestsOnly ? 'Solicitação de Materiais de Consumo' : orderEntryOnly ? 'Entrada em Pedidos de Compra' : 'Gestão de Compras'}</h1>
             <p class="text-xs text-slate-500 font-medium">${ownRequestsOnly ? 'Solicite materiais e acompanhe o status das suas solicitações.' : orderEntryOnly ? 'Consulte pedidos aprovados e registre a entrada dos materiais.' : 'Pedidos gerados, aprovação e entrada de materiais.'}</p>
           </div>
           ${canCreate ? `<button id="btn-nova-compra" class="btn-primary">
@@ -107,7 +107,7 @@ window.ComprasModule = {
             ${this.setores.length ? `<select id="select-filtro-setor-compra" class="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-900">
               <option value="">Todos os Setores</option>
               ${this.setores.map(s => `
-                <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>
+                <option value="${s.id}" ${Number(this.setorFilter) === Number(s.id) ? 'selected' : ''}>${window.UI.escapeHtml(s.nome)}</option>
               `).join('')}
             </select>` : ''}
           </div>
@@ -144,16 +144,16 @@ window.ComprasModule = {
                       <tr class="hub-table-row">
                         <td class="px-6 py-4 font-mono font-medium text-slate-400">#${item.id}</td>
                         <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
-                          <span class="max-w-xs line-clamp-1" title="${prodEscaped}">${item.produto}</span>
+                          <span class="max-w-xs line-clamp-1" title="${window.UI.escapeHtml(item.produto)}">${window.UI.escapeHtml(item.produto)}</span>
                           ${item.valor_estimado ? `<span class="block text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">R$ ${Number(item.valor_estimado).toFixed(2)}</span>` : ''}
                         </td>
                         ${ownRequestsOnly ? '' : `<td class="px-6 py-4 text-slate-600 dark:text-slate-300">
                           <div class="flex items-center gap-1.5">
                             <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
-                            ${item.solicitante_nome || '—'}
+                            ${window.UI.escapeHtml(item.solicitante_nome || '—')}
                           </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300">${item.setor_nome || '—'}</td>`}
+                        <td class="px-6 py-4 text-slate-600 dark:text-slate-300">${window.UI.escapeHtml(item.setor_nome || '—')}</td>`}
                         <td class="px-6 py-4">
                           ${window.UI.renderBadge(item.status)}
                         </td>
@@ -229,8 +229,6 @@ window.ComprasModule = {
     const currentUserId = window.Auth.getUsuario()?.id;
     const isOwner = item && Number(item.solicitante_id) === Number(currentUserId);
 
-    const prodValueEscaped = item && item.produto ? String(item.produto).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') : '';
-
     const modalContent = `
       <form id="form-compra" class="space-y-4" onsubmit="return false;">
         ${isAdmin ? `
@@ -251,41 +249,41 @@ window.ComprasModule = {
             type="text" 
             name="produto" 
             required 
-            value="${prodValueEscaped}" 
+            value="${item ? window.UI.escapeHtml(item.produto) : ''}" 
             placeholder="Ex: Detergente concentrado, papel toalha ou equipamento"
-            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
           />
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição Detalhada</label>
-          <textarea name="descricao" rows="2" placeholder="Especificações técnicas, marca de preferência ou detalhes..." class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">${item?.descricao || ''}</textarea>
+          <textarea name="descricao" rows="2" placeholder="Especificações técnicas, marca de preferência ou detalhes..." class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">${this._esc(item?.descricao || '')}</textarea>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Quantidade *</label>
-            <input type="number" name="quantidade" min="1" required value="${item ? item.quantidade : 1}" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Quantidade *</label>
+            <input type="number" name="quantidade" min="1" required value="${item ? item.quantidade : 1}" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
           </div>
           ${this.setores.length ? `<div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Setor de Destino</label>
-            <select name="setor_id" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Setor de Destino</label>
+            <select name="setor_id" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
               <option value="">Meu setor</option>
-              ${this.setores.map(s => `<option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${s.nome}</option>`).join('')}
+              ${this.setores.map(s => `<option value="${s.id}" ${item && Number(item.setor_id) === Number(s.id) ? 'selected' : ''}>${this._esc(s.nome)}</option>`).join('')}
             </select>
           </div>` : ''}
         </div>
 
         ${isAdmin ? `
           <!-- CAMPOS EXCLUSIVOS DO ADMINISTRADOR: DIGITAÇÃO COMPLETA -->
-          <div class="pt-3 border-t border-slate-100 space-y-4">
-            <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-blue-600"></i> Parâmetros Administrativos & Financeiros
             </h4>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Valor Estimado / Cotação (R$)</label>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Valor Estimado / Cotação (R$)</label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
                   <input 
@@ -295,14 +293,14 @@ window.ComprasModule = {
                     name="valor_estimado" 
                     value="${item?.valor_estimado ? Number(item.valor_estimado).toFixed(2) : ''}" 
                     placeholder="0.00"
-                    class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-mono"
+                    class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Estágio do Fluxo (Status)</label>
-                <select name="status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Estágio do Fluxo (Status)</label>
+                <select name="status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                   <option value="pendente" ${(!item || item.status === 'pendente') ? 'selected' : ''}>Pendente (Aguardando Análise)</option>
                   <option value="aprovado" ${item?.status === 'aprovado' ? 'selected' : ''}>Aprovado (Liberado p/ Compra)</option>
                   <option value="entregue" ${item?.status === 'entregue' ? 'selected' : ''}>Entregue (Mercadoria Recebida)</option>
@@ -312,13 +310,13 @@ window.ComprasModule = {
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Justificativa / Parecer Administrativo</label>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">Justificativa / Parecer Administrativo</label>
               <textarea 
                 name="justificativa" 
                 rows="2" 
                 placeholder="Insira anotações, motivo de aprovação/rejeição ou dados da cotação..."
-                class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-              >${item?.justificativa || ''}</textarea>
+                class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              >${window.UI.escapeHtml(item?.justificativa || '')}</textarea>
             </div>
           </div>
         ` : ''}
@@ -400,7 +398,7 @@ window.ComprasModule = {
 
     const modalContent = `
       <div class="space-y-4">
-        <p class="text-xs text-slate-600">Altere o estágio do fluxo do item: <strong class="text-slate-800">${item.produto}</strong></p>
+        <p class="text-xs text-slate-600 dark:text-slate-300">Altere o estágio do fluxo do item: <strong class="text-slate-800 dark:text-white">${window.UI.escapeHtml(item.produto)}</strong></p>
         <div class="space-y-2">
           ${['pendente', 'aprovado', 'entregue', 'cancelado'].map(st => `
             <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">

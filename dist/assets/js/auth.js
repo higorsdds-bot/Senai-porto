@@ -642,9 +642,11 @@ class AuthManager {
     const iniciais = partes.length >= 2
       ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
       : (partes[0] ? partes[0].slice(0, 2).toUpperCase() : 'HB');
+    const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     document.querySelectorAll('[data-usuario-iniciais]').forEach(el => {
       if (u.foto_url) {
-        el.innerHTML = `<img src="${u.foto_url}" alt="${u.nome}" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.parentElement.textContent='${iniciais}';">`;
+        const resolvedUrl = window.API?.resolveAssetUrl ? window.API.resolveAssetUrl(u.foto_url) : u.foto_url;
+        el.innerHTML = `<img src="${esc(resolvedUrl)}" alt="${esc(u.nome)}" class="w-full h-full object-cover rounded-full" onerror="this.onerror=null; this.parentElement.textContent='${esc(iniciais)}';">`;
       } else {
         el.textContent = iniciais;
       }

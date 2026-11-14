@@ -332,12 +332,12 @@ window.AdvertenciasModule = {
                       return `
                         <tr class="${rowClass} hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                           <td class="p-3">
-                            <div class="font-bold text-slate-900 dark:text-white">${item.colaborador_nome}</div>
-                            <div class="text-[11px] text-slate-400 font-mono">${item.colaborador_perfil || item.colaborador_email || ''}</div>
+                            <div class="font-bold text-slate-900 dark:text-white">${window.UI.escapeHtml(item.colaborador_nome)}</div>
+                            <div class="text-[11px] text-slate-400 font-mono">${window.UI.escapeHtml(item.colaborador_perfil || item.colaborador_email || '')}</div>
                           </td>
                           <td class="p-3">
-                            <div class="font-semibold text-slate-800 dark:text-slate-200 max-w-xs truncate">${item.motivo}</div>
-                            <div class="text-[11px] text-slate-400 max-w-xs truncate">${item.descricao}</div>
+                            <div class="font-semibold text-slate-800 dark:text-slate-200 max-w-xs truncate">${window.UI.escapeHtml(item.motivo)}</div>
+                            <div class="text-[11px] text-slate-400 max-w-xs truncate">${window.UI.escapeHtml(item.descricao)}</div>
                           </td>
                           <td class="p-3">
                             <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeGravidade}">
@@ -548,14 +548,14 @@ window.AdvertenciasModule = {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <span class="text-slate-400 font-medium">Colaborador Advertido:</span>
-              <p class="font-bold text-slate-900 dark:text-white text-sm">${item.colaborador_nome}</p>
-              <p class="text-[11px] text-slate-500">${item.colaborador_email || ''}</p>
+              <p class="font-bold text-slate-900 dark:text-white text-sm">${window.UI.escapeHtml(item.colaborador_nome)}</p>
+              <p class="text-[11px] text-slate-500">${window.UI.escapeHtml(item.colaborador_email || '')}</p>
             </div>
             <div>
               <span class="text-slate-400 font-medium">Situação & Gravidade:</span>
               <div class="flex items-center gap-2 mt-0.5">
-                <span class="font-bold uppercase tracking-wider text-slate-900 dark:text-white">${item.status}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700">${item.gravidade}</span>
+                <span class="font-bold uppercase tracking-wider text-slate-900 dark:text-white">${window.UI.escapeHtml(item.status)}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700">${window.UI.escapeHtml(item.gravidade)}</span>
               </div>
               <p class="text-[10px] text-slate-400 mt-1">Registrado em: ${dataCriacao}</p>
             </div>
@@ -565,26 +565,26 @@ window.AdvertenciasModule = {
         <div>
           <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Motivo / Infração Disciplinar:</label>
           <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium">
-            ${item.motivo}
+            ${window.UI.escapeHtml(item.motivo)}
           </div>
         </div>
 
         <div>
           <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Descrição Circunstanciada dos Fatos:</label>
           <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-            ${item.descricao}
+            ${window.UI.escapeHtml(item.descricao)}
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
             <span class="text-slate-400 font-medium">Solicitante da Medida:</span>
-            <p class="font-semibold text-slate-800 dark:text-slate-200">${item.solicitante_nome}</p>
+            <p class="font-semibold text-slate-800 dark:text-slate-200">${window.UI.escapeHtml(item.solicitante_nome)}</p>
             <p class="text-[10px] text-slate-500">Data do fato: ${dataOcorr}</p>
           </div>
           <div>
             <span class="text-slate-400 font-medium">Homologação / Aceite:</span>
-            <p class="font-semibold text-slate-800 dark:text-slate-200">${item.homologador_nome || 'Pendente de homologação'}</p>
+            <p class="font-semibold text-slate-800 dark:text-slate-200">${window.UI.escapeHtml(item.homologador_nome || 'Pendente de homologação')}</p>
             <p class="text-[10px] text-slate-500">${dataDecisao ? `Decidido em: ${dataDecisao}` : 'Aguardando decisão do Admin Geral'}</p>
           </div>
         </div>
@@ -593,7 +593,7 @@ window.AdvertenciasModule = {
           <div>
             <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Parecer Institucional / Motivo da Decisão:</label>
             <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
-              ${item.motivo_decisao}
+              ${window.UI.escapeHtml(item.motivo_decisao)}
             </div>
           </div>
         ` : ''}
@@ -623,7 +623,7 @@ window.AdvertenciasModule = {
 
     window.UI.openModal({
       title: `Advertência #${item.id}`,
-      subtitle: `Registro disciplinar do colaborador ${item.colaborador_nome}`,
+      subtitle: `Registro disciplinar do colaborador ${window.UI.escapeHtml(item.colaborador_nome)}`,
       contentHtml: contentHtml,
       saveLabel: null
     });
@@ -674,7 +674,7 @@ window.AdvertenciasModule = {
           <select name="colaborador_id" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20">
             <option value="">Selecione o colaborador...</option>
             ${colaboradores.map(u => `
-              <option value="${u.id}">${u.nome} (${u.perfil || 'Colaborador'}) - ${u.email}</option>
+              <option value="${u.id}">${window.UI.escapeHtml(u.nome)} (${window.UI.escapeHtml(u.perfil || 'Colaborador')}) - ${window.UI.escapeHtml(u.email)}</option>
             `).join('')}
           </select>
         </div>

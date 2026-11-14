@@ -87,7 +87,7 @@ window.UsuariosModule = {
               </span>
               <span class="text-xs text-slate-400">• Admissão e Credenciamento</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight mt-1">Pré-Cadastro de Colaborador</h1>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1">Pré-Cadastro de Colaborador</h1>
             <p class="text-xs text-slate-500 font-medium">Cadastre novos integrantes para encaminhamento e aprovação do Administrador Geral</p>
           </div>
         </div>
@@ -115,7 +115,7 @@ window.UsuariosModule = {
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-slate-900">Novo Colaborador</h3>
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Novo Colaborador</h3>
                 <p class="text-[11px] text-slate-400">Preencha os dados de acesso</p>
               </div>
             </div>
@@ -210,7 +210,7 @@ window.UsuariosModule = {
           <div class="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 class="text-sm font-extrabold text-slate-900">Solicitações Registradas</h3>
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Solicitações Registradas</h3>
                 <p class="text-[11px] text-slate-400">Acompanhe o andamento das admissões encaminhadas</p>
               </div>
               <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-100">
@@ -235,7 +235,7 @@ window.UsuariosModule = {
                     <div class="py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors rounded-xl px-2">
                       <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl ${isPendente ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-extrabold text-xs shrink-0 shadow-sm">
-                          ${this._iniciais(u.nome)}
+                          ${this._esc(this._iniciais(u.nome))}
                         </div>
                         <div>
                           <h4 class="text-xs font-bold text-slate-800">${this._esc(u.nome)}</h4>
@@ -491,7 +491,7 @@ window.UsuariosModule = {
                     <td class="px-5 py-4 font-bold text-slate-900 dark:text-slate-100">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold text-xs shrink-0">
-                          ${this._iniciais(u.nome)}
+                          ${this._esc(this._iniciais(u.nome))}
                         </div>
                         <div>
                           <div class="leading-tight">${this._esc(u.nome)}</div>
@@ -620,8 +620,8 @@ window.UsuariosModule = {
         <!-- ALERTA INLINE DE VALIDAÇÃO (SEMPRE VISÍVEL EM CASO DE ERRO) -->
         <div id="novo-user-alerta" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold flex items-center gap-2"></div>
 
-        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center gap-2">
-          <i data-lucide="user-plus" class="w-4 h-4 text-blue-600 shrink-0"></i>
+        <div class="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-900 dark:text-blue-200 flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"></i>
           <span>Cadastre um novo usuário com acesso direto ou via link de ativação por e-mail.</span>
         </div>
 
@@ -652,8 +652,8 @@ window.UsuariosModule = {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Perfil de Acesso / Hierarquia *</label>
-            <select id="novo-user-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Perfil de Acesso / Hierarquia *</label>
+            <select id="novo-user-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
               <optgroup label="Administração e Governança">
                 <option value="ADMIN">ADMIN (Super Administrador Geral)</option>
                 <option value="ADMINISTRADOR">ADMINISTRADOR (Gestão Institucional)</option>
@@ -683,8 +683,8 @@ window.UsuariosModule = {
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
-            <select id="novo-user-setor" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Setor de Lotação</label>
+            <select id="novo-user-setor" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
               <option value="">Sem setor definido</option>
               ${setoresOptions}
             </select>
@@ -750,10 +750,10 @@ window.UsuariosModule = {
           </div>
 
           <!-- Bloco: Aviso informativo do link por e-mail -->
-          <div id="bloco-senha-email-info" class="hidden p-3 bg-blue-50 border border-blue-200/80 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2">
-            <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+          <div id="bloco-senha-email-info" class="hidden p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800 rounded-xl text-[11px] text-blue-900 dark:text-blue-200 leading-relaxed flex items-start gap-2">
+            <i data-lucide="mail-check" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"></i>
             <div>
-              <strong class="block text-blue-950 font-bold mb-0.5">Ativação segura pelo colaborador:</strong>
+              <strong class="block text-blue-950 dark:text-blue-100 font-bold mb-0.5">Ativação segura pelo colaborador:</strong>
               Não é necessário preencher senha agora. Será gerado um token exclusivo com validade e enviado para o e-mail corporativo para que o usuário cadastre sua senha e autentique a conta.
             </div>
           </div>
@@ -1002,23 +1002,23 @@ window.UsuariosModule = {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Cargo / Perfil *</label>
-            <select id="edit-gestao-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-semibold">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Cargo / Perfil *</label>
+            <select id="edit-gestao-perfil" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold">
               ${perfisHtml}
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Setor de Lotação</label>
-            <select id="edit-gestao-setor" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-medium">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Setor de Lotação</label>
+            <select id="edit-gestao-setor" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium">
               <option value="">Sem setor definido</option>
               ${setoresOptions}
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Status da Conta *</label>
-            <select id="edit-gestao-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white font-semibold">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">Status da Conta *</label>
+            <select id="edit-gestao-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold">
               <option value="ATIVO" ${item.status === 'ATIVO' ? 'selected' : ''}>ATIVO (Liberado)</option>
               <option value="INATIVO" ${item.status === 'INATIVO' ? 'selected' : ''}>INATIVO (Pausado)</option>
               <option value="BLOQUEADO" ${item.status === 'BLOQUEADO' ? 'selected' : ''}>BLOQUEADO (Revogado)</option>
@@ -1030,7 +1030,7 @@ window.UsuariosModule = {
         <!-- PERMISSÕES ADICIONAIS / EXCEÇÕES GRANULARES -->
         <div class="border border-blue-200 rounded-2xl p-3.5 bg-blue-50/40 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i> Liberar Acesso Específico a Módulos / Lugares
             </span>
             <span class="text-[10px] text-blue-700 font-bold bg-blue-100 px-2 py-0.5 rounded-full">Permissões Extras</span>
@@ -1062,7 +1062,7 @@ window.UsuariosModule = {
     `;
 
     window.UI.openModal({
-      title: `Editar Usuário: ${item.nome}`,
+      title: `Editar Usuário: ${this._esc(item.nome)}`,
       subtitle: 'Altere cargo, setor, status ou adicione acesso a módulos específicos.',
       maxWidth: 'max-w-2xl',
       contentHtml: modalContent,
@@ -1210,8 +1210,8 @@ window.UsuariosModule = {
 
     const modalContent = `
       <form id="form-edit-pre-cad" class="space-y-4">
-        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
-          <i data-lucide="edit-3" class="w-4 h-4 text-amber-600 shrink-0"></i>
+        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"></i>
           <span><strong>Edição da Solicitação:</strong> Corrija o nome, e-mail ou redefina a senha provisória do colaborador antes da aprovação do Administrador Geral.</span>
         </div>
 

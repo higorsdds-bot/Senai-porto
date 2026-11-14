@@ -144,6 +144,20 @@ body {
   border-color: rgba(148, 163, 184, 0.18) !important;
 }
 
+/* Correção Tema Claro: superfícies claras e inputs/tabelas nunca herdam text-slate-100 do body */
+html:not(.dark) :where(.bg-white, .bento-surface, .glass-panel, .glass-header, [class*="bg-white"], [class*="bg-slate-50"], [class*="bg-slate-100"]) {
+  color: #1e293b;
+}
+
+html:not(.dark) :where(td, th, input, select, textarea, option) {
+  color: #0f172a;
+}
+
+html:not(.dark) :where(input, textarea)::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
 /* ==========================================================================
    GLASSMORPHISM & SUPERFÍCIES REFINADAS
    ========================================================================== */
@@ -805,4 +819,56 @@ html:not(.dark) table tbody tr:hover {
 
 .dark .hub-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* ==========================================================================
+   CHATBOT FLUTUANTE & BONEQUINHO INTERATIVO (ASSISTENTE HUB ES+)
+   ========================================================================== */
+@keyframes hubMascotFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1.5deg);
+  }
+}
+
+@keyframes hubMascotBlink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes hubBubblePulse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.hub-mascot-float {
+  animation: hubMascotFloat 3.4s ease-in-out infinite;
+}
+
+.hub-mascot-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hubMascotBlink 4.2s infinite;
+}
+
+.hub-bubble-float {
+  animation: hubBubblePulse 3.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-mascot-float,
+  .hub-mascot-eye,
+  .hub-bubble-float {
+    animation: none !important;
+  }
 }
