@@ -46,7 +46,7 @@ window.ComprasModule = {
     const canCreate = window.Auth.hasPermission('compras.criar');
     const canApprove = window.Auth.hasPermission('compras.aprovar');
     const canReceive = window.Auth.hasPermission('compras.receber');
-    const canEdit = window.Auth.hasPermission('compras.editar');
+    const canEdit = isAdminGeral || window.Auth.hasPermission('compras.editar');
     const canDelete = window.Auth.hasPermission('compras.excluir');
     const currentUserId = window.Auth.getUsuario()?.id;
 
@@ -165,7 +165,7 @@ window.ComprasModule = {
                             ${canApprove ? `<button onclick="window.ComprasModule._openStatusModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-primary" title="Mudar Status">
                               <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                             </button>` : ''}
-                            ${canEditThisItem ? `<button onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="${isAdminGeral ? 'Digitar / Editar Tudo (Administrador)' : isOwner ? 'Editar minha solicitação' : 'Editar Pedido'}">
+                            ${canEditThisItem ? `<button type="button" onclick="window.ComprasModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-edit" title="${isAdminGeral ? 'Digitar / Editar Tudo (Administrador)' : isOwner ? 'Editar minha solicitação' : 'Editar Pedido'}">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>` : ''}
                             ${canDelete ? `<button onclick="window.ComprasModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-delete" title="Excluir">
@@ -229,8 +229,10 @@ window.ComprasModule = {
     const currentUserId = window.Auth.getUsuario()?.id;
     const isOwner = item && Number(item.solicitante_id) === Number(currentUserId);
 
+    const prodValueEscaped = item && item.produto ? String(item.produto).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') : '';
+
     const modalContent = `
-      <form id="form-compra" class="space-y-4">
+      <form id="form-compra" class="space-y-4" onsubmit="return false;">
         ${isAdmin ? `
           <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800 flex items-center gap-2">
             <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
@@ -249,7 +251,7 @@ window.ComprasModule = {
             type="text" 
             name="produto" 
             required 
-            value="${item ? item.produto : ''}" 
+            value="${prodValueEscaped}" 
             placeholder="Ex: Detergente concentrado, papel toalha ou equipamento"
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
           />
@@ -351,7 +353,7 @@ window.ComprasModule = {
           produto: formData.get('produto').trim(),
           descricao: formData.get('descricao')?.trim() || null,
           quantidade: Number(formData.get('quantidade')),
-          setor_id: formData.get('setor_id') ? Number(formData.get('setor_id')) : null
+          setor_id: formData.has('setor_id') ? (formData.get('setor_id') ? Number(formData.get('setor_id')) : null) : (item?.setor_id || null)
         };
 
         if (isAdmin) {

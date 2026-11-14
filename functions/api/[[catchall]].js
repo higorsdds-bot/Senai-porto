@@ -955,6 +955,10 @@ async function getBodyData(request) {
               data.anexo_url = dataUrl;
               data.anexo_nome = value.name || 'anexo';
             }
+            if (key === 'nota_fiscal') {
+              data.nota_fiscal_url = dataUrl;
+              data.nota_fiscal_nome = value.name || 'nota_fiscal';
+            }
             if (key === 'arquivo') data._arquivo = fileMeta;
           }
         } else {
@@ -984,6 +988,39 @@ async function ensureDbInit(db) {
   if (_dbInitPromise) return _dbInitPromise;
   _dbInitPromise = (async () => {
     try { await d1Run(db, 'ALTER TABLE usuarios ADD COLUMN foto_url TEXT'); } catch (_) { }
+    const equipCols = [
+      'ALTER TABLE equipamentos ADD COLUMN data_aquisicao TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN numero_nf TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN nota_fiscal_url TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN nota_fiscal_nome TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN baixa_usuario_id INTEGER',
+      'ALTER TABLE equipamentos ADD COLUMN baixa_usuario_nome TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN baixa_motivo TEXT',
+      'ALTER TABLE equipamentos ADD COLUMN baixa_data DATETIME',
+      'ALTER TABLE equipamentos ADD COLUMN baixa_destino TEXT'
+    ];
+    for (const sql of equipCols) {
+      try { await d1Run(db, sql); } catch (_) { }
+    }
+    try {
+      await d1Run(db, `CREATE TABLE IF NOT EXISTS equipamentos_movimentacoes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        equipamento_id INTEGER NOT NULL,
+        tipo TEXT NOT NULL DEFAULT 'movimentacao',
+        local_origem TEXT,
+        local_destino TEXT,
+        responsavel_anterior_id INTEGER,
+        responsavel_anterior_nome TEXT,
+        responsavel_novo_id INTEGER,
+        responsavel_novo_nome TEXT,
+        movimentado_por_id INTEGER,
+        movimentado_por_nome TEXT,
+        observacao TEXT,
+        data_movimentacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_equip_mov_equip_id ON equipamentos_movimentacoes(equipamento_id, data_movimentacao DESC)');
+    } catch (_) { }
     try {
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_del_created ON ocorrencias(deleted_at, created_at DESC)');
       await d1Run(db, 'CREATE INDEX IF NOT EXISTS idx_ocorrencias_status ON ocorrencias(status, deleted_at)');
@@ -1482,6 +1519,31 @@ export async function onRequest(context) {
         headers: {
           'Content-Type': parsed.mime,
           'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    const matchEquipamentoNf = route.match(/^\/equipamentos\/(\d+)\/nota-fiscal$/);
+    if (matchEquipamentoNf && method === 'GET') {
+      const id = matchEquipamentoNf[1];
+      const row = await d1First(db, 'SELECT nota_fiscal_url, nota_fiscal_nome FROM equipamentos WHERE id = ? AND deleted_at IS NULL LIMIT 1', [id]);
+      if (!row || !row.nota_fiscal_url) {
+        return new Response('Nota fiscal não encontrada.', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+      if (row.nota_fiscal_url.startsWith('http://') || row.nota_fiscal_url.startsWith('https://')) {
+        return Response.redirect(row.nota_fiscal_url, 302);
+      }
+      const parsed = parseDataUrl(row.nota_fiscal_url);
+      if (!parsed) {
+        return new Response('Formato inválido.', { status: 400 });
+      }
+      const safeName = String(row.nota_fiscal_nome || `nota_fiscal_${id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+      return new Response(parsed.bytes, {
+        headers: {
+          'Content-Type': parsed.mime,
+          'Content-Disposition': `inline; filename="${safeName}"`,
+          'Cache-Control': 'public, max-age=86400',
           'Access-Control-Allow-Origin': '*'
         }
       });
@@ -2322,7 +2384,9 @@ export async function onRequest(context) {
       const statusFinal = (canEditGeneral && status) ? status : current.status;
       const solicitanteFinal = (isUserAdmin(usuario) && solicitante_id) ? Number(solicitante_id) : current.solicitante_id;
       const setorFinal = setor_id !== undefined && setor_id !== '' ? (setor_id ? Number(setor_id) : null) : current.setor_id;
-      const valorFinal = valor_estimado !== undefined && valor_estimado !== '' ? Number(valor_estimado) : current.valor_estimado;
+      const valorFinal = (valor_estimado !== undefined && valor_estimado !== null && valor_estimado !== '')
+        ? Number(valor_estimado)
+        : (valor_estimado === null && canEditGeneral ? null : current.valor_estimado);
 
       await d1Run(
         db,
@@ -2500,22 +2564,26 @@ export async function onRequest(context) {
     }
 
     // =========================================================================
-    // 10. EQUIPAMENTOS (/equipamentos/*) — CORRIGIDO PARA O SCHEMA REAL
+    // 10. EQUIPAMENTOS (/equipamentos/*) — PATRIMONIO, NF, MOVIMENTACAO & BAIXA
     // =========================================================================
     if (route === '/equipamentos' && method === 'GET') {
+      await ensureDbInit(db);
       const estado = url.searchParams.get('estado');
       const q = url.searchParams.get('q');
       let conds = ['e.deleted_at IS NULL'];
       let params = [];
       if (estado) { conds.push('e.estado = ?'); params.push(estado); }
       if (q) {
-        conds.push('(e.nome LIKE ? OR e.patrimonio LIKE ? OR e.localizacao LIKE ? OR e.descricao LIKE ?)');
-        params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+        conds.push('(e.nome LIKE ? OR e.patrimonio LIKE ? OR e.localizacao LIKE ? OR e.descricao LIKE ? OR e.numero_nf LIKE ?)');
+        params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
       }
 
       const rows = await d1All(
         db,
-        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url, e.created_at, e.updated_at,
+        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url,
+                e.data_aquisicao, e.numero_nf, e.nota_fiscal_url, e.nota_fiscal_nome,
+                e.baixa_usuario_id, e.baixa_usuario_nome, e.baixa_motivo, e.baixa_data, e.baixa_destino,
+                e.created_at, e.updated_at,
                 e.responsavel_id, u.nome AS responsavel_nome
          FROM equipamentos e
          LEFT JOIN usuarios u ON u.id = e.responsavel_id
@@ -2528,28 +2596,233 @@ export async function onRequest(context) {
         if (imagem_url && imagem_url.startsWith('data:')) {
           imagem_url = `/api/v1/equipamentos/${r.id}/foto`;
         }
-        return { ...r, imagem_url };
+        let nota_fiscal_url = r.nota_fiscal_url;
+        if (nota_fiscal_url && nota_fiscal_url.startsWith('data:')) {
+          nota_fiscal_url = `/api/v1/equipamentos/${r.id}/nota-fiscal`;
+        }
+        return { ...r, imagem_url, nota_fiscal_url };
       });
       return jsonResponse({ success: true, data });
     }
 
+    const matchEqHistorico = route.match(/^\/equipamentos\/(\d+)\/historico$/);
+    if (matchEqHistorico && method === 'GET') {
+      await ensureDbInit(db);
+      const id = matchEqHistorico[1];
+      const eq = await d1First(
+        db,
+        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url,
+                e.data_aquisicao, e.numero_nf, e.nota_fiscal_url, e.nota_fiscal_nome,
+                e.baixa_usuario_id, e.baixa_usuario_nome, e.baixa_motivo, e.baixa_data, e.baixa_destino,
+                e.created_at, e.updated_at,
+                e.responsavel_id, u.nome AS responsavel_nome
+         FROM equipamentos e
+         LEFT JOIN usuarios u ON u.id = e.responsavel_id
+         WHERE e.id = ? AND e.deleted_at IS NULL LIMIT 1`,
+        [id]
+      );
+      if (!eq) return jsonResponse({ success: false, message: 'Equipamento não encontrado.' }, 404);
+      const movimentacoes = await d1All(
+        db,
+        `SELECT m.*,
+                COALESCE(m.responsavel_anterior_nome, ua.nome) AS responsavel_anterior_nome,
+                COALESCE(m.responsavel_novo_nome, un.nome) AS responsavel_novo_nome,
+                COALESCE(m.movimentado_por_nome, um.nome) AS movimentado_por_nome
+         FROM equipamentos_movimentacoes m
+         LEFT JOIN usuarios ua ON ua.id = m.responsavel_anterior_id
+         LEFT JOIN usuarios un ON un.id = m.responsavel_novo_id
+         LEFT JOIN usuarios um ON um.id = m.movimentado_por_id
+         WHERE m.equipamento_id = ?
+         ORDER BY m.data_movimentacao DESC, m.id DESC`,
+        [id]
+      );
+      if (eq.imagem_url && eq.imagem_url.startsWith('data:')) eq.imagem_url = `/api/v1/equipamentos/${eq.id}/foto`;
+      if (eq.nota_fiscal_url && eq.nota_fiscal_url.startsWith('data:')) eq.nota_fiscal_url = `/api/v1/equipamentos/${eq.id}/nota-fiscal`;
+      return jsonResponse({ success: true, data: { equipamento: eq, movimentacoes } });
+    }
+
+    const matchEqMovimentar = route.match(/^\/equipamentos\/(\d+)\/movimentar$/);
+    if (matchEqMovimentar && method === 'POST') {
+      await ensureDbInit(db);
+      if (!hasPerm(auth, 'equipamentos.editar')) {
+        return jsonResponse({ success: false, message: 'Sem permissão para movimentar patrimônio.' }, 403);
+      }
+      const id = matchEqMovimentar[1];
+      const body = await getBodyData(request);
+      const { local_destino, responsavel_novo_id, observacao, data_movimentacao } = body;
+
+      const current = await d1First(
+        db,
+        `SELECT e.*, u.nome AS responsavel_nome
+         FROM equipamentos e LEFT JOIN usuarios u ON u.id = e.responsavel_id
+         WHERE e.id = ? AND e.deleted_at IS NULL LIMIT 1`,
+        [id]
+      );
+      if (!current) return jsonResponse({ success: false, message: 'Equipamento não encontrado.' }, 404);
+      if (current.estado === 'descartado') {
+        return jsonResponse({ success: false, message: 'Não é possível movimentar um patrimônio já baixado/descartado.' }, 422);
+      }
+
+      const destinoFinal = local_destino ? String(local_destino).trim() : '';
+      if (!destinoFinal) {
+        return jsonResponse({ success: false, message: 'Informe a nova localização de destino.' }, 422);
+      }
+
+      const respNovoId = responsavel_novo_id ? Number(responsavel_novo_id) : null;
+      let respNovoNome = null;
+      if (respNovoId) {
+        const uNovo = await d1First(db, 'SELECT nome FROM usuarios WHERE id = ? LIMIT 1', [respNovoId]);
+        respNovoNome = uNovo?.nome || null;
+      }
+
+      const dataMov = data_movimentacao ? String(data_movimentacao).replace('T', ' ') : null;
+      const obsFinal = observacao ? String(observacao).trim() : null;
+
+      await d1Run(
+        db,
+        `UPDATE equipamentos SET localizacao = ?, responsavel_id = ?, updated_at = datetime('now') WHERE id = ?`,
+        [destinoFinal, respNovoId, id]
+      );
+
+      await d1Run(
+        db,
+        `INSERT INTO equipamentos_movimentacoes (
+           equipamento_id, tipo, local_origem, local_destino,
+           responsavel_anterior_id, responsavel_anterior_nome,
+           responsavel_novo_id, responsavel_novo_nome,
+           movimentado_por_id, movimentado_por_nome, observacao, data_movimentacao
+         ) VALUES (?, 'movimentacao', ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))`,
+        [
+          id,
+          current.localizacao || 'Não informada',
+          destinoFinal,
+          current.responsavel_id || null,
+          current.responsavel_nome || 'Sem responsável',
+          respNovoId,
+          respNovoNome || 'Sem responsável',
+          usuario.id,
+          usuario.nome,
+          obsFinal,
+          dataMov
+        ]
+      );
+
+      await registrarAuditoria(db, {
+        usuario_id: usuario.id,
+        acao: 'MOVIMENTAR_EQUIPAMENTO',
+        entidade: 'equipamentos',
+        entidade_id: Number(id),
+        descricao: `Patrimônio "${current.nome}" (${current.patrimonio}) movimentado de "${current.localizacao || '-'}" para "${destinoFinal}".`,
+        ip,
+        user_agent: userAgent
+      });
+
+      return jsonResponse({ success: true, message: 'Movimentação patrimonial registrada com sucesso.' });
+    }
+
+    const matchEqBaixa = route.match(/^\/equipamentos\/(\d+)\/baixa$/);
+    if (matchEqBaixa && method === 'POST') {
+      await ensureDbInit(db);
+      if (!hasPerm(auth, 'equipamentos.editar')) {
+        return jsonResponse({ success: false, message: 'Sem permissão para dar baixa em patrimônio.' }, 403);
+      }
+      const id = matchEqBaixa[1];
+      const body = await getBodyData(request);
+      const { motivo, destino, data_baixa } = body;
+
+      const motivoFinal = motivo ? String(motivo).trim() : '';
+      const destinoFinal = destino ? String(destino).trim() : '';
+      if (motivoFinal.length < 3 || !destinoFinal) {
+        return jsonResponse({ success: false, message: 'Informe o motivo (mín. 3 caracteres) e o destino da baixa.' }, 422);
+      }
+
+      const current = await d1First(
+        db,
+        `SELECT e.*, u.nome AS responsavel_nome
+         FROM equipamentos e LEFT JOIN usuarios u ON u.id = e.responsavel_id
+         WHERE e.id = ? AND e.deleted_at IS NULL LIMIT 1`,
+        [id]
+      );
+      if (!current) return jsonResponse({ success: false, message: 'Equipamento não encontrado.' }, 404);
+
+      const dataBaixaFinal = data_baixa ? String(data_baixa).replace('T', ' ') : null;
+
+      await d1Run(
+        db,
+        `UPDATE equipamentos
+         SET estado = 'descartado',
+             baixa_usuario_id = ?,
+             baixa_usuario_nome = ?,
+             baixa_motivo = ?,
+             baixa_data = COALESCE(?, datetime('now')),
+             baixa_destino = ?,
+             updated_at = datetime('now')
+         WHERE id = ?`,
+        [usuario.id, usuario.nome, motivoFinal, dataBaixaFinal, destinoFinal, id]
+      );
+
+      await d1Run(
+        db,
+        `INSERT INTO equipamentos_movimentacoes (
+           equipamento_id, tipo, local_origem, local_destino,
+           responsavel_anterior_id, responsavel_anterior_nome,
+           responsavel_novo_id, responsavel_novo_nome,
+           movimentado_por_id, movimentado_por_nome, observacao, data_movimentacao
+         ) VALUES (?, 'baixa', ?, ?, ?, ?, NULL, 'Baixado', ?, ?, ?, COALESCE(?, datetime('now')))`,
+        [
+          id,
+          current.localizacao || 'Não informada',
+          `BAIXA: ${destinoFinal}`,
+          current.responsavel_id || null,
+          current.responsavel_nome || 'Sem responsável',
+          usuario.id,
+          usuario.nome,
+          `Motivo: ${motivoFinal} | Destino: ${destinoFinal}`,
+          dataBaixaFinal
+        ]
+      );
+
+      await registrarAuditoria(db, {
+        usuario_id: usuario.id,
+        acao: 'BAIXA_EQUIPAMENTO',
+        entidade: 'equipamentos',
+        entidade_id: Number(id),
+        descricao: `Baixa do patrimônio "${current.nome}" (${current.patrimonio}) por ${usuario.nome}. Motivo: ${motivoFinal}. Destino: ${destinoFinal}.`,
+        ip,
+        user_agent: userAgent
+      });
+
+      return jsonResponse({ success: true, message: 'Baixa patrimonial registrada com sucesso.' });
+    }
+
     const matchEqId = route.match(/^\/equipamentos\/(\d+)$/);
     if (matchEqId && method === 'GET') {
+      await ensureDbInit(db);
       const row = await d1First(
         db,
-        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url, e.created_at, e.updated_at,
+        `SELECT e.id, e.nome, e.patrimonio, e.descricao, e.localizacao, e.estado, e.imagem_url,
+                e.data_aquisicao, e.numero_nf, e.nota_fiscal_url, e.nota_fiscal_nome,
+                e.baixa_usuario_id, e.baixa_usuario_nome, e.baixa_motivo, e.baixa_data, e.baixa_destino,
+                e.created_at, e.updated_at,
                 e.responsavel_id, u.nome AS responsavel_nome
          FROM equipamentos e LEFT JOIN usuarios u ON u.id = e.responsavel_id
          WHERE e.id = ? AND e.deleted_at IS NULL LIMIT 1`,
         [matchEqId[1]]
       );
       if (!row) return jsonResponse({ success: false, message: 'Equipamento não encontrado.' }, 404);
+      if (row.imagem_url && row.imagem_url.startsWith('data:')) row.imagem_url = `/api/v1/equipamentos/${row.id}/foto`;
+      if (row.nota_fiscal_url && row.nota_fiscal_url.startsWith('data:')) row.nota_fiscal_url = `/api/v1/equipamentos/${row.id}/nota-fiscal`;
       return jsonResponse({ success: true, data: row });
     }
 
     if (route === '/equipamentos' && method === 'POST') {
+      await ensureDbInit(db);
       const body = await getBodyData(request);
-      const { nome, patrimonio, codigo_patrimonio, descricao, localizacao, local, estado, status, responsavel_id, imagem_url, imagem_base64 } = body;
+      const {
+        nome, patrimonio, codigo_patrimonio, descricao, localizacao, local, estado, status,
+        responsavel_id, imagem_url, imagem_base64,
+        data_aquisicao, numero_nf, nota_fiscal_url, nota_fiscal_nome
+      } = body;
       const nomeFinal = String(nome || '').trim();
       const patFinal = String(patrimonio || codigo_patrimonio || '').trim();
 
@@ -2565,13 +2838,52 @@ export async function onRequest(context) {
       const imgFinal = imagem_url || imagem_base64 || null;
       const estadoFinal = ['bom', 'manutencao', 'descartado'].includes(estado || status) ? (estado || status) : 'bom';
       const localFinal = (localizacao || local) ? String(localizacao || local).trim() : null;
+      const respIdFinal = responsavel_id ? Number(responsavel_id) : null;
 
       const res = await d1Run(
         db,
-        `INSERT INTO equipamentos (nome, patrimonio, descricao, localizacao, estado, responsavel_id, imagem_url)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [nomeFinal, patFinal, descricao ? String(descricao).trim() : null, localFinal, estadoFinal, responsavel_id || null, imgFinal]
+        `INSERT INTO equipamentos (nome, patrimonio, descricao, localizacao, estado, responsavel_id, imagem_url, data_aquisicao, numero_nf, nota_fiscal_url, nota_fiscal_nome)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          nomeFinal,
+          patFinal,
+          descricao ? String(descricao).trim() : null,
+          localFinal,
+          estadoFinal,
+          respIdFinal,
+          imgFinal,
+          data_aquisicao ? String(data_aquisicao).trim() : null,
+          numero_nf ? String(numero_nf).trim() : null,
+          nota_fiscal_url || null,
+          nota_fiscal_nome || null
+        ]
       );
+
+      let respNome = 'Sem responsável';
+      if (respIdFinal) {
+        const uResp = await d1First(db, 'SELECT nome FROM usuarios WHERE id = ? LIMIT 1', [respIdFinal]);
+        if (uResp?.nome) respNome = uResp.nome;
+      }
+
+      await d1Run(
+        db,
+        `INSERT INTO equipamentos_movimentacoes (
+           equipamento_id, tipo, local_origem, local_destino,
+           responsavel_anterior_id, responsavel_anterior_nome,
+           responsavel_novo_id, responsavel_novo_nome,
+           movimentado_por_id, movimentado_por_nome, observacao
+         ) VALUES (?, 'cadastro', 'Entrada / Aquisição', ?, NULL, '—', ?, ?, ?, ?, ?)`,
+        [
+          res.insertId,
+          localFinal || 'Não informada',
+          respIdFinal,
+          respNome,
+          usuario.id,
+          usuario.nome,
+          numero_nf ? `Cadastro inicial (NF: ${String(numero_nf).trim()})` : 'Cadastro inicial de patrimônio'
+        ]
+      );
+
       await registrarAuditoria(db, { usuario_id: usuario.id, acao: 'CRIAR_EQUIPAMENTO', entidade: 'equipamentos', entidade_id: res.insertId, descricao: `Equipamento "${nomeFinal}" (Pat: ${patFinal}) cadastrado.`, ip, user_agent: userAgent });
       return jsonResponse({
         success: true,
@@ -2581,11 +2893,23 @@ export async function onRequest(context) {
     }
 
     if (matchEqId && method === 'PUT') {
+      await ensureDbInit(db);
       const id = matchEqId[1];
       const body = await getBodyData(request);
-      const { nome, patrimonio, codigo_patrimonio, descricao, localizacao, local, estado, status, responsavel_id, imagem_url, imagem_base64, remover_imagem } = body;
+      const {
+        nome, patrimonio, codigo_patrimonio, descricao, localizacao, local, estado, status,
+        responsavel_id, imagem_url, imagem_base64, remover_imagem,
+        data_aquisicao, numero_nf, nota_fiscal_url, nota_fiscal_nome, remover_nota_fiscal,
+        baixa_motivo, baixa_destino, baixa_data
+      } = body;
 
-      const current = await d1First(db, `SELECT * FROM equipamentos WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [id]);
+      const current = await d1First(
+        db,
+        `SELECT e.*, u.nome AS responsavel_nome
+         FROM equipamentos e LEFT JOIN usuarios u ON u.id = e.responsavel_id
+         WHERE e.id = ? AND e.deleted_at IS NULL LIMIT 1`,
+        [id]
+      );
       if (!current) return jsonResponse({ success: false, message: 'Equipamento não encontrado.' }, 404);
 
       const nomeFinal = nome ? String(nome).trim() : current.nome;
@@ -2597,19 +2921,108 @@ export async function onRequest(context) {
       let imgFinal = current.imagem_url;
       if (imagem_url || imagem_base64) {
         imgFinal = imagem_url || imagem_base64;
-      } else if (remover_imagem === '1' || remover_imagem === true) {
+      } else if (remover_imagem === '1' || remover_imagem === 'true' || remover_imagem === true) {
         imgFinal = null;
+      }
+
+      let nfUrlFinal = current.nota_fiscal_url;
+      let nfNomeFinal = current.nota_fiscal_nome;
+      if (nota_fiscal_url) {
+        nfUrlFinal = nota_fiscal_url;
+        nfNomeFinal = nota_fiscal_nome || 'nota_fiscal';
+      } else if (remover_nota_fiscal === '1' || remover_nota_fiscal === 'true' || remover_nota_fiscal === true) {
+        nfUrlFinal = null;
+        nfNomeFinal = null;
       }
 
       const estadoFinal = ['bom', 'manutencao', 'descartado'].includes(estado || status) ? (estado || status) : current.estado;
       const localFinal = (localizacao !== undefined || local !== undefined) ? (String(localizacao || local || '').trim() || null) : current.localizacao;
+      const respFinal = responsavel_id !== undefined ? (responsavel_id ? Number(responsavel_id) : null) : current.responsavel_id;
+      const dataAqFinal = data_aquisicao !== undefined ? (String(data_aquisicao || '').trim() || null) : current.data_aquisicao;
+      const numNfFinal = numero_nf !== undefined ? (String(numero_nf || '').trim() || null) : current.numero_nf;
+
+      const baixaChanged = estadoFinal === 'descartado' && current.estado !== 'descartado';
+      const baixaUserFinal = baixaChanged ? usuario.id : current.baixa_usuario_id;
+      const baixaUserNomeFinal = baixaChanged ? usuario.nome : current.baixa_usuario_nome;
+      const baixaMotivoFinal = baixa_motivo !== undefined ? (String(baixa_motivo || '').trim() || null) : current.baixa_motivo;
+      const baixaDestinoFinal = baixa_destino !== undefined ? (String(baixa_destino || '').trim() || null) : current.baixa_destino;
+      const baixaDataFinal = baixaChanged
+        ? (baixa_data ? String(baixa_data).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '))
+        : (baixa_data ? String(baixa_data).replace('T', ' ') : current.baixa_data);
 
       await d1Run(
         db,
-        `UPDATE equipamentos SET nome = ?, patrimonio = ?, descricao = ?, localizacao = ?, estado = ?, responsavel_id = ?, imagem_url = ?, updated_at = datetime('now')
+        `UPDATE equipamentos
+         SET nome = ?, patrimonio = ?, descricao = ?, localizacao = ?, estado = ?, responsavel_id = ?, imagem_url = ?,
+             data_aquisicao = ?, numero_nf = ?, nota_fiscal_url = ?, nota_fiscal_nome = ?,
+             baixa_usuario_id = ?, baixa_usuario_nome = ?, baixa_motivo = ?, baixa_data = ?, baixa_destino = ?,
+             updated_at = datetime('now')
          WHERE id = ? AND deleted_at IS NULL`,
-        [nomeFinal, patFinal, descricao !== undefined ? (descricao ? String(descricao).trim() : null) : current.descricao, localFinal, estadoFinal, responsavel_id !== undefined ? (responsavel_id || null) : current.responsavel_id, imgFinal, id]
+        [
+          nomeFinal, patFinal,
+          descricao !== undefined ? (descricao ? String(descricao).trim() : null) : current.descricao,
+          localFinal, estadoFinal, respFinal, imgFinal,
+          dataAqFinal, numNfFinal, nfUrlFinal, nfNomeFinal,
+          baixaUserFinal, baixaUserNomeFinal, baixaMotivoFinal, baixaDataFinal, baixaDestinoFinal,
+          id
+        ]
       );
+
+      // Registra movimentação automática no histórico se localização ou responsável mudou
+      const localMudou = (localFinal || '') !== (current.localizacao || '');
+      const respMudou = Number(respFinal || 0) !== Number(current.responsavel_id || 0);
+      if (localMudou || respMudou) {
+        let respNovoNome = 'Sem responsável';
+        if (respFinal) {
+          const uNovo = await d1First(db, 'SELECT nome FROM usuarios WHERE id = ? LIMIT 1', [respFinal]);
+          if (uNovo?.nome) respNovoNome = uNovo.nome;
+        }
+        await d1Run(
+          db,
+          `INSERT INTO equipamentos_movimentacoes (
+             equipamento_id, tipo, local_origem, local_destino,
+             responsavel_anterior_id, responsavel_anterior_nome,
+             responsavel_novo_id, responsavel_novo_nome,
+             movimentado_por_id, movimentado_por_nome, observacao
+           ) VALUES (?, 'movimentacao', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            current.localizacao || 'Não informada',
+            localFinal || 'Não informada',
+            current.responsavel_id || null,
+            current.responsavel_nome || 'Sem responsável',
+            respFinal,
+            respNovoNome,
+            usuario.id,
+            usuario.nome,
+            'Atualização cadastral de localização/responsável'
+          ]
+        );
+      }
+
+      if (baixaChanged) {
+        await d1Run(
+          db,
+          `INSERT INTO equipamentos_movimentacoes (
+             equipamento_id, tipo, local_origem, local_destino,
+             responsavel_anterior_id, responsavel_anterior_nome,
+             responsavel_novo_id, responsavel_novo_nome,
+             movimentado_por_id, movimentado_por_nome, observacao, data_movimentacao
+           ) VALUES (?, 'baixa', ?, ?, ?, ?, NULL, 'Baixado', ?, ?, ?, ?)`,
+          [
+            id,
+            current.localizacao || 'Não informada',
+            `BAIXA: ${baixaDestinoFinal || 'Não informado'}`,
+            current.responsavel_id || null,
+            current.responsavel_nome || 'Sem responsável',
+            usuario.id,
+            usuario.nome,
+            `Motivo: ${baixaMotivoFinal || 'Não informado'} | Destino: ${baixaDestinoFinal || 'Não informado'}`,
+            baixaDataFinal
+          ]
+        );
+      }
+
       await registrarAuditoria(db, { usuario_id: usuario.id, acao: 'EDITAR_EQUIPAMENTO', entidade: 'equipamentos', entidade_id: Number(id), descricao: `Equipamento #${id} ("${nomeFinal}") atualizado.`, ip, user_agent: userAgent });
       return jsonResponse({ success: true, message: 'Equipamento atualizado com sucesso.', data: { imagem_url: imgFinal } });
     }

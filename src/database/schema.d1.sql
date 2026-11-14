@@ -64,18 +64,50 @@ CREATE TABLE IF NOT EXISTS usuario_permissoes (
 
 -- 6. EQUIPAMENTOS
 CREATE TABLE IF NOT EXISTS equipamentos (
-  id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome           TEXT NOT NULL,
-  patrimonio     TEXT NOT NULL UNIQUE,
-  responsavel_id INTEGER,
-  descricao      TEXT,
-  localizacao    TEXT,
-  estado         TEXT NOT NULL DEFAULT 'bom',
-  imagem_url     TEXT,
-  deleted_at     DATETIME,
-  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (responsavel_id) REFERENCES usuarios(id) ON DELETE SET NULL
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome                TEXT NOT NULL,
+  patrimonio          TEXT NOT NULL UNIQUE,
+  responsavel_id      INTEGER,
+  descricao           TEXT,
+  localizacao         TEXT,
+  estado              TEXT NOT NULL DEFAULT 'bom',
+  imagem_url          TEXT,
+  data_aquisicao      TEXT,
+  numero_nf           TEXT,
+  nota_fiscal_url     TEXT,
+  nota_fiscal_nome    TEXT,
+  baixa_usuario_id    INTEGER,
+  baixa_usuario_nome  TEXT,
+  baixa_motivo        TEXT,
+  baixa_data          DATETIME,
+  baixa_destino       TEXT,
+  deleted_at          DATETIME,
+  created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (responsavel_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  FOREIGN KEY (baixa_usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+-- 6b. HISTORICO DE MOVIMENTACOES E BAIXAS DE PATRIMONIO
+CREATE TABLE IF NOT EXISTS equipamentos_movimentacoes (
+  id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+  equipamento_id            INTEGER NOT NULL,
+  tipo                      TEXT NOT NULL DEFAULT 'movimentacao',
+  local_origem              TEXT,
+  local_destino             TEXT,
+  responsavel_anterior_id   INTEGER,
+  responsavel_anterior_nome TEXT,
+  responsavel_novo_id       INTEGER,
+  responsavel_novo_nome     TEXT,
+  movimentado_por_id        INTEGER,
+  movimentado_por_nome      TEXT,
+  observacao                TEXT,
+  data_movimentacao         DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at                DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (equipamento_id) REFERENCES equipamentos(id) ON DELETE CASCADE,
+  FOREIGN KEY (responsavel_anterior_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  FOREIGN KEY (responsavel_novo_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  FOREIGN KEY (movimentado_por_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- 7. DOCUMENTOS

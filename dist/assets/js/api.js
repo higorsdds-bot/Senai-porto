@@ -368,6 +368,24 @@ class ApiService {
       () => window.MockDB.delete('equipamentos', id));
   }
 
+  async getEquipamentoHistorico(id) {
+    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}/historico`, { method: 'GET' });
+  }
+
+  async movimentarEquipamento(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}/movimentar`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async baixarEquipamento(id, data) {
+    return this.request(`${CONFIG.ENDPOINTS.EQUIPAMENTOS}/${id}/baixa`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
   // =========================================================================
   // DOCUMENTOS (com suporte a upload FormData e download real)
   // =========================================================================

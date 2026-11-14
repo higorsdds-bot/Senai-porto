@@ -12,10 +12,12 @@ window.EquipamentosModule = {
   pageSize: 8,
   _searchTimer: null,
 
-  // Estado temporário de foto no formulário
+  // Estado temporário de foto e NF no formulário
   _fotoArquivo: null,
   _fotoBase64: null,
   _removerImagem: false,
+  _nfArquivo: null,
+  _removerNf: false,
   _streamCamera: null,
   _facingMode: 'environment',
 
@@ -166,6 +168,13 @@ window.EquipamentosModule = {
                         <td class="p-3.5">
                           <div class="font-bold text-slate-900 dark:text-white leading-tight" title="${this._esc(item.nome)}">${this._esc(item.nome)}</div>
                           ${item.descricao ? `<div class="text-[11px] text-slate-400 max-w-xs truncate mt-0.5" title="${this._esc(item.descricao)}">${this._esc(item.descricao)}</div>` : ''}
+                          ${(item.numero_nf || item.data_aquisicao || item.nota_fiscal_url) ? `
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                              ${item.data_aquisicao ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Aq: ${this._esc(this._fmtDateOnly(item.data_aquisicao))}</span>` : ''}
+                              ${item.numero_nf ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-mono">NF: ${this._esc(item.numero_nf)}</span>` : ''}
+                              ${item.nota_fiscal_url ? `<a href="${this._esc(window.API.resolveAssetUrl(item.nota_fiscal_url))}" target="_blank" rel="noopener" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold hover:underline inline-flex items-center gap-1" title="Abrir Nota Fiscal anexada"><i data-lucide="file-text" class="w-3 h-3"></i> Ver NF</a>` : ''}
+                            </div>
+                          ` : ''}
                         </td>
                         <td class="p-3.5 font-mono">
                           <span class="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -176,6 +185,7 @@ window.EquipamentosModule = {
                           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${badgeEstado}">
                             ${this._esc(item.estado || 'bom')}
                           </span>
+                          ${(item.estado === 'descartado' && item.baixa_data) ? `<div class="text-[10px] text-rose-500 mt-0.5" title="Baixado por ${this._esc(item.baixa_usuario_nome || '-')}">Baixa: ${this._esc(this._fmtDateOnly(item.baixa_data))}</div>` : ''}
                         </td>
                         <td class="p-3.5 text-slate-600 dark:text-slate-300">
                           <div class="flex items-center gap-1.5">
@@ -187,11 +197,22 @@ window.EquipamentosModule = {
                           ${this._esc(item.localizacao || '-')}
                         </td>
                         <td class="p-3.5 text-right whitespace-nowrap">
-                          <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.editar') ? 'btn-action-table action-edit' : 'hidden'}" title="Editar">
+                          <div class="flex items-center justify-end gap-1">
+                            <button type="button" onclick="window.EquipamentosModule._openHistoricoModal(${item.id})" class="btn-action-table action-primary" title="Ficha & Histórico de Movimentações">
+                              <i data-lucide="history" class="w-4 h-4"></i>
+                            </button>
+                            ${(window.Auth?.hasPermission('equipamentos.editar') && item.estado !== 'descartado') ? `
+                              <button type="button" onclick="window.EquipamentosModule._openMovimentarModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table action-success" title="Movimentar Patrimônio">
+                                <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                              </button>
+                              <button type="button" onclick="window.EquipamentosModule._openBaixaModal(document.getElementById('main-content'), ${item.id})" class="btn-action-table text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40" title="Registrar Baixa Patrimonial">
+                                <i data-lucide="archive-x" class="w-4 h-4"></i>
+                              </button>
+                            ` : ''}
+                            <button type="button" onclick="window.EquipamentosModule._openFormModal(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.editar') ? 'btn-action-table action-edit' : 'hidden'}" title="Editar">
                               <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.excluir') ? 'btn-action-table action-delete' : 'hidden'}" title="Excluir">
+                            <button type="button" onclick="window.EquipamentosModule._confirmDelete(document.getElementById('main-content'), ${item.id})" class="${window.Auth?.hasPermission('equipamentos.excluir') ? 'btn-action-table action-delete' : 'hidden'}" title="Excluir">
                               <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                           </div>
@@ -271,12 +292,15 @@ window.EquipamentosModule = {
     this._fotoArquivo = null;
     this._fotoBase64 = null;
     this._removerImagem = false;
+    this._nfArquivo = null;
+    this._removerNf = false;
 
     const fotoExistente = item && item.imagem_url ? window.API.resolveAssetUrl(item.imagem_url) : null;
+    const nfExistente = item && item.nota_fiscal_url ? window.API.resolveAssetUrl(item.nota_fiscal_url) : null;
     const temFotoInicial = !!fotoExistente;
 
     const modalContent = `
-      <form id="form-equipamento" class="space-y-4 text-xs" novalidate>
+      <form id="form-equipamento" class="space-y-4 text-xs" novalidate onsubmit="return false;">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nome / Descrição do Ativo *</label>
@@ -346,6 +370,52 @@ window.EquipamentosModule = {
             placeholder="Número de série, acessórios inclusos, voltagem ou especificações..." 
             class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >${item && item.descricao ? this._esc(item.descricao) : ''}</textarea>
+        </div>
+
+        <!-- AQUISIÇÃO & NOTA FISCAL -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="file-text" class="w-4 h-4 text-indigo-600"></i> Aquisição & Nota Fiscal
+            </span>
+            <span class="text-[10px] text-slate-400">Opcional (quando aplicável)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Data de Aquisição</label>
+              <input
+                type="date"
+                name="data_aquisicao"
+                value="${item && item.data_aquisicao ? this._esc(String(item.data_aquisicao).slice(0, 10)) : ''}"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Número da Nota Fiscal (NF)</label>
+              <input
+                type="text"
+                name="numero_nf"
+                value="${item && item.numero_nf ? this._esc(item.numero_nf) : ''}"
+                placeholder="Ex: NF-e 00012345"
+                class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono"
+              />
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="paperclip" class="w-3.5 h-3.5 text-indigo-600"></i> Anexar Nota Fiscal (PDF / Imagem)
+              <input id="input-equip-nf" type="file" accept=".pdf,image/*" class="hidden">
+            </label>
+            ${nfExistente ? `
+              <a id="link-equip-nf-atual" href="${this._esc(nfExistente)}" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 inline-flex items-center gap-1 hover:underline">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> ${this._esc(item.nota_fiscal_nome || 'Ver NF anexada')}
+              </a>
+            ` : ''}
+            <span id="lbl-equip-nf-nome" class="text-[11px] text-slate-600 dark:text-slate-300 font-medium ${nfExistente ? 'hidden' : ''}"></span>
+            <button type="button" id="btn-remover-nf-equip" class="text-xs text-rose-600 hover:text-rose-700 px-2 py-1 font-semibold flex items-center gap-1 ${nfExistente ? '' : 'hidden'}">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remover NF
+            </button>
+          </div>
         </div>
 
         <!-- SEÇÃO DE FOTO DO PATRIMÔNIO COM VALIDAÇÃO OBRIGATÓRIA -->
@@ -425,6 +495,8 @@ window.EquipamentosModule = {
         const localizacao = (formData.get('localizacao') || '').trim();
         const estado = formData.get('estado') || 'bom';
         const descricao = (formData.get('descricao') || '').trim();
+        const data_aquisicao = (formData.get('data_aquisicao') || '').trim();
+        const numero_nf = (formData.get('numero_nf') || '').trim();
 
         if (nome.length < 3) {
           window.UI.toast({ title: 'Atenção', message: 'O nome do equipamento deve ter no mínimo 3 caracteres.', type: 'warning' });
@@ -460,6 +532,13 @@ window.EquipamentosModule = {
           if (localizacao) dataToSend.append('localizacao', localizacao);
           dataToSend.append('estado', estado);
           if (descricao) dataToSend.append('descricao', descricao);
+          dataToSend.append('data_aquisicao', data_aquisicao);
+          dataToSend.append('numero_nf', numero_nf);
+          if (this._nfArquivo) {
+            dataToSend.append('nota_fiscal', this._nfArquivo);
+          } else if (this._removerNf) {
+            dataToSend.append('remover_nota_fiscal', 'true');
+          }
 
           if (this._fotoArquivo) {
             dataToSend.append('imagem', this._fotoArquivo);
@@ -506,6 +585,42 @@ window.EquipamentosModule = {
 
     // Identifica o botão de Salvar do modal do window.UI
     const btnSalvarModal = document.getElementById('modal-save-btn');
+
+    // Controles de Nota Fiscal
+    const inputNf = document.getElementById('input-equip-nf');
+    const lblNfNome = document.getElementById('lbl-equip-nf-nome');
+    const linkNfAtual = document.getElementById('link-equip-nf-atual');
+    const btnRemoverNf = document.getElementById('btn-remover-nf-equip');
+
+    inputNf?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        window.UI.toast({ title: 'Arquivo grande', message: 'A Nota Fiscal deve ter no máximo 10 MB.', type: 'warning' });
+        e.target.value = '';
+        return;
+      }
+      this._nfArquivo = file;
+      this._removerNf = false;
+      if (linkNfAtual) linkNfAtual.classList.add('hidden');
+      if (lblNfNome) {
+        lblNfNome.textContent = `Selecionado: ${file.name}`;
+        lblNfNome.classList.remove('hidden');
+      }
+      if (btnRemoverNf) btnRemoverNf.classList.remove('hidden');
+    });
+
+    btnRemoverNf?.addEventListener('click', () => {
+      this._nfArquivo = null;
+      this._removerNf = true;
+      if (inputNf) inputNf.value = '';
+      if (linkNfAtual) linkNfAtual.classList.add('hidden');
+      if (lblNfNome) {
+        lblNfNome.textContent = 'Nota fiscal será removida ao salvar';
+        lblNfNome.classList.remove('hidden');
+      }
+      btnRemoverNf.classList.add('hidden');
+    });
 
     const atualizarEstadoValidacaoFoto = () => {
       const temFoto = !!(this._fotoArquivo || this._fotoBase64 || (isEdit && fotoExistente && !this._removerImagem));
@@ -750,6 +865,296 @@ window.EquipamentosModule = {
     }
 
     window.UI.toast({ title: 'Foto Capturada!', message: 'Imagem vinculada ao equipamento com sucesso.', type: 'success' });
+  },
+
+  // ─── Modal de Movimentação Patrimonial ───────────────────────────────────
+  _openMovimentarModal(container, id) {
+    const item = this.items.find(i => Number(i.id) === Number(id));
+    if (!item) return;
+
+    const respAtual = this.usuarios.find(u => Number(u.id) === Number(item.responsavel_id))?.nome || item.responsavel_nome || 'Sem responsável';
+    const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    const modalContent = `
+      <form id="form-movimentar-equip" class="space-y-4 text-xs" novalidate onsubmit="return false;">
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1">
+          <div class="font-bold text-slate-900 dark:text-white">${this._esc(item.nome)} <span class="font-mono text-indigo-600">(${this._esc(item.patrimonio)})</span></div>
+          <div class="text-[11px] text-slate-500">Local atual: <strong>${this._esc(item.localizacao || 'Não informada')}</strong> • Responsável atual: <strong>${this._esc(respAtual)}</strong></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nova Localização (Destino) *</label>
+            <input type="text" name="local_destino" required placeholder="Ex: Auditório Principal / Sala 102"
+              class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Novo Responsável pela Guarda</label>
+            <select name="responsavel_novo_id" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+              <option value="">Sem responsável vinculado</option>
+              ${this.usuarios.map(u => `<option value="${u.id}" ${Number(item.responsavel_id) === Number(u.id) ? 'selected' : ''}>${this._esc(u.nome)} (${this._esc(u.perfil || 'Colaborador')})</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Data e Hora da Movimentação</label>
+          <input type="datetime-local" name="data_movimentacao" value="${nowLocal}"
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Motivo / Observação da Movimentação</label>
+          <textarea name="observacao" rows="2" placeholder="Descreva o motivo da transferência ou observações de entrega..."
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Movimentar Patrimônio',
+      subtitle: 'Transferência de local e/ou responsável com registro em histórico',
+      contentHtml: modalContent,
+      saveLabel: 'Confirmar Movimentação',
+      maxWidth: 'max-w-lg',
+      onSave: async () => {
+        const form = document.getElementById('form-movimentar-equip');
+        if (!window.UI.validateForm(form)) return false;
+        const fd = new FormData(form);
+        const payload = {
+          local_destino: (fd.get('local_destino') || '').trim(),
+          responsavel_novo_id: fd.get('responsavel_novo_id') ? Number(fd.get('responsavel_novo_id')) : null,
+          data_movimentacao: fd.get('data_movimentacao') || null,
+          observacao: (fd.get('observacao') || '').trim() || null
+        };
+        try {
+          await window.API.movimentarEquipamento(id, payload);
+          window.UI.toast({ title: 'Patrimônio Movimentado', message: 'Transferência registrada no histórico do bem.' });
+          await this.render(container);
+          return true;
+        } catch (err) {
+          window.UI.toast({ title: 'Erro ao Movimentar', message: err.message || 'Falha ao registrar movimentação.', type: 'error' });
+          return false;
+        }
+      }
+    });
+  },
+
+  // ─── Modal de Baixa Patrimonial ──────────────────────────────────────────
+  _openBaixaModal(container, id) {
+    const item = this.items.find(i => Number(i.id) === Number(id));
+    if (!item) return;
+
+    const usuarioAtual = window.Auth?.getUsuario()?.nome || 'Usuário Autenticado';
+    const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    const modalContent = `
+      <form id="form-baixa-equip" class="space-y-4 text-xs" novalidate onsubmit="return false;">
+        <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 space-y-1">
+          <div class="font-bold">Baixa do Patrimônio: ${this._esc(item.nome)} (${this._esc(item.patrimonio)})</div>
+          <div class="text-[11px]">Responsável pelo registro da baixa: <strong>${this._esc(usuarioAtual)}</strong></div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Data da Baixa *</label>
+          <input type="datetime-local" name="data_baixa" required value="${nowLocal}"
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Destino do Bem *</label>
+          <input type="text" name="destino" required list="lista-destinos-baixa" placeholder="Ex: Descarte Ecológico, Doação, Leilão, Depósito de Inservíveis..."
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
+          <datalist id="lista-destinos-baixa">
+            <option value="Descarte Ecológico / Reciclagem"></option>
+            <option value="Depósito de Inservíveis"></option>
+            <option value="Doação Institucional"></option>
+            <option value="Leilão Público"></option>
+            <option value="Transferência Externa"></option>
+            <option value="Extravio / Sinistro"></option>
+          </datalist>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Motivo da Baixa *</label>
+          <textarea name="motivo" required rows="3" placeholder="Descreva detalhadamente o motivo da baixa (ex: dano irreparável, obsolescência, laudo técnico nº...)..."
+            class="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"></textarea>
+        </div>
+      </form>
+    `;
+
+    window.UI.openModal({
+      title: 'Registrar Baixa Patrimonial',
+      subtitle: 'Esta ação altera o estado do bem para Descartado / Baixado com registro permanente',
+      contentHtml: modalContent,
+      saveLabel: 'Confirmar Baixa',
+      maxWidth: 'max-w-lg',
+      onSave: async () => {
+        const form = document.getElementById('form-baixa-equip');
+        if (!window.UI.validateForm(form)) return false;
+        const fd = new FormData(form);
+        const payload = {
+          data_baixa: fd.get('data_baixa') || null,
+          destino: (fd.get('destino') || '').trim(),
+          motivo: (fd.get('motivo') || '').trim()
+        };
+        if (payload.motivo.length < 3) {
+          window.UI.toast({ title: 'Atenção', message: 'Informe o motivo da baixa (mín. 3 caracteres).', type: 'warning' });
+          return false;
+        }
+        try {
+          await window.API.baixarEquipamento(id, payload);
+          window.UI.toast({ title: 'Baixa Registrada', message: 'Baixa patrimonial gravada com sucesso no histórico.', type: 'warning' });
+          await this.render(container);
+          return true;
+        } catch (err) {
+          window.UI.toast({ title: 'Erro ao Baixar', message: err.message || 'Falha ao registrar baixa.', type: 'error' });
+          return false;
+        }
+      }
+    });
+  },
+
+  // ─── Modal de Ficha & Histórico Completo do Patrimônio ───────────────────
+  async _openHistoricoModal(id) {
+    window.UI.openModal({
+      title: 'Ficha & Histórico Patrimonial',
+      subtitle: 'Carregando linha do tempo do bem...',
+      contentHtml: '<div class="py-10 text-center text-xs text-slate-400">Carregando histórico completo...</div>',
+      saveLabel: null,
+      cancelLabel: 'Fechar',
+      maxWidth: 'max-w-2xl'
+    });
+
+    try {
+      const resp = await window.API.getEquipamentoHistorico(id);
+      const eq = resp?.equipamento || resp?.data?.equipamento || this.items.find(i => Number(i.id) === Number(id)) || {};
+      const movs = resp?.movimentacoes || resp?.data?.movimentacoes || [];
+
+      const fotoUrl = eq.imagem_url ? window.API.resolveAssetUrl(eq.imagem_url) : null;
+      const nfUrl = eq.nota_fiscal_url ? window.API.resolveAssetUrl(eq.nota_fiscal_url) : null;
+
+      const html = `
+        <div class="space-y-4 text-xs">
+          <!-- Resumo do Bem -->
+          <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+            ${fotoUrl ? `<img src="${this._esc(fotoUrl)}" alt="${this._esc(eq.nome)}" class="w-20 h-20 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shrink-0" />` : ''}
+            <div class="flex-1 space-y-1">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h4 class="text-sm font-extrabold text-slate-900 dark:text-white">${this._esc(eq.nome)}</h4>
+                <span class="font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200">${this._esc(eq.patrimonio)}</span>
+              </div>
+              <p class="text-slate-500">Localização atual: <strong class="text-slate-800 dark:text-slate-200">${this._esc(eq.localizacao || 'Não informada')}</strong></p>
+              <p class="text-slate-500">Responsável atual: <strong class="text-slate-800 dark:text-slate-200">${this._esc(eq.responsavel_nome || 'Não vinculado')}</strong></p>
+              <p class="text-slate-500">Estado: <strong class="uppercase">${this._esc(eq.estado || 'bom')}</strong></p>
+            </div>
+          </div>
+
+          <!-- Aquisição & Nota Fiscal -->
+          <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <div class="font-bold text-slate-800 dark:text-slate-200">Aquisição & Nota Fiscal</div>
+              <div class="text-slate-500">
+                Data de Aquisição: <strong>${eq.data_aquisicao ? this._esc(this._fmtDateOnly(eq.data_aquisicao)) : 'Não informada'}</strong>
+                • Número NF: <strong class="font-mono">${this._esc(eq.numero_nf || 'Não informado')}</strong>
+              </div>
+            </div>
+            ${nfUrl ? `
+              <a href="${this._esc(nfUrl)}" target="_blank" rel="noopener" class="btn-secondary text-xs px-3 py-1.5 inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Abrir Nota Fiscal
+              </a>
+            ` : '<span class="text-[11px] text-slate-400">Sem anexo de NF</span>'}
+          </div>
+
+          <!-- Registro de Baixa (se baixado) -->
+          ${(eq.estado === 'descartado' || eq.baixa_data) ? `
+            <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 space-y-1.5">
+              <div class="font-extrabold text-rose-800 dark:text-rose-200 flex items-center gap-1.5">
+                <i data-lucide="archive-x" class="w-4 h-4"></i> Registro de Baixa Patrimonial
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-rose-900 dark:text-rose-100">
+                <div><strong>Quem baixou:</strong> ${this._esc(eq.baixa_usuario_nome || 'Não informado')}</div>
+                <div><strong>Data da Baixa:</strong> ${this._esc(this._fmtDate(eq.baixa_data))}</div>
+                <div><strong>Destino:</strong> ${this._esc(eq.baixa_destino || 'Não informado')}</div>
+                <div><strong>Motivo:</strong> ${this._esc(eq.baixa_motivo || 'Não informado')}</div>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Timeline de Movimentações -->
+          <div>
+            <h5 class="font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] mb-2.5 flex items-center gap-1.5">
+              <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-600"></i> Histórico de Movimentações (${movs.length})
+            </h5>
+            ${movs.length === 0 ? `
+              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 text-center text-slate-400">
+                Nenhuma movimentação registrada ainda para este patrimônio.
+              </div>
+            ` : `
+              <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1 hub-scrollbar">
+                ${movs.map(m => {
+                  const tipoLabel = m.tipo === 'cadastro' ? 'Cadastro' : m.tipo === 'baixa' ? 'Baixa' : 'Movimentação';
+                  const tipoClass = m.tipo === 'baixa'
+                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                    : m.tipo === 'cadastro'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                      : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300';
+                  return `
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 space-y-1">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${tipoClass}">${tipoLabel}</span>
+                        <span class="text-[11px] text-slate-400 font-mono">${this._esc(this._fmtDate(m.data_movimentacao || m.created_at))}</span>
+                      </div>
+                      <div class="text-slate-700 dark:text-slate-200">
+                        <strong>Local:</strong> ${this._esc(m.local_origem || '—')} <span class="text-slate-400">→</span> <strong>${this._esc(m.local_destino || '—')}</strong>
+                      </div>
+                      <div class="text-slate-600 dark:text-slate-300">
+                        <strong>Responsável:</strong> ${this._esc(m.responsavel_anterior_nome || '—')} <span class="text-slate-400">→</span> <strong>${this._esc(m.responsavel_novo_nome || '—')}</strong>
+                      </div>
+                      <div class="text-[11px] text-slate-500">
+                        <strong>Movimentado por:</strong> ${this._esc(m.movimentado_por_nome || 'Sistema')}
+                        ${m.observacao ? ` • <em>${this._esc(m.observacao)}</em>` : ''}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+
+      window.UI.openModal({
+        title: 'Ficha & Histórico Patrimonial',
+        subtitle: `${eq.nome || 'Patrimônio'} • ${eq.patrimonio || ''}`,
+        contentHtml: html,
+        saveLabel: null,
+        cancelLabel: 'Fechar',
+        maxWidth: 'max-w-2xl'
+      });
+    } catch (err) {
+      window.UI.openModal({
+        title: 'Erro ao Carregar Histórico',
+        contentHtml: `<div class="p-4 text-xs text-rose-600">${this._esc(err.message || 'Não foi possível carregar o histórico.')}</div>`,
+        saveLabel: null,
+        cancelLabel: 'Fechar'
+      });
+    }
+  },
+
+  _fmtDate(dt) {
+    if (!dt) return '-';
+    const d = new Date(String(dt).replace(' ', 'T'));
+    if (isNaN(d.getTime())) return String(dt);
+    return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  },
+
+  _fmtDateOnly(dt) {
+    if (!dt) return '-';
+    const s = String(dt).slice(0, 10);
+    const parts = s.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return s;
   },
 
   _confirmDelete(container, id) {
